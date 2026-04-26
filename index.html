@@ -14,16 +14,15 @@
             --text: #e0e1dd;
         }
 
-        * { box-sizing: border-box; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body { 
-            margin: 0; 
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font-family: system-ui, -apple-system, sans-serif; 
             background: var(--bg); 
             color: var(--text); 
             display: flex; 
             flex-direction: column; 
-            height: 100vh; 
+            height: 100dvh;          /* важно для мобильных с клавиатурой */
             overflow: hidden;
         }
 
@@ -31,7 +30,7 @@
             background: var(--header); 
             padding: 14px 16px; 
             text-align: center; 
-            font-size: clamp(1.2rem, 4vw, 1.6rem); 
+            font-size: clamp(1.25rem, 4vw, 1.6rem); 
             font-weight: 700; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
@@ -45,20 +44,18 @@
 
         .chat-tabs button {
             flex: 1;
-            padding: 10px;
+            padding: 11px;
             border: none;
             border-radius: 9999px;
             background: transparent;
             color: #ccc;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         .chat-tabs button.active {
             background: #40916c;
             color: white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
         }
 
         #chat-window { 
@@ -69,18 +66,15 @@
             flex-direction: column; 
             gap: 12px;
             background: var(--chat-bg);
-            scrollbar-width: thin;
-            scrollbar-color: #40916c #1b263b;
         }
 
         .message { 
             max-width: 85%; 
-            padding: 11px 15px; 
+            padding: 12px 16px; 
             border-radius: 20px; 
             font-size: clamp(0.95rem, 3.5vw, 1.05rem); 
             line-height: 1.45;
-            position: relative;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.3);
         }
 
         .incoming { 
@@ -98,47 +92,40 @@
         .user-name { 
             font-size: 0.78rem; 
             opacity: 0.85; 
-            margin-bottom: 3px; 
+            margin-bottom: 4px; 
             font-weight: 600; 
-        }
-
-        .message-text { 
-            word-break: break-word; 
-            margin-bottom: 4px;
         }
 
         .message-time { 
             font-size: 0.68rem; 
             opacity: 0.75; 
             text-align: right; 
+            margin-top: 4px;
         }
 
         .input-area { 
             background: #1b263b; 
-            padding: 12px 12px 16px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.4);
+            padding: 12px 12px 18px; 
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.5);
         }
 
         .input-row {
             display: flex;
             gap: 8px;
+            margin-bottom: 8px;
         }
 
         input {
-            padding: 13px 16px;
+            padding: 14px 16px;
             border-radius: 9999px;
             border: none; 
             background: #0d1b2a; 
             color: white; 
-            outline: none;
             font-size: 1rem;
         }
 
-        #username { width: 110px; flex: none; }
-        #recipient { flex: 1; }
+        #username { width: 120px; flex: none; }
+        #recipient { flex: 1; display: none; }
 
         #message-input { flex: 1; }
 
@@ -146,12 +133,11 @@
             background: #40916c; 
             color: white; 
             border: none; 
-            padding: 13px 22px; 
+            padding: 14px 24px; 
             border-radius: 9999px; 
             cursor: pointer; 
             font-weight: 700; 
             font-size: 1rem;
-            transition: background 0.2s;
         }
 
         button:hover { background: #52b788; }
@@ -162,22 +148,13 @@
             text-align: center;
             font-style: italic;
             max-width: 90% !important;
-            padding: 14px 18px !important;
-        }
-
-        #chat-window::-webkit-scrollbar { width: 6px; }
-        #chat-window::-webkit-scrollbar-thumb { 
-            background: #40916c; 
-            border-radius: 10px; 
+            padding: 16px !important;
         }
 
         @media (min-width: 768px) {
-            .input-area {
-                flex-direction: row;
-                align-items: center;
-                padding: 14px 20px;
-            }
-            #username { width: 140px; }
+            .input-area { flex-direction: row; align-items: center; padding: 14px 20px; }
+            .input-row { margin-bottom: 0; }
+            #username { width: 150px; }
             .message { max-width: 70%; }
         }
     </style>
@@ -195,7 +172,7 @@
     <div class="input-area">
         <div class="input-row">
             <input type="text" id="username" placeholder="Ваше имя">
-            <input type="text" id="recipient" placeholder="Имя получателя (для личного)" style="display: none;">
+            <input type="text" id="recipient" placeholder="Имя получателя">
         </div>
         <div class="input-row">
             <input type="text" id="message-input" placeholder="Напишите сообщение...">
@@ -220,10 +197,8 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
-        // DOM элементы
         const chatWindow = document.getElementById('chat-window');
         const usernameInput = document.getElementById('username');
         const recipientInput = document.getElementById('recipient');
@@ -235,10 +210,11 @@
         let currentChatType = 'general';
         let currentRecipient = '';
         let currentChatRef = null;
+        let currentUnsubscribe = null;
 
         function getChatId(user1, user2) {
-            const u1 = user1.trim().toLowerCase();
-            const u2 = user2.trim().toLowerCase();
+            const u1 = (user1 || '').trim().toLowerCase();
+            const u2 = (user2 || '').trim().toLowerCase();
             return u1 < u2 ? `${u1}_${u2}` : `${u2}_${u1}`;
         }
 
@@ -251,11 +227,8 @@
 
             if (isToday) {
                 return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-            } else {
-                return date.toLocaleString('ru-RU', {
-                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
-                });
             }
+            return date.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
         }
 
         function scrollToBottom() {
@@ -266,56 +239,51 @@
             chatWindow.innerHTML = '';
         }
 
-        function addWelcomeMessage(isPrivate = false) {
+        function addWelcomeMessage(isPrivate) {
             const text = isPrivate 
-                ? `👋 Личный чат с <strong>${currentRecipient}</strong>. Только вы двое видите эти сообщения.`
-                : `👋 Добро пожаловать в общий чат! Сообщения видны всем участникам.`;
-            
-            const welcomeHTML = `
-                <div class="message welcome">
-                    ${text}
-                </div>`;
-            chatWindow.innerHTML += welcomeHTML;
+                ? `👋 Личный чат с <strong>${currentRecipient}</strong>. Только вы двое видите сообщения.`
+                : `👋 Добро пожаловать в общий чат!`;
+            chatWindow.innerHTML += `<div class="message welcome">${text}</div>`;
             scrollToBottom();
         }
 
         function addMessage(snapshot) {
             const msg = snapshot.val();
-            if (!msg) return;
+            if (!msg?.text) return;
 
             const myName = usernameInput.value.trim() || 'Гость';
-            const isMyMessage = msg.name === myName;
+            const isMy = msg.name === myName;
 
-            const messageHTML = `
-                <div class="message ${isMyMessage ? 'outgoing' : 'incoming'}">
+            const html = `
+                <div class="message ${isMy ? 'outgoing' : 'incoming'}">
                     <div class="user-name">${msg.name || 'Аноним'}</div>
-                    <div class="message-text">${msg.text}</div>
+                    <div>${msg.text}</div>
                     <div class="message-time">${formatTime(msg.time || Date.now())}</div>
                 </div>`;
-            chatWindow.innerHTML += messageHTML;
+            chatWindow.innerHTML += html;
             scrollToBottom();
         }
 
         function loadChat() {
             clearChat();
+            if (currentUnsubscribe) currentUnsubscribe();
 
-            if (currentChatType === 'general') {
-                currentChatRef = ref(db, 'messages');
-                addWelcomeMessage(false);
-            } else {
-                if (!currentRecipient || !usernameInput.value.trim()) {
-                    alert("Введите своё имя и имя получателя!");
+            let path = currentChatType === 'general' ? 'messages' : null;
+
+            if (currentChatType === 'private') {
+                if (!usernameInput.value.trim() || !recipientInput.value.trim()) {
+                    alert("Введите своё имя и имя получателя для личного чата");
                     return;
                 }
-                const chatId = getChatId(usernameInput.value, currentRecipient);
-                currentChatRef = ref(db, `privateChats/${chatId}/messages`);
-                addWelcomeMessage(true);
+                const chatId = getChatId(usernameInput.value, recipientInput.value);
+                path = `privateChats/${chatId}/messages`;
+                currentRecipient = recipientInput.value.trim();
             }
 
-            // Слушатель новых сообщений
-            onChildAdded(currentChatRef, (snapshot) => {
-                addMessage(snapshot);
-            });
+            currentChatRef = ref(db, path);
+            addWelcomeMessage(currentChatType === 'private');
+
+            currentUnsubscribe = onChildAdded(currentChatRef, addMessage);
         }
 
         function sendMessage() {
@@ -323,57 +291,46 @@
             const text = messageInput.value.trim();
             if (!text) return;
 
-            let targetRef;
-            if (currentChatType === 'general') {
-                targetRef = ref(db, 'messages');
-            } else {
-                if (!currentRecipient) {
-                    alert("Введите имя получателя!");
+            let targetPath = currentChatType === 'general' ? 'messages' : null;
+
+            if (currentChatType === 'private') {
+                if (!recipientInput.value.trim()) {
+                    alert("Введите имя получателя");
                     return;
                 }
-                const chatId = getChatId(name, currentRecipient);
-                targetRef = ref(db, `privateChats/${chatId}/messages`);
+                const chatId = getChatId(name, recipientInput.value);
+                targetPath = `privateChats/${chatId}/messages`;
             }
 
-            push(targetRef, {
-                name: name,
-                text: text,
-                time: Date.now()
-            });
-
+            push(ref(db, targetPath), { name, text, time: Date.now() });
             messageInput.value = '';
         }
 
-        // Переключение между чатами
+        // Переключение чатов
         btnGeneral.addEventListener('click', () => {
             currentChatType = 'general';
-            currentRecipient = '';
-            recipientInput.style.display = 'none';
             btnGeneral.classList.add('active');
             btnPrivate.classList.remove('active');
+            recipientInput.style.display = 'none';
             loadChat();
         });
 
         btnPrivate.addEventListener('click', () => {
             currentChatType = 'private';
-            recipientInput.style.display = 'block';
             btnGeneral.classList.remove('active');
             btnPrivate.classList.add('active');
+            recipientInput.style.display = 'block';
             loadChat();
         });
 
-        // Отправка сообщения
         sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
-        // Загрузка страницы
+        // Запуск
         window.addEventListener('load', () => {
-            recipientInput.style.display = 'none';
-            usernameInput.focus();                    // ← Вот эта строка, о которой я говорил
+            usernameInput.focus();
             loadChat();
-            console.log("✅ FChat успешно запущен с новым дизайном!");
+            console.log("✅ FChat запущен (исправленная версия)");
         });
     </script>
 </body>
