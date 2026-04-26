@@ -5,182 +5,201 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FChat — Семейный чат</title>
     <style>
-        .message {
-    margin-bottom: 12px;
-    padding: 10px 15px;
-    border-radius: 18px;
-    max-width: 75%;
-    position: relative;
-}
-
-.incoming {
-    background: #415a77;
-    align-self: flex-start;
-    border-bottom-left-radius: 4px;
-}
-
-.outgoing {
-    background: #2d6a4f;
-    align-self: flex-end;
-    border-bottom-right-radius: 4px;
-}
-
-.user-name {
-    font-size: 0.75rem;
-    opacity: 0.85;
-    margin-bottom: 4px;
-    font-weight: bold;
-}
-
-.message-text {
-    word-break: break-word;
-}
-
-.message-time {
-    font-size: 0.65rem;
-    opacity: 0.7;
-    text-align: right;
-    margin-top: 4px;
-}
-        body { margin: 0; font-family: sans-serif; background: #0d1b2a; color: #e0e1dd; display: flex; flex-direction: column; height: 100vh; }
-        header { background: #1b4332; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: bold; }
-        #chat-window { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .message { max-width: 75%; padding: 10px 15px; border-radius: 15px; font-size: 0.9rem; line-height: 1.4; }
-        .incoming { background: #415a77; align-self: flex-start; }
-        .outgoing { background: #2d6a4f; align-self: flex-end; }
-        .input-area { background: #1b263b; padding: 15px; display: flex; gap: 10px; }
-        input { flex: 1; padding: 12px; border-radius: 25px; border: none; background: #0d1b2a; color: white; outline: none; }
-        button { background: #40916c; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
-        .user-name { font-size: 0.7rem; margin-bottom: 4px; opacity: 0.8; }
+        body { 
+            margin: 0; 
+            font-family: sans-serif; 
+            background: #0d1b2a; 
+            color: #e0e1dd; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+        }
+        header { 
+            background: #1b4332; 
+            padding: 15px; 
+            text-align: center; 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+        }
+        #chat-window { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+        }
+        .message { 
+            max-width: 75%; 
+            padding: 10px 15px; 
+            border-radius: 18px; 
+            font-size: 0.9rem; 
+            line-height: 1.4; 
+            margin-bottom: 12px;
+            position: relative;
+        }
+        .incoming { 
+            background: #415a77; 
+            align-self: flex-start; 
+            border-bottom-left-radius: 4px;
+        }
+        .outgoing { 
+            background: #2d6a4f; 
+            align-self: flex-end; 
+            border-bottom-right-radius: 4px;
+        }
+        .user-name { 
+            font-size: 0.75rem; 
+            opacity: 0.85; 
+            margin-bottom: 4px; 
+            font-weight: bold; 
+        }
+        .message-text { 
+            word-break: break-word; 
+        }
+        .message-time { 
+            font-size: 0.65rem; 
+            opacity: 0.7; 
+            text-align: right; 
+            margin-top: 4px; 
+        }
+        .input-area { 
+            background: #1b263b; 
+            padding: 15px; 
+            display: flex; 
+            gap: 10px; 
+        }
+        input { 
+            flex: 1; 
+            padding: 12px; 
+            border-radius: 25px; 
+            border: none; 
+            background: #0d1b2a; 
+            color: white; 
+            outline: none; 
+        }
+        button { 
+            background: #40916c; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            border-radius: 25px; 
+            cursor: pointer; 
+            font-weight: bold; 
+        }
     </style>
 </head>
 <body>
-    <header>FChat</header>
+    <header>FChat — Семейный чат</header>
     <div id="chat-window"></div>
     <div class="input-area">
-        <input type="text" id="username" placeholder="Имя" style="width: 70px; flex: none;">
+        <input type="text" id="username" placeholder="Имя" style="width: 100px; flex: none;">
         <input type="text" id="message-input" placeholder="Сообщение...">
         <button id="send-btn">Отправить</button>
     </div>
 
     <script type="module">
-    // Импорты Firebase (обязательно отдельно для database)
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
-    import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+        // Импорты Firebase
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-    // Твоя конфигурация Firebase (лучше не выкладывать публично в будущем)
-    const firebaseConfig = {
-        apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
-        authDomain: "fchat-d6879.firebaseapp.com",
-        databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "fchat-d6879",
-        storageBucket: "fchat-d6879.firebasestorage.app",
-        messagingSenderId: "1049514912319",
-        appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a",
-        measurementId: "G-11PJ481DDP"
-    };
+        // Конфигурация Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
+            authDomain: "fchat-d6879.firebaseapp.com",
+            databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "fchat-d6879",
+            storageBucket: "fchat-d6879.firebasestorage.app",
+            messagingSenderId: "1049514912319",
+            appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a",
+            measurementId: "G-11PJ481DDP"
+        };
 
-    // Инициализация
-    const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
-    const db = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
 
-    // Ссылки
-    const messagesRef = ref(db, 'messages');
+        // DOM элементы
+        const chatWindow = document.getElementById('chat-window');
+        const usernameInput = document.getElementById('username');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
 
-    // DOM элементы
-    const chatWindow = document.getElementById('chat-window');
-    const userInput = document.getElementById('username');
-    const msgInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
+        const messagesRef = ref(db, 'messages');
 
-        // Функция форматирования времени
-    function formatTime(timestamp) {
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    }
+        // Форматирование времени
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
 
-    // Автоматическая прокрутка вниз
-    function scrollToBottom() {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
+        // Прокрутка вниз
+        function scrollToBottom() {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
 
-    // Приветственное сообщение при первой загрузке
-    function addWelcomeMessage() {
-        const welcomeHTML = `
-            <div class="message incoming" style="background: #2d6a4f; text-align: center; font-style: italic; opacity: 0.9;">
-                👋 Добро пожаловать в FChat! Это семейный чат. Пиши сообщения, они видны всем.
-            </div>`;
-        chatWindow.innerHTML += welcomeHTML;
-        scrollToBottom();
-    }
+        // Приветственное сообщение
+        function addWelcomeMessage() {
+            const welcomeHTML = `
+                <div class="message incoming" style="background: #2d6a4f; text-align: center; font-style: italic; opacity: 0.9; max-width: 90%;">
+                    👋 Добро пожаловать в FChat! Это семейный чат. Пиши сообщения — они видны всем участникам.
+                </div>`;
+            chatWindow.innerHTML += welcomeHTML;
+            scrollToBottom();
+        }
 
-    // Добавление сообщения в чат (с именем и временем)
-    function addMessage(data) {
-        const { username, message, timestamp = Date.now() } = data.val() || data; // поддержка старых и новых сообщений
+        // Добавление сообщения
+        function addMessage(snapshot) {
+            const msg = snapshot.val();
+            if (!msg) return;
 
-        const messageHTML = `
-            <div class="message ${username === usernameInput.value.trim() ? 'outgoing' : 'incoming'}">
-                <div class="user-name">${username || 'Аноним'}</div>
-                <div class="message-text">${message}</div>
-                <div class="message-time">${formatTime(timestamp)}</div>
-            </div>`;
+            const currentUser = usernameInput.value.trim() || 'Гость';
+            const isMyMessage = msg.name === currentUser;
 
-        chatWindow.innerHTML += messageHTML;
-        scrollToBottom();
-    }
-        
-    // Функция отправки сообщения
-    const sendMessage = () => {
-        const name = userInput.value.trim() || 'Гость';
-        const text = msgInput.value.trim();
+            const messageHTML = `
+                <div class="message ${isMyMessage ? 'outgoing' : 'incoming'}">
+                    <div class="user-name">${msg.name || 'Аноним'}</div>
+                    <div class="message-text">${msg.text}</div>
+                    <div class="message-time">${formatTime(msg.time || Date.now())}</div>
+                </div>`;
 
-        if (text) {
+            chatWindow.innerHTML += messageHTML;
+            scrollToBottom();
+        }
+
+        // Отправка сообщения
+        function sendMessage() {
+            const name = usernameInput.value.trim() || 'Гость';
+            const text = messageInput.value.trim();
+
+            if (!text) return;
+
             push(messagesRef, {
                 name: name,
                 text: text,
                 time: Date.now()
             });
-            msgInput.value = ''; // очищаем поле
+
+            messageInput.value = '';
         }
-    };
 
-        // Слушатель новых сообщений
-    const messagesRef = ref(db, 'messages');
-    onChildAdded(messagesRef, (data) => {
-        addMessage(data);
-    });
-        
-        // Обработчики событий
-    sendBtn.addEventListener('click', sendMessage);
-    messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') sendMessage();
-    });
+        // Слушатель новых сообщений (один!)
+        onChildAdded(messagesRef, (snapshot) => {
+            addMessage(snapshot);
+        });
 
-    // Приветствие при загрузке страницы
-    window.addEventListener('load', () => {
-        // Очищаем старые сообщения при желании или оставляем
-        // chatWindow.innerHTML = ''; 
-        addWelcomeMessage();
-    });
+        // Обработчики
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
 
-    // Реалтайм прослушка новых сообщений
-    onChildAdded(messagesRef, (data) => {
-        const msg = data.val();
-        const div = document.createElement('div');
-
-        const isMyMessage = msg.name === (userInput.value.trim() || 'Гость');
-
-        div.className = `message ${isMyMessage ? 'outgoing' : 'incoming'}`;
-        div.innerHTML = `
-            <div class="user-name">${msg.name}</div>
-            ${msg.text}
-        `;
-
-        chatWindow.appendChild(div);
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    });
-
-    console.log("FChat успешно запущен!");
-</script>
+        // При загрузке страницы
+        window.addEventListener('load', () => {
+            addWelcomeMessage();
+            console.log("✅ FChat успешно запущен!");
+        });
+    </script>
+</body>
+</html>
