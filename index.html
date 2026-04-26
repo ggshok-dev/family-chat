@@ -130,15 +130,29 @@
 
         // Форматирование времени
         function formatTime(timestamp) {
-        const date = new Date(timestamp);
-        // Выведет в формате: 14:30, 26 апреля 2024 г.
-        return date.toLocaleString('ru-RU', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        day: 'numeric',
-        month: 'long', // 'long' — словами (апреля), '2-digit' — цифрами (04)
-        year: 'numeric'
-    });
+    const date = new Date(timestamp);
+    const now = new Date();
+    
+    const isToday = date.getFullYear() === now.getFullYear() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getDate() === now.getDate();
+
+    if (isToday) {
+        // Для сегодняшних сообщений — только время (как было раньше)
+        return date.toLocaleTimeString('ru-RU', { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+        });
+    } else {
+        // Для старых сообщений — время + короткая дата
+        return date.toLocaleString('ru-RU', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: 'numeric',
+            month: 'short',     // "апр" вместо "апреля" (короче)
+            year: 'numeric'
+        });
+    }
 }
         // Прокрутка вниз
         function scrollToBottom() {
