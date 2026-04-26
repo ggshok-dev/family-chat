@@ -6,106 +6,55 @@
     <title>FChat — Семейный чат</title>
     <style>
         body { 
-            margin: 0; 
-            font-family: sans-serif; 
-            background: #0d1b2a; 
-            color: #e0e1dd; 
-            display: flex; 
-            flex-direction: column; 
-            height: 100vh; 
+            margin: 0; font-family: sans-serif; background: #0d1b2a; color: #e0e1dd; 
+            display: flex; flex-direction: column; height: 100vh; 
         }
         header { 
-            background: #1b4332; 
-            padding: 15px; 
-            text-align: center; 
-            font-size: 1.5rem; 
-            font-weight: bold; 
+            background: #1b4332; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: bold; 
         }
         #chat-window { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 10px; 
+            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; 
         }
         .message { 
-            max-width: 75%; 
-            padding: 10px 15px; 
-            border-radius: 18px; 
-            font-size: 0.9rem; 
-            line-height: 1.4; 
-            margin-bottom: 12px;
-            position: relative;
+            max-width: 75%; padding: 10px 15px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; 
+            margin-bottom: 12px; position: relative;
         }
-        .incoming { 
-            background: #415a77; 
-            align-self: flex-start; 
-            border-bottom-left-radius: 4px;
-        }
-        .outgoing { 
-            background: #2d6a4f; 
-            align-self: flex-end; 
-            border-bottom-right-radius: 4px;
-        }
-        .user-name { 
-            font-size: 0.75rem; 
-            opacity: 0.85; 
-            margin-bottom: 4px; 
-            font-weight: bold; 
-        }
-        .message-text { 
-            word-break: break-word; 
-        }
-        .message-time { 
-            font-size: 0.65rem; 
-            opacity: 0.7; 
-            text-align: right; 
-            margin-top: 4px; 
-        }
-        .input-area { 
-            background: #1b263b; 
-            padding: 15px; 
-            display: flex; 
-            gap: 10px; 
-        }
-        input { 
-            flex: 1; 
-            padding: 12px; 
-            border-radius: 25px; 
-            border: none; 
-            background: #0d1b2a; 
-            color: white; 
-            outline: none; 
-        }
-        button { 
-            background: #40916c; 
-            color: white; 
-            border: none; 
-            padding: 10px 20px; 
-            border-radius: 25px; 
-            cursor: pointer; 
-            font-weight: bold; 
-        }
+        .incoming { background: #415a77; align-self: flex-start; border-bottom-left-radius: 4px; }
+        .outgoing { background: #2d6a4f; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .user-name { font-size: 0.75rem; opacity: 0.85; margin-bottom: 4px; font-weight: bold; }
+        .message-text { word-break: break-word; }
+        .message-time { font-size: 0.65rem; opacity: 0.7; text-align: right; margin-top: 4px; }
+
+        .input-area { background: #1b263b; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        input, select { flex: 1; padding: 12px; border-radius: 25px; border: none; background: #0d1b2a; color: white; outline: none; }
+        button { background: #40916c; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
+        
+        .chat-header { padding: 10px; background: #1b4332; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
     <header>FChat — Семейный чат</header>
+    
+    <div class="chat-header">
+        <button id="btn-general">Общий чат</button>
+        <button id="btn-private">Личный чат</button>
+    </div>
+
     <div id="chat-window"></div>
+
     <div class="input-area">
-        <input type="text" id="username" placeholder="Имя" style="width: 100px; flex: none;">
+        <input type="text" id="username" placeholder="Ваше имя" style="width: 120px; flex: none;">
+        <input type="text" id="recipient" placeholder="Имя получателя (для личного)">
         <input type="text" id="message-input" placeholder="Сообщение...">
         <button id="send-btn">Отправить</button>
     </div>
 
     <script type="module">
-        // Импорты Firebase
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
         import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-        // Конфигурация Firebase
-        const firebaseConfig = {
+        const firebaseConfig = { /* твоя конфигурация без изменений */ 
             apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
             authDomain: "fchat-d6879.firebaseapp.com",
             databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
@@ -120,62 +69,64 @@
         const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
-        // DOM элементы
+        // DOM
         const chatWindow = document.getElementById('chat-window');
         const usernameInput = document.getElementById('username');
+        const recipientInput = document.getElementById('recipient');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
+        const btnGeneral = document.getElementById('btn-general');
+        const btnPrivate = document.getElementById('btn-private');
 
-        const messagesRef = ref(db, 'messages');
+        let currentChatType = 'general'; // 'general' или 'private'
+        let currentRecipient = '';
+        let currentChatRef = null;
 
-        // Форматирование времени
+        function getChatId(user1, user2) {
+            const u1 = user1.trim().toLowerCase();
+            const u2 = user2.trim().toLowerCase();
+            return u1 < u2 ? `${u1}_${u2}` : `${u2}_${u1}`;
+        }
+
         function formatTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    
-    const isToday = date.getFullYear() === now.getFullYear() &&
-                    date.getMonth() === now.getMonth() &&
-                    date.getDate() === now.getDate();
+            const date = new Date(timestamp);
+            const now = new Date();
+            const isToday = date.getFullYear() === now.getFullYear() &&
+                            date.getMonth() === now.getMonth() &&
+                            date.getDate() === now.getDate();
 
-    if (isToday) {
-        // Для сегодняшних сообщений — только время (как было раньше)
-        return date.toLocaleTimeString('ru-RU', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-        });
-    } else {
-        // Для старых сообщений — время + короткая дата
-        return date.toLocaleString('ru-RU', {
-            hour: '2-digit',
-            minute: '2-digit',
-            day: 'numeric',
-            month: 'short',     // "апр" вместо "апреля" (короче)
-            year: 'numeric'
-        });
-    }
-}
-        // Прокрутка вниз
+            if (isToday) {
+                return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            } else {
+                return date.toLocaleString('ru-RU', {
+                    day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                });
+            }
+        }
+
         function scrollToBottom() {
             chatWindow.scrollTop = chatWindow.scrollHeight;
         }
 
-        // Приветственное сообщение
-        function addWelcomeMessage() {
+        function clearChat() {
+            chatWindow.innerHTML = '';
+        }
+
+        function addWelcomeMessage(isPrivate = false) {
+            const text = isPrivate 
+                ? `👋 Это личный чат с ${currentRecipient}. Только вы двое видите эти сообщения.`
+                : `👋 Добро пожаловать в общий чат! Сообщения видны всем.`;
             const welcomeHTML = `
                 <div class="message incoming" style="background: #2d6a4f; text-align: center; font-style: italic; opacity: 0.9; max-width: 90%;">
-                    👋 Добро пожаловать в FChat! Это семейный чат. Пиши сообщения — они видны всем участникам.
+                    ${text}
                 </div>`;
             chatWindow.innerHTML += welcomeHTML;
             scrollToBottom();
         }
 
-        // Добавление сообщения
-        function addMessage(snapshot) {
+        function addMessage(snapshot, isMyMessage) {
             const msg = snapshot.val();
             if (!msg) return;
-
-            const currentUser = usernameInput.value.trim() || 'Гость';
-            const isMyMessage = msg.name === currentUser;
 
             const messageHTML = `
                 <div class="message ${isMyMessage ? 'outgoing' : 'incoming'}">
@@ -183,19 +134,58 @@
                     <div class="message-text">${msg.text}</div>
                     <div class="message-time">${formatTime(msg.time || Date.now())}</div>
                 </div>`;
-
             chatWindow.innerHTML += messageHTML;
             scrollToBottom();
         }
 
-        // Отправка сообщения
+        function loadChat() {
+            clearChat();
+            if (currentChatRef) {
+                // Здесь можно отключить старый слушатель, но для простоты пока оставляем
+            }
+
+            if (currentChatType === 'general') {
+                currentChatRef = ref(db, 'messages');
+                addWelcomeMessage(false);
+            } else {
+                if (!currentRecipient) {
+                    alert("Введите имя получателя для личного чата!");
+                    return;
+                }
+                const myName = usernameInput.value.trim() || 'Гость';
+                const chatId = getChatId(myName, currentRecipient);
+                currentChatRef = ref(db, `privateChats/${chatId}/messages`);
+                addWelcomeMessage(true);
+            }
+
+            // Слушатель сообщений
+            onChildAdded(currentChatRef, (snapshot) => {
+                const msg = snapshot.val();
+                const myName = usernameInput.value.trim() || 'Гость';
+                const isMyMessage = msg.name === myName;
+                addMessage(snapshot, isMyMessage);
+            });
+        }
+
         function sendMessage() {
             const name = usernameInput.value.trim() || 'Гость';
             const text = messageInput.value.trim();
-
             if (!text) return;
 
-            push(messagesRef, {
+            let targetRef;
+
+            if (currentChatType === 'general') {
+                targetRef = ref(db, 'messages');
+            } else {
+                if (!currentRecipient) {
+                    alert("Выберите получателя для личного чата!");
+                    return;
+                }
+                const chatId = getChatId(name, currentRecipient);
+                targetRef = ref(db, `privateChats/${chatId}/messages`);
+            }
+
+            push(targetRef, {
                 name: name,
                 text: text,
                 time: Date.now()
@@ -204,21 +194,31 @@
             messageInput.value = '';
         }
 
-        // Слушатель новых сообщений (один!)
-        onChildAdded(messagesRef, (snapshot) => {
-            addMessage(snapshot);
+        // Переключение чатов
+        btnGeneral.addEventListener('click', () => {
+            currentChatType = 'general';
+            currentRecipient = '';
+            recipientInput.style.display = 'none';
+            loadChat();
         });
 
-        // Обработчики
+        btnPrivate.addEventListener('click', () => {
+            currentChatType = 'private';
+            recipientInput.style.display = 'inline';
+            loadChat();
+        });
+
+        // Отправка
         sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
 
-        // При загрузке страницы
+        // При загрузке
         window.addEventListener('load', () => {
-            addWelcomeMessage();
-            console.log("✅ FChat успешно запущен!");
+            recipientInput.style.display = 'none'; // по умолчанию скрыто
+            loadChat(); // начинаем с общего чата
+            console.log("✅ FChat с приватными сообщениями запущен!");
         });
     </script>
 </body>
