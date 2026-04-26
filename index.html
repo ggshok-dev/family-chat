@@ -381,7 +381,13 @@
         window.addEventListener('load', () => {
             recipientInput.style.display = 'none'; // по умолчанию скрыто
             loadChat(); // начинаем с общего чата
-            console.log("✅ FChat с приватными сообщениями запущен!");
+                    
+        // Загрузка страницы
+        window.addEventListener('load', () => {
+            recipientInput.style.display = 'none';
+            usernameInput.focus();                    // ← Вот эта строка, о которой я говорил
+            loadChat();
+            console.log("✅ FChat успешно запущен с новым дизайном!");
         });
     </script>
 </body>
