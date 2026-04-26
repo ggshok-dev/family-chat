@@ -14,9 +14,7 @@
             --text: #e0e1dd;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body { 
             margin: 0; 
@@ -129,7 +127,7 @@
             gap: 8px;
         }
 
-        input, select {
+        input {
             padding: 13px 16px;
             border-radius: 9999px;
             border: none; 
@@ -142,9 +140,7 @@
         #username { width: 110px; flex: none; }
         #recipient { flex: 1; }
 
-        #message-input {
-            flex: 1;
-        }
+        #message-input { flex: 1; }
 
         button { 
             background: #40916c; 
@@ -158,9 +154,7 @@
             transition: background 0.2s;
         }
 
-        button:hover {
-            background: #52b788;
-        }
+        button:hover { background: #52b788; }
 
         .welcome {
             align-self: center;
@@ -171,13 +165,10 @@
             padding: 14px 18px !important;
         }
 
-        /* Прокрутка на мобильных */
-        #chat-window::-webkit-scrollbar {
-            width: 6px;
-        }
-        #chat-window::-webkit-scrollbar-thumb {
-            background: #40916c;
-            border-radius: 10px;
+        #chat-window::-webkit-scrollbar { width: 6px; }
+        #chat-window::-webkit-scrollbar-thumb { 
+            background: #40916c; 
+            border-radius: 10px; 
         }
 
         @media (min-width: 768px) {
@@ -203,7 +194,7 @@
 
     <div class="input-area">
         <div class="input-row">
-            <input type="text" id="username" placeholder="Имя" value="">
+            <input type="text" id="username" placeholder="Ваше имя">
             <input type="text" id="recipient" placeholder="Имя получателя (для личного)" style="display: none;">
         </div>
         <div class="input-row">
@@ -217,7 +208,7 @@
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
         import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-        const firebaseConfig = { /* твоя конфигурация без изменений */ 
+        const firebaseConfig = {
             apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
             authDomain: "fchat-d6879.firebaseapp.com",
             databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
@@ -232,7 +223,7 @@
         const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
-        // DOM
+        // DOM элементы
         const chatWindow = document.getElementById('chat-window');
         const usernameInput = document.getElementById('username');
         const recipientInput = document.getElementById('recipient');
@@ -241,7 +232,7 @@
         const btnGeneral = document.getElementById('btn-general');
         const btnPrivate = document.getElementById('btn-private');
 
-        let currentChatType = 'general'; // 'general' или 'private'
+        let currentChatType = 'general';
         let currentRecipient = '';
         let currentChatRef = null;
 
@@ -277,19 +268,23 @@
 
         function addWelcomeMessage(isPrivate = false) {
             const text = isPrivate 
-                ? `👋 Это личный чат с ${currentRecipient}. Только вы двое видите эти сообщения.`
-                : `👋 Добро пожаловать в общий чат! Сообщения видны всем.`;
+                ? `👋 Личный чат с <strong>${currentRecipient}</strong>. Только вы двое видите эти сообщения.`
+                : `👋 Добро пожаловать в общий чат! Сообщения видны всем участникам.`;
+            
             const welcomeHTML = `
-                <div class="message incoming" style="background: #2d6a4f; text-align: center; font-style: italic; opacity: 0.9; max-width: 90%;">
+                <div class="message welcome">
                     ${text}
                 </div>`;
             chatWindow.innerHTML += welcomeHTML;
             scrollToBottom();
         }
 
-        function addMessage(snapshot, isMyMessage) {
+        function addMessage(snapshot) {
             const msg = snapshot.val();
             if (!msg) return;
+
+            const myName = usernameInput.value.trim() || 'Гость';
+            const isMyMessage = msg.name === myName;
 
             const messageHTML = `
                 <div class="message ${isMyMessage ? 'outgoing' : 'incoming'}">
@@ -303,30 +298,23 @@
 
         function loadChat() {
             clearChat();
-            if (currentChatRef) {
-                // Здесь можно отключить старый слушатель, но для простоты пока оставляем
-            }
 
             if (currentChatType === 'general') {
                 currentChatRef = ref(db, 'messages');
                 addWelcomeMessage(false);
             } else {
-                if (!currentRecipient) {
-                    alert("Введите имя получателя для личного чата!");
+                if (!currentRecipient || !usernameInput.value.trim()) {
+                    alert("Введите своё имя и имя получателя!");
                     return;
                 }
-                const myName = usernameInput.value.trim() || 'Гость';
-                const chatId = getChatId(myName, currentRecipient);
+                const chatId = getChatId(usernameInput.value, currentRecipient);
                 currentChatRef = ref(db, `privateChats/${chatId}/messages`);
                 addWelcomeMessage(true);
             }
 
-            // Слушатель сообщений
+            // Слушатель новых сообщений
             onChildAdded(currentChatRef, (snapshot) => {
-                const msg = snapshot.val();
-                const myName = usernameInput.value.trim() || 'Гость';
-                const isMyMessage = msg.name === myName;
-                addMessage(snapshot, isMyMessage);
+                addMessage(snapshot);
             });
         }
 
@@ -336,12 +324,11 @@
             if (!text) return;
 
             let targetRef;
-
             if (currentChatType === 'general') {
                 targetRef = ref(db, 'messages');
             } else {
                 if (!currentRecipient) {
-                    alert("Выберите получателя для личного чата!");
+                    alert("Введите имя получателя!");
                     return;
                 }
                 const chatId = getChatId(name, currentRecipient);
@@ -357,31 +344,30 @@
             messageInput.value = '';
         }
 
-        // Переключение чатов
+        // Переключение между чатами
         btnGeneral.addEventListener('click', () => {
             currentChatType = 'general';
             currentRecipient = '';
             recipientInput.style.display = 'none';
+            btnGeneral.classList.add('active');
+            btnPrivate.classList.remove('active');
             loadChat();
         });
 
         btnPrivate.addEventListener('click', () => {
             currentChatType = 'private';
-            recipientInput.style.display = 'inline';
+            recipientInput.style.display = 'block';
+            btnGeneral.classList.remove('active');
+            btnPrivate.classList.add('active');
             loadChat();
         });
 
-        // Отправка
+        // Отправка сообщения
         sendBtn.addEventListener('click', sendMessage);
         messageInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') sendMessage();
         });
 
-        // При загрузке
-        window.addEventListener('load', () => {
-            recipientInput.style.display = 'none'; // по умолчанию скрыто
-            loadChat(); // начинаем с общего чата
-                    
         // Загрузка страницы
         window.addEventListener('load', () => {
             recipientInput.style.display = 'none';
