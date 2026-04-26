@@ -5,48 +5,211 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FChat — Семейный чат</title>
     <style>
-        body { 
-            margin: 0; font-family: sans-serif; background: #0d1b2a; color: #e0e1dd; 
-            display: flex; flex-direction: column; height: 100vh; 
+        :root {
+            --bg: #0d1b2a;
+            --header: #1b4332;
+            --chat-bg: #112233;
+            --incoming: #415a77;
+            --outgoing: #2d6a4f;
+            --text: #e0e1dd;
         }
-        header { 
-            background: #1b4332; padding: 15px; text-align: center; font-size: 1.5rem; font-weight: bold; 
-        }
-        #chat-window { 
-            flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; 
-        }
-        .message { 
-            max-width: 75%; padding: 10px 15px; border-radius: 18px; font-size: 0.9rem; line-height: 1.4; 
-            margin-bottom: 12px; position: relative;
-        }
-        .incoming { background: #415a77; align-self: flex-start; border-bottom-left-radius: 4px; }
-        .outgoing { background: #2d6a4f; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .user-name { font-size: 0.75rem; opacity: 0.85; margin-bottom: 4px; font-weight: bold; }
-        .message-text { word-break: break-word; }
-        .message-time { font-size: 0.65rem; opacity: 0.7; text-align: right; margin-top: 4px; }
 
-        .input-area { background: #1b263b; padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
-        input, select { flex: 1; padding: 12px; border-radius: 25px; border: none; background: #0d1b2a; color: white; outline: none; }
-        button { background: #40916c; color: white; border: none; padding: 10px 20px; border-radius: 25px; cursor: pointer; font-weight: bold; }
-        
-        .chat-header { padding: 10px; background: #1b4332; text-align: center; font-weight: bold; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            overflow: hidden;
+        }
+
+        header { 
+            background: var(--header); 
+            padding: 14px 16px; 
+            text-align: center; 
+            font-size: clamp(1.2rem, 4vw, 1.6rem); 
+            font-weight: 700; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .chat-tabs {
+            display: flex;
+            background: #1b263b;
+            padding: 6px;
+            gap: 8px;
+        }
+
+        .chat-tabs button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 9999px;
+            background: transparent;
+            color: #ccc;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .chat-tabs button.active {
+            background: #40916c;
+            color: white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        #chat-window { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 16px 12px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px;
+            background: var(--chat-bg);
+            scrollbar-width: thin;
+            scrollbar-color: #40916c #1b263b;
+        }
+
+        .message { 
+            max-width: 85%; 
+            padding: 11px 15px; 
+            border-radius: 20px; 
+            font-size: clamp(0.95rem, 3.5vw, 1.05rem); 
+            line-height: 1.45;
+            position: relative;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+
+        .incoming { 
+            background: var(--incoming); 
+            align-self: flex-start; 
+            border-bottom-left-radius: 6px;
+        }
+
+        .outgoing { 
+            background: var(--outgoing); 
+            align-self: flex-end; 
+            border-bottom-right-radius: 6px;
+        }
+
+        .user-name { 
+            font-size: 0.78rem; 
+            opacity: 0.85; 
+            margin-bottom: 3px; 
+            font-weight: 600; 
+        }
+
+        .message-text { 
+            word-break: break-word; 
+            margin-bottom: 4px;
+        }
+
+        .message-time { 
+            font-size: 0.68rem; 
+            opacity: 0.75; 
+            text-align: right; 
+        }
+
+        .input-area { 
+            background: #1b263b; 
+            padding: 12px 12px 16px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.4);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        input, select {
+            padding: 13px 16px;
+            border-radius: 9999px;
+            border: none; 
+            background: #0d1b2a; 
+            color: white; 
+            outline: none;
+            font-size: 1rem;
+        }
+
+        #username { width: 110px; flex: none; }
+        #recipient { flex: 1; }
+
+        #message-input {
+            flex: 1;
+        }
+
+        button { 
+            background: #40916c; 
+            color: white; 
+            border: none; 
+            padding: 13px 22px; 
+            border-radius: 9999px; 
+            cursor: pointer; 
+            font-weight: 700; 
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #52b788;
+        }
+
+        .welcome {
+            align-self: center;
+            background: #2d6a4f !important;
+            text-align: center;
+            font-style: italic;
+            max-width: 90% !important;
+            padding: 14px 18px !important;
+        }
+
+        /* Прокрутка на мобильных */
+        #chat-window::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-window::-webkit-scrollbar-thumb {
+            background: #40916c;
+            border-radius: 10px;
+        }
+
+        @media (min-width: 768px) {
+            .input-area {
+                flex-direction: row;
+                align-items: center;
+                padding: 14px 20px;
+            }
+            #username { width: 140px; }
+            .message { max-width: 70%; }
+        }
     </style>
 </head>
 <body>
     <header>FChat — Семейный чат</header>
     
-    <div class="chat-header">
-        <button id="btn-general">Общий чат</button>
+    <div class="chat-tabs">
+        <button id="btn-general" class="active">Общий чат</button>
         <button id="btn-private">Личный чат</button>
     </div>
 
     <div id="chat-window"></div>
 
     <div class="input-area">
-        <input type="text" id="username" placeholder="Ваше имя" style="width: 120px; flex: none;">
-        <input type="text" id="recipient" placeholder="Имя получателя (для личного)">
-        <input type="text" id="message-input" placeholder="Сообщение...">
-        <button id="send-btn">Отправить</button>
+        <div class="input-row">
+            <input type="text" id="username" placeholder="Имя" value="">
+            <input type="text" id="recipient" placeholder="Имя получателя (для личного)" style="display: none;">
+        </div>
+        <div class="input-row">
+            <input type="text" id="message-input" placeholder="Напишите сообщение...">
+            <button id="send-btn">Отправить</button>
+        </div>
     </div>
 
     <script type="module">
