@@ -130,10 +130,16 @@
 
         // Форматирование времени
         function formatTime(timestamp) {
-            const date = new Date(timestamp);
-            return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        }
-
+        const date = new Date(timestamp);
+        // Выведет в формате: 14:30, 26 апреля 2024 г.
+        return date.toLocaleString('ru-RU', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        day: 'numeric',
+        month: 'long', // 'long' — словами (апреля), '2-digit' — цифрами (04)
+        year: 'numeric'
+    });
+}
         // Прокрутка вниз
         function scrollToBottom() {
             chatWindow.scrollTop = chatWindow.scrollHeight;
