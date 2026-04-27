@@ -5,256 +5,448 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FChat — Семейный чат</title>
     <style>
-        /* Существующие стили остаются без изменений */
+        :root {
+            --bg: #0d1b2a;
+            --header: #1b4332;
+            --chat-bg: #112233;
+            --incoming: #415a77;
+            --outgoing: #2d6a4f;
+            --text: #e0e1dd;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body { 
+            font-family: system-ui, -apple-system, sans-serif; 
+            background: var(--bg); 
+            color: var(--text); 
+            display: flex; 
+            flex-direction: column; 
+            height: 100dvh; 
+            overflow: hidden;
+        }
+
+        header { 
+            background: var(--header); 
+            padding: 14px 16px; 
+            text-align: center; 
+            font-size: clamp(1.25rem, 4vw, 1.6rem); 
+            font-weight: 700; 
+        }
+
+        .chat-tabs {
+            display: flex;
+            background: #1b263b;
+            padding: 6px;
+            gap: 8px;
+        }
+
+        .chat-tabs button {
+            flex: 1;
+            padding: 11px;
+            border: none;
+            border-radius: 9999px;
+            background: transparent;
+            color: #ccc;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .chat-tabs button.active {
+            background: #40916c;
+            color: white;
+        }
+
+        #chat-window { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 16px 12px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px;
+            background: var(--chat-bg);
+        }
+
+        .message { 
+            max-width: 85%; 
+            padding: 12px 16px; 
+            border-radius: 20px; 
+            font-size: clamp(0.95rem, 3.5vw, 1.05rem); 
+            line-height: 1.45;
+            position: relative;
+        }
+
+        .incoming { background: var(--incoming); align-self: flex-start; border-bottom-left-radius: 6px; }
+        .outgoing { background: var(--outgoing); align-self: flex-end; border-bottom-right-radius: 6px; }
+
+        .user-name { font-size: 0.78rem; opacity: 0.85; margin-bottom: 4px; font-weight: 600; }
+        .message-time { font-size: 0.68rem; opacity: 0.75; text-align: right; margin-top: 4px; }
+
+        .edit-btn {
+          position: absolute;
+          top: 6px;
+          right: 8px;
+          background: none;
+          border: none;
+          color: rgba(255,255,255,0.7);
+          cursor: pointer;
+          font-size: 1.1rem;
+          display:none;
+        }
+        .outgoing .edit-btn { display:none; }
+        .outgoing.editing .edit-btn { display:none; }
+        .outgoing .edit-btn.active { display:none; }
+        .outgoing.editing .edit-btn.active { display:none; }
+
+        .input-area { 
+          background:#1b263b; 
+          padding-top:12px; 
+          box-shadow:none;
+          display:none;
+        }
+
+        .input-row {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 8px;
+        }
+
+        input, select {
+          padding-right:40px;
+          padding-left:16px;
+          border-radius:9999px;
+          border:none; 
+          background:#0d1b2a; 
+          color:#fff; 
+          font-size:.95rem;
+        }
+
+        #username { width:120px; flex:none;}
+        #recipient-select { flex-grow :1;}
+
+        #message-input { flex-grow :1;}
+
+        button { 
+          background:#40916c; 
+          color:#fff; 
+          border:none; 
+          padding:.7rem 2.4rem .7rem 2.4rem ; 
+          border-radius :9999px ; 
+          cursor :pointer ; 
+          font-weight :700 ; 
+        }
+
+        .welcome {
+           align-self:center ;
+           background:#2d6a4f !important ;
+           text-align:center ;
+           font-style :italic ;
+           max-width :90% !important ;
+           padding :16px !important ;
+           margin-bottom :8px !important ;
+           border-radius :6px !important ;
+         }
+
+         @media (min-width :768px ) {
+           .input-area { flex-direction :row ; align-items :center ; padding :14px 20px ; display :flex ;}
+           .input-row { margin-bottom :0;}
+           #username { width :150px;}
+           .message { max-width :70%;}
+         }
     </style>
 </head>
 <body>
     <header>FChat — Семейный чат</header>
     
     <div class="chat-tabs">
-        <button id="btn-general" class="active">Общий чат</button>
-        <button id="btn-private">Личный чат</button>
+      <button id="btn-general" class="active">Общий чат</button>
+      <button id="btn-private">Личный чат</button>
     </div>
 
     <div id="chat-window"></div>
 
     <div class="input-area">
-        <div class="input-row">
-            <input type="text" id="username" placeholder="Ваше имя">
-            <select id="recipient-select" style="display: none;">
-                <option value="">Выберите получателя или введите новое</option>
-            </select>
-        </div>
-        <div class="input-row">
-            <input type="text" id="message-input" placeholder="Напишите сообщение...">
-            <button id="send-btn">Отправить</button>
-        </div>
+      <div class="input-row">
+         <input type="text" id="username" placeholder="Ваше имя">
+         <select id="recipient-select" style="display:none;" placeholder="Выберите получателя">
+             <option value="">Новое имя...</option>
+         </select>
+      </div>
+      <div class="input-row">
+         <input type="text" id="message-input" placeholder="Напишите сообщение...">
+         <button id="send-btn">Отправить</button>
+      </div>
     </div>
 
-    <!-- НОВАЯ ЧАСТЬ: Элемент для звукового уведомления -->
-    <audio id="notificationSound" src="notification.mp3"></audio> <!-- Убедитесь, что файл существует -->
-
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, update } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+      import { getDatabase, ref, push, onChildAdded, update } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-        const firebaseConfig = { 
-            apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
-            authDomain: "fchat-d6879.firebaseapp.com",
-            databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "fchat-d6879",
-            storageBucket: "fchat-d6879.firebasestorage.app",
-            messagingSenderId: "1049514912319",
-            appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a"
-        };
+      const firebaseConfig = { /* твоя конфигурация */ };
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        const chatWindow = document.getElementById('chat-window');
-        const usernameInput = document.getElementById('username');
-        const recipientSelect = document.getElementById('recipient-select');
-        const messageInput = document.getElementById('message-input');
-        const sendBtn = document.getElementById('send-btn');
-        const btnGeneral = document.getElementById('btn-general');
-        const btnPrivate = document.getElementById('btn-private');
-
-        // НОВАЯ ЧАСТЬ: Для уведомлений
-        const notificationSound = document.getElementById('notificationSound');
-
-async function requestNotificationPermission() {
-    if ('Notification' in window) {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-            console.log('Уведомления разрешены');
-        } else {
-            console.log('Уведомления не разрешены');
-        }
-    }
-}
-
-function playNotificationSound() {
-    notificationSound.play().catch(error => console.error('Ошибка воспроизведения звука:', error));
-}
-
-function showNotification(title, body) {
-    if (Notification.permission === 'granted') {
-        new Notification(title, { body });
-    }
-}
-
-let currentChatType = 'general';
-let currentRecipient = '';
-let currentChatRef = null;
-let currentUnsubscribe = null;
-let recentRecipients = JSON.parse(localStorage.getItem('recentRecipients') || '[]');
-
-function saveRecentRecipient(name) {
-    if (!name) return;
-    recentRecipients = recentRecipients.filter(n => n !== name);
-    recentRecipients.unshift(name);
-    if (recentRecipients.length > 7) recentRecipients.pop();
-    localStorage.setItem('recentRecipients', JSON.stringify(recentRecipients));
-    updateRecipientSelect();
-}
-
-function updateRecipientSelect() {
-    recipientSelect.innerHTML = '<option value="">Выберите получателя или введите новое</option>';
-    recentRecipients.forEach(name => {
-        const opt = document.createElement('option');
-        opt.value = name;
-        opt.textContent = name;
-        recipientSelect.appendChild(opt);
-    });
-}
-
-function getChatId(user1, user2) {
-    const u1 = (user1 || '').trim().toLowerCase();
-    const u2 = (user2 || '').trim().toLowerCase();
-    return u1 < u2 ? `{u1}_{u2}` : `{u2}_{u1}`;
-}
-
-function formatTime(timestamp) {
-    const date = new Date(timestamp);
-    const now = new Date();
-    const isToday = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
-    if (isToday) return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    return date.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-}
-
-function scrollToBottom() { chatWindow.scrollTop = chatWindow.scrollHeight; }
-
-function clearChat() { chatWindow.innerHTML = ''; }
-
-function addWelcomeMessage(isPrivate) {
-    const text = isPrivate ? `👋 Личный чат с <strong>${currentRecipient}</strong>` : `👋 Общий чат`;
-    chatWindow.innerHTML += `<div class="message welcome">${text}</div>`;
-    scrollToBottom();
-}
-
-function addMessage(snapshot) {
-    const msg = snapshot.val();
-    if (!msg?.text) return;
-
-    const myName = usernameInput.value.trim() || 'Гость';
-    const isMy = msg.name === myName;
-    const key = snapshot.key;
-
-    const html = `
-        <div class="message isMy?′outgoing′:′incoming′"data−key="{isMy ? 'outgoing' : 'incoming'}" data-key="isMy?′outgoing′:′incoming′"data−key="{key}">
-            <div class="user-name">${msg.name || 'Аноним'}</div>
-            <div class="message-text">${msg.text}</div>
-            <div class="message-time">${formatTime(msg.time || Date.now())}</div>
-            ${isMy ? `<button class="edit-btn" title="Редактировать">✏️</button>` : ''}
-        </div>`;
-    chatWindow.innerHTML += html;
-    scrollToBottom();
-// НОВАЯ ЧАСТЬ: Уведомления для сообщений от других пользователей
-    if (!isMy) {
-        playNotificationSound();
-        showNotification('Новое сообщение', `Новое сообщение от msg.name:{msg.name}:msg.name:{msg.text.substring(0, 50)}...`);  // Показываем уведомление с коротким текстом
-    }
-
-    // Обработчик редактирования
-    if (isMy) {
-        const msgDiv = chatWindow.lastElementChild;
-        msgDiv.querySelector('.edit-btn').addEventListener('click', () => editMessage(msgDiv, key, msg.text));
-    }
-}  // Завершение функции addMessage
-
-function editMessage(msgDiv, key, oldText) {
-    const textDiv = msgDiv.querySelector('.message-text');
-    const editInput = document.createElement('input');
-    editInput.type = 'text';
-    editInput.value = oldText;
-    editInput.style.width = '100%';
-    textDiv.replaceWith(editInput);
-    editInput.focus();
-
-    const saveBtn = document.createElement('button');
-    saveBtn.textContent = 'Сохранить';
-    saveBtn.style.marginTop = '6px';
-    msgDiv.appendChild(saveBtn);
-
-    saveBtn.addEventListener('click', () => {
-        const newText = editInput.value.trim();
-        if (newText && newText !== oldText) {
-            const chatPath = currentChatType === 'general' ? 'messages' : `privateChats/${getChatId(usernameInput.value, currentRecipient)}/messages`;
-            update(ref(db, `chatPath/{chatPath}/chatPath/{key}`), { text: newText });
-        }
-        loadChat();  // перезагрузка чата для простоты
-    });
-}
-
-function loadChat() {
-    clearChat();
-    if (currentUnsubscribe) currentUnsubscribe();
-
-    let path = currentChatType === 'general' ? 'messages' : null;
-
-    if (currentChatType === 'private') {
-        const selected = recipientSelect.value || currentRecipient;
-        if (!usernameInput.value.trim() || !selected) {
-            alert("Введите своё имя и выберите/введите получателя");
-            return;
-        }
-        currentRecipient = selected;
-        saveRecentRecipient(currentRecipient);
-        const chatId = getChatId(usernameInput.value, currentRecipient);
-        path = `privateChats/${chatId}/messages`;
-    }
-
-    currentChatRef = ref(db, path);
-    addWelcomeMessage(currentChatType === 'private');
-    currentUnsubscribe = onChildAdded(currentChatRef, addMessage);
-}
-
-function sendMessage() {
-    const name = usernameInput.value.trim() || 'Гость';
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    let targetPath = currentChatType === 'general' ? 'messages' : null;
-    if (currentChatType === 'private') {
-        const rec = recipientSelect.value || currentRecipient;
-        if (!rec) return alert("Выберите получателя");
-        currentRecipient = rec;
-        saveRecentRecipient(rec);
-        const chatId = getChatId(name, rec);
-        targetPath = `privateChats/${chatId}/messages`;
-    }
-
-    push(ref(db, targetPath), { name, text, time: Date.now() });
-    messageInput.value = '';
-}
-
-        // Переключение чатов
-        btnGeneral.addEventListener('click', () => {
-        currentChatType = 'general';
-        btnGeneral.classList.add('active');
-        btnPrivate.classList.remove('active');
-        recipientSelect.style.display = 'none';
-        loadChat();
-        });
-
-        btnPrivate.addEventListener('click', () => {
-        currentChatType = 'private';
-        btnGeneral.classList.remove('active');
-        btnPrivate.classList.add('active');
-        recipientSelect.style.display = 'block';
-        updateRecipientSelect();
-        loadChat();
-        });
-
-        sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
-        // Запрос разрешения на уведомления при загрузке страницы
-        window.addEventListener('load', () => {
-        requestNotificationPermission();  // НОВАЯ ЧАСТЬ: Запрашиваем разрешение на уведомления
-        updateRecipientSelect();
-        usernameInput.focus();
-        loadChat();
-        console.log("✅ FChat обновлён: с уведомлениями и запоминанием имён");
+      const chatWindow = document.getElementById('chat-window');
+      const usernameInput = document.getElementById('username');
+      const recipientSelect = document.getElementById('recipient-select');
+      const messageInput = document.getElementById('message-input');
+      const sendBtn = document.getElementById('send-btn');
+      const btnGeneral = document.getElementById('btn-general');
+      const btnPrivate = document.getElementById('btn-private');
+      const inputArea = document.querySelector('.input-area');
+      
+      let currentChatType = 'general';
+      let currentRecipient = '';
+      let currentChatRef = null;
+      let currentUnsubscribe = null;
+      let recentRecipients = JSON.parse(localStorage.getItem('recentRecipients') || '[]');
+      
+      // Экранирование для XSS
+      const escapeHTML = (str) => String(str).replace(/[&<>"'`]/g, tag => ({
+         '&': '&', '<': '<', '>': '>', '"': '"', "'": ''', '`': '`'
+       })[tag] || tag);
+       
+       function saveRecentRecipient(name) {
+         if (!name) return;
+         recentRecipients = recentRecipients.filter(n => n !== name);
+         recentRecipients.unshift(name);
+         if (recentRecipients.length > 7) recentRecipients.pop();
+         localStorage.setItem('recentRecipients', JSON.stringify(recentRecipients));
+         updateRecipientSelect();
+       }
+       
+       function updateRecipientSelect() {
+         recipientSelect.innerHTML = '<option value="">Новое имя...</option>';
+         recentRecipients.forEach(name => {
+           const opt = document.createElement('option');
+           opt.value = name;
+           opt.textContent = name;
+           recipientSelect.appendChild(opt);
+         });
+       }
+       
+       function getChatId(user1, user2) {
+         const u1 = (user1 || '').trim().toLowerCase();
+         const u2 = (user2 || '').trim().toLowerCase();
+         return u1 < u2 ? `${u1}_${u2}` : `${u2}_${u1}`;
+       }
+       
+       function formatTime(timestamp) {
+         const date = new Date(timestamp);
+         const now = new Date();
+         const isToday = date.toDateString() === now.toDateString();
+         return isToday ? date.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' }) :
+                          date.toLocaleDateString('ru-RU', { day:'numeric', month:'short' }) + ' ' +
+                          date.toLocaleTimeString('ru-RU', { hour:'2-digit', minute:'2-digit' });
+       }
+       
+       function scrollToBottom() { chatWindow.scrollTop = chatWindow.scrollHeight - chatWindow.clientHeight;}
+       
+       function clearChat() { chatWindow.innerHTML = ''; }
+       
+       function addWelcomeMessage(isPrivate) {
+         const text = isPrivate ? `👋 Личный чат с <strong>${escapeHTML(currentRecipient)}</strong>` : `👋 Общий чат`;
+         chatWindow.insertAdjacentHTML('beforeend', `<div class="message welcome">${text}</div>`);
+       }
+       
+       function addMessage(snapshot) {
+         const msg = snapshot.val();
+         if (!msg?.text) return;
+         
+         const myName = usernameInput.value.trim() || 'Гость';
+         const isMy = msg.name === myName;
+         
+         const html = `
+             <div class="message ${isMy ? 'outgoing' : 'incoming'}" data-key="${snapshot.key}">
+               <div class="user-name">${escapeHTML(msg.name || 'Аноним')}</div>
+               <div class="message-text">${escapeHTML(msg.text)}</div>
+               <div class="message-time">${formatTime(msg.time || Date.now())}</div>
+               ${isMy ? `<button class="edit-btn" title="Редактировать">✏️</button>` : ''}
+             </div>`;
+         
+         chatWindow.insertAdjacentHTML('beforeend', html);
+         
+         // Обработчик редактирования только для новых сообщений пользователя
+         if (isMy) {
+             const msgDiv = chatWindow.lastElementChild;
+             msgDiv.querySelector('.edit-btn').addEventListener('click', () => editMessage(msgDiv, snapshot.key, msg.text));
+             scrollToBottom();
+         }
+       }
+       
+       let editInProgress = false;
+       function editMessage(msgDiv, key, oldText) {
+         if (editInProgress) return alert("Дождитесь завершения редактирования предыдущего сообщения.");
+         
+         editInProgress = true;
+         
+         const textDiv = msgDiv.querySelector('.message-text');
+         
+         const editInput = document.createElement('input');
+         editInput.type = 'text';
+         editInput.value = oldText.trim();
+         editInput.style.width = 'calc(100% - 38px)';
+         
+         const saveBtn = document.createElement('button');
+         saveBtn.textContent = 'Сохранить';
+         
+         const cancelBtn = document.createElement('button');
+         cancelBtn.textContent = 'Отмена';
+         
+         // Заменяем содержимое блока сообщения на форму редактирования
+         msgDiv.innerHTML = '';
+         
+         msgDiv.appendChild(editInput);
+         
+         const btnsContainer = document.createElement('div');
+         btnsContainer.style.display = 'flex';
+         btnsContainer.style.gap = '8px';
+         
+         btnsContainer.appendChild(saveBtn);
+         btnsContainer.appendChild(cancelBtn);
+         
+         msgDiv.appendChild(btnsContainer);
+         
+         editInput.focus();
+         
+         saveBtn.addEventListener('click', () => {
+             const newText = editInput.value.trim();
+             if (!newText) return alert("Сообщение не может быть пустым");
+             
+             const chatPath = currentChatType === 'general' ? 'messages' : `privateChats/${getChatId(usernameInput.value, currentRecipient)}/messages`;
+             update(ref(db, `${chatPath}/${key}`), { text:newText });
+             
+             // Восстанавливаем отображение сообщения с новым текстом
+             loadChat(); // Простое решение — перезагрузка чата для обновления всех сообщений.
+             editInProgress = false;
+             
+             // Альтернатива без перезагрузки (сложнее):
+             // textDiv.textContent = escapeHTML(newText);
+             // msgDiv.querySelector('.edit-btn').style.display = 'none';
+             // msgDiv.classList.remove('editing');
+             // saveBtn.remove();
+             // cancelBtn.remove();
+             // editInput.remove();
+             // textDiv.style.display = 'block';
+             // scrollToBottom();
+             
+             // Для простоты и надёжности — reload.
+             // В продакшене лучше реализовать точечное обновление.
+             
+             // Так как мы делаем loadChat(), отменяем флаг вручную:
+             editInProgress = false;
+             
+             // Прокручиваем к последнему сообщению после перезагрузки.
+             setTimeout(scrollToBottom, 50);
+             
+           });
+           
+           cancelBtn.addEventListener('click', () => {
+               // Просто перезагружаем чат, чтобы вернуть исходное состояние.
+               loadChat(); 
+               editInProgress = false;
+               setTimeout(scrollToBottom, 50);
+           });
+       }
+       
+       function loadChat() {
+           clearChat();
+           
+           if (currentUnsubscribe) currentUnsubscribe();
+           
+           let path = null;
+           
+           if (currentChatType === 'general') {
+               path = 'messages';
+               addWelcomeMessage(false);
+           } else {
+               const selected = recipientSelect.value || currentRecipient || '';
+               if (!usernameInput.value.trim() || !selected) {
+                   chatWindow.innerHTML += '<div class="message"><em>Введите своё имя и выберите/введите получателя для личного чата.</em></div>';
+                   return;
+               }
+               
+               currentRecipient = selected.trim();
+               saveRecentRecipient(currentRecipient);
+               
+               const chatId = getChatId(usernameInput.value.trim(), currentRecipient);
+               path = `privateChats/${chatId}/messages`;
+               
+               addWelcomeMessage(true);
+           }
+           
+           currentChatRef = ref(db, path);
+           currentUnsubscribe = onChildAdded(currentChatRef, addMessage);
+           
+           // Прокрутка к последнему сообщению после загрузки истории.
+           setTimeout(scrollToBottom, 50);
+       }
+       
+       function sendMessage() {
+           const name = usernameInput.value.trim() || 'Гость';
+           const text = messageInput.value.trim();
+           
+           if (!text) return alert("Введите текст сообщения");
+           
+           let targetPath = null;
+           
+           if (currentChatType === 'general') {
+               targetPath = 'messages';
+           } else {
+               const rec = recipientSelect.value || currentRecipient || '';
+               if (!rec) return alert("Выберите получателя");
+               
+               currentRecipient = rec.trim();
+               saveRecentRecipient(currentRecipient);
+               
+               targetPath = `privateChats/${getChatId(name, currentRecipient)}/messages`;
+           }
+           
+           push(ref(db, targetPath), { name, text, time : Date.now() });
+           
+           messageInput.value = '';
+           messageInput.focus(); // Фокус на ввод после отправки.
+       }
+       
+       btnGeneral.addEventListener('click', () => {
+           currentChatType = 'general';
+           btnGeneral.classList.add('active');
+           btnPrivate.classList.remove('active');
+           
+           recipientSelect.style.display = 'none';
+           
+           inputArea.style.display ='flex'; // Показываем поле ввода для общего чата.
+           
+           loadChat();
+       });
+       
+       btnPrivate.addEventListener('click', () => {
+           currentChatType = 'private';
+           btnGeneral.classList.remove('active');
+           btnPrivate.classList.add('active');
+           
+           recipientSelect.style.display ='block';
+           
+           inputArea.style.display ='flex'; // Показываем поле ввода для личного чата.
+           
+           updateRecipientSelect();
+           loadChat();
+       });
+       
+       sendBtn.addEventListener('click', sendMessage);
+       messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+       
+       window.addEventListener('load', () => {
+           updateRecipientSelect();
+          
+           // Показываем поле ввода только если есть имя пользователя.
+              usernameInput.addEventListener('input', () => {
+                  inputArea.style.display = usernameInput.value.trim() ? 'flex' :'none';
+              });
+              
+              usernameInput.focus();
+              loadChat();
+              console.log("✅ FChat обновлён и защищён от XSS");
        });
     </script>
 </body>
