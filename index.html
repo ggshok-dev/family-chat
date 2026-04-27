@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FChat — Семейный мессенджер</title>
+  <!-- Emoji Picker -->
   <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.20.2/index.js"></script>
   <style>
     :root {
@@ -11,15 +12,61 @@
       --header: linear-gradient(135deg, #667eea, #764ba2);
       --chat-bg: #f8f9fa;
       --bubble-sent: #667eea;
-      --bubble-received: #ffffff;
-      --text-sent: white;
-      --text-received: #333;
+      --bubble-sent-text: white;
+      --bubble-received-bg: #ffffff;
+      --bubble-received-text: #333333;
+      --bubble-received-border: #e0e0e0;
+      --text-color: #333;
+      --meta-color: #888888;
+      --input-bg: #ffffff;
+      --btn-bg: #f0f0f0;
+      --btn-color: #333;
+      --tab-active-bg: #ffffff;
+      --tab-active-text: #764ba2;
+      --welcome-bg: #e9ecef;
+      --settings-bg: #fff3e0;
     }
-    body.dark { --bg: #1a1a2e; --chat-bg: #16213e; --bubble-received: #1e2a44; --text-received: #e0e0e0; }
-    body.green { --bg: linear-gradient(135deg, #2d6a4f, #40916c); --bubble-sent: #2d6a4f; }
-    body.purple { --bg: linear-gradient(135deg, #5a189a, #9d4edd); --bubble-sent: #5a189a; }
+    body.dark {
+      --bg: #1a1a2e;
+      --header: #16213e;
+      --chat-bg: #0f0f1a;
+      --bubble-sent: #0f3460;
+      --bubble-sent-text: #e0e0e0;
+      --bubble-received-bg: #16213e;
+      --bubble-received-text: #e0e0e0;
+      --bubble-received-border: #0f3460;
+      --text-color: #e0e0e0;
+      --meta-color: #999;
+      --input-bg: #16213e;
+      --btn-bg: #0f3460;
+      --btn-color: #e0e0e0;
+      --tab-active-bg: #0f3460;
+      --tab-active-text: #e0e0e0;
+      --welcome-bg: #1a1a2e;
+      --settings-bg: #1a1a2e;
+    }
+    body.green {
+      --bg: linear-gradient(135deg, #2d6a4f, #40916c);
+      --header: linear-gradient(135deg, #2d6a4f, #40916c);
+      --bubble-sent: #2d6a4f;
+      --bubble-sent-text: white;
+      --bubble-received-bg: #d8f3dc;
+      --bubble-received-text: #1b4332;
+      --bubble-received-border: #95d5b2;
+      --tab-active-text: #1b4332;
+    }
+    body.purple {
+      --bg: linear-gradient(135deg, #5a189a, #9d4edd);
+      --header: linear-gradient(135deg, #5a189a, #9d4edd);
+      --bubble-sent: #5a189a;
+      --bubble-sent-text: white;
+      --bubble-received-bg: #f3e8ff;
+      --bubble-received-text: #3c096c;
+      --bubble-received-border: #d8b4fe;
+      --tab-active-text: #3c096c;
+    }
 
-    * { margin:0; padding:0; box-sizing:border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
       background: var(--bg);
@@ -28,137 +75,373 @@
       justify-content: center;
       align-items: center;
       padding: 10px;
+      transition: background 0.3s;
+      color: var(--text-color);
     }
     .messenger {
       width: 100%;
-      max-width: 480px;
+      max-width: 500px;
       height: 94vh;
       background: var(--chat-bg);
       border-radius: 24px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      overflow: hidden;
       display: flex;
       flex-direction: column;
+      overflow: hidden;
     }
     .header {
       background: var(--header);
       color: white;
-      padding: 14px 16px;
+      padding: 12px 16px;
       display: flex;
+      align-items: center;
       justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .header h1 { font-size: 1.3rem; }
+    .header-controls {
+      display: flex;
+      gap: 8px;
       align-items: center;
     }
-    .header h1 { font-size: 1.35rem; }
+    .user-selector { display: flex; gap: 6px; flex-wrap: wrap; }
     .user-btn {
       padding: 6px 12px;
       background: rgba(255,255,255,0.25);
       border: none;
       border-radius: 20px;
       color: white;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       cursor: pointer;
+      transition: 0.2s;
+      white-space: nowrap;
     }
     .user-btn.active { background: white; color: #333; font-weight: bold; }
 
-    .chat-tabs { display: flex; background: rgba(0,0,0,0.08); padding: 6px; gap: 6px; }
-    .chat-tab {
-      flex: 1; padding: 10px; border: none; border-radius: 12px;
-      background: transparent; font-weight: 600; cursor: pointer;
+    .theme-selector { display: flex; gap: 4px; }
+    .theme-btn {
+      width: 22px; height: 22px; border-radius: 50%;
+      border: 2px solid white; cursor: pointer; background: white;
     }
-    .chat-tab.active { background: white; color: #333; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .theme-btn.light { background: white; }
+    .theme-btn.dark { background: #1a1a2e; }
+    .theme-btn.green { background: #2d6a4f; }
+    .theme-btn.purple { background: #5a189a; }
+
+    .chat-tabs {
+      display: flex;
+      background: rgba(0,0,0,0.08);
+      padding: 6px;
+      gap: 6px;
+    }
+    .chat-tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 12px;
+      background: transparent;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-color);
+      transition: 0.2s;
+    }
+    .chat-tab.active {
+      background: var(--tab-active-bg);
+      color: var(--tab-active-text);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .private-selector {
+      display: none;
+      padding: 8px 12px;
+      background: var(--input-bg);
+      border-bottom: 1px solid var(--bubble-received-border);
+      align-items: center;
+      gap: 8px;
+      font-size: 0.9rem;
+    }
+    .private-selector select {
+      padding: 6px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      background: var(--input-bg);
+      color: var(--text-color);
+    }
+
+    .settings-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 12px;
+      background: var(--settings-bg);
+      font-size: 0.8rem;
+      border-bottom: 1px solid var(--bubble-received-border);
+    }
+    .settings-bar select {
+      padding: 4px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      background: var(--input-bg);
+      color: var(--text-color);
+    }
 
     .chat-window {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 12px;
+      background: var(--chat-bg);
       display: flex;
       flex-direction: column;
-      gap: 10px;
-      background: var(--chat-bg);
+      gap: 8px;
     }
     .message {
-      max-width: 80%;
+      max-width: 85%;
       animation: fadeIn 0.3s;
+      position: relative;
     }
     .message.sent { align-self: flex-end; }
     .message.received { align-self: flex-start; }
     .bubble {
       padding: 10px 14px;
       border-radius: 18px;
-      font-size: 0.97rem;
+      font-size: 0.95rem;
       line-height: 1.45;
+      word-wrap: break-word;
     }
-    .sent .bubble { background: var(--bubble-sent); color: var(--text-sent); border-bottom-right-radius: 4px; }
-    .received .bubble { background: var(--bubble-received); color: var(--text-received); border-bottom-left-radius: 4px; }
-
-    .meta { font-size: 0.72rem; color: #888; margin-top: 3px; text-align: right; }
+    .sent .bubble {
+      background: var(--bubble-sent);
+      color: var(--bubble-sent-text);
+      border-bottom-right-radius: 4px;
+    }
+    .received .bubble {
+      background: var(--bubble-received-bg);
+      color: var(--bubble-received-text);
+      border: 1px solid var(--bubble-received-border);
+      border-bottom-left-radius: 4px;
+    }
+    .meta {
+      font-size: 0.7rem;
+      color: var(--meta-color);
+      margin: 3px 4px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .msg-actions {
+      cursor: pointer;
+      font-weight: bold;
+      padding: 0 4px;
+    }
+    .sender-name {
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-bottom: 2px;
+      opacity: 0.8;
+    }
+    .image-msg img {
+      max-width: 200px;
+      border-radius: 12px;
+      margin-top: 4px;
+    }
+    .audio-msg audio {
+      max-width: 220px;
+      height: 32px;
+    }
+    .welcome {
+      align-self: center;
+      background: var(--welcome-bg);
+      border-radius: 12px;
+      padding: 8px 16px;
+      font-size: 0.8rem;
+      color: var(--text-color);
+    }
 
     .input-panel {
-      background: white;
+      background: var(--input-bg);
       padding: 10px 12px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid var(--bubble-received-border);
+    }
+    .emoji-bar {
+      display: none;
+      margin-bottom: 8px;
+    }
+    .emoji-bar.show { display: block; }
+    emoji-picker {
+      height: 300px;
+      width: 100%;
+      --background: var(--input-bg);
+      --border-color: var(--bubble-received-border);
     }
     .input-row {
       display: flex;
       gap: 8px;
       align-items: flex-end;
     }
-    .text-input {
-      flex: 1;
-      border: 1px solid #ddd;
-      border-radius: 24px;
-      padding: 12px 16px;
-      font-size: 1rem;
-      resize: none;
-      max-height: 120px;
-    }
     .icon-btn {
-      width: 44px; height: 44px;
+      width: 44px;
+      height: 44px;
       border: none;
-      background: #f0f0f0;
+      background: var(--btn-bg);
       border-radius: 50%;
       font-size: 1.5rem;
       cursor: pointer;
+      color: var(--btn-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .send-btn {
-      width: 44px; height: 44px;
-      background: #667eea;
+      width: 44px;
+      height: 44px;
+      background: var(--bubble-sent);
       color: white;
       border: none;
       border-radius: 50%;
       font-size: 1.4rem;
       cursor: pointer;
     }
-    emoji-picker { height: 320px; width: 100%; }
+    .text-input {
+      flex: 1;
+      border: 1px solid #ddd;
+      border-radius: 24px;
+      padding: 10px 16px;
+      font-size: 0.95rem;
+      resize: none;
+      max-height: 120px;
+      background: var(--input-bg);
+      color: var(--text-color);
+      outline: none;
+    }
+
+    /* Меню сообщения */
+    .message-menu {
+      position: absolute;
+      bottom: 100%;
+      right: 0;
+      background: var(--input-bg);
+      border: 1px solid var(--bubble-received-border);
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+    }
+    .message-menu button {
+      border: none;
+      background: none;
+      padding: 8px 14px;
+      text-align: left;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: var(--text-color);
+      white-space: nowrap;
+    }
+    .message-menu button:hover {
+      background: rgba(0,0,0,0.05);
+    }
+
+    /* ПИН-окно */
+    .pin-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+    .pin-dialog {
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      color: #333;
+    }
+    .pin-dialog input {
+      width: 140px;
+      padding: 8px;
+      font-size: 1.2rem;
+      text-align: center;
+      margin: 8px 0;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .pin-dialog button {
+      margin: 4px;
+      padding: 8px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .storage-warning {
+      background: #ffebee;
+      color: #c62828;
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      text-align: center;
+      display: none;
+      border-bottom: 1px solid #ef9a9a;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
   </style>
 </head>
 <body class="light">
+
 <div class="messenger">
   <div class="header">
     <h1>👨‍👩‍👧‍👦 FChat</h1>
-    <div id="userSelector"></div>
+    <div class="header-controls">
+      <div class="theme-selector">
+        <div class="theme-btn light" data-theme="light"></div>
+        <div class="theme-btn dark" data-theme="dark"></div>
+        <div class="theme-btn green" data-theme="green"></div>
+        <div class="theme-btn purple" data-theme="purple"></div>
+      </div>
+      <div class="user-selector" id="userSelector"></div>
+    </div>
+  </div>
+
+  <div class="storage-warning" id="storageWarning"></div>
+
+  <div class="settings-bar">
+    <span>🗑️ Автоудаление:</span>
+    <select id="autoDeleteSelect">
+      <option value="1">1 час</option>
+      <option value="6">6 часов</option>
+      <option value="12">12 часов</option>
+      <option value="24" selected>1 день</option>
+      <option value="168">1 неделя</option>
+      <option value="720">1 месяц</option>
+    </select>
   </div>
 
   <div class="chat-tabs">
-    <button class="chat-tab active" data-type="general">Общий чат</button>
-    <button class="chat-tab" data-type="private">Приватный</button>
+    <button class="chat-tab active" data-type="general">💬 Общий чат</button>
+    <button class="chat-tab" data-type="private">🔒 Приватный</button>
   </div>
 
-  <div id="privateSelector" class="private-selector" style="display:none; padding:8px 12px; background:#f8f9fa; border-bottom:1px solid #eee;">
-    <strong>С кем переписываемся:</strong>
-    <select id="privateRecipient" style="margin-left:10px; padding:6px;"></select>
+  <div class="private-selector" id="privateSelector">
+    <span>С кем переписка:</span>
+    <select id="privateRecipient"></select>
   </div>
 
   <div class="chat-window" id="chatWindow"></div>
 
   <div class="input-panel">
-    <div id="emojiBar" style="display:none; margin-bottom:8px;">
+    <div class="emoji-bar" id="emojiBar">
       <emoji-picker id="emojiPicker"></emoji-picker>
     </div>
     <div class="input-row">
       <button class="icon-btn" id="emojiBtn">😊</button>
+      <button class="icon-btn" id="micBtn">🎤</button>
       <button class="icon-btn" id="attachBtn">📷</button>
-      <textarea class="text-input" id="messageInput" placeholder="Напишите сообщение..."></textarea>
+      <textarea class="text-input" id="messageInput" rows="1" placeholder="Сообщение..."></textarea>
       <button class="send-btn" id="sendBtn">➤</button>
     </div>
   </div>
@@ -166,10 +449,20 @@
 
 <input type="file" id="fileInput" accept="image/*" style="display:none">
 
+<!-- ПИН-окно -->
+<div class="pin-overlay" id="pinOverlay">
+  <div class="pin-dialog">
+    <div id="pinMessage">Введите ПИН для <span id="pinUserName"></span></div>
+    <input type="password" id="pinInput" maxlength="4" placeholder="0000" inputmode="numeric">
+    <br>
+    <button id="pinSubmit">Войти</button>
+    <button id="pinCancel" style="background:#888;">Отмена</button>
+  </div>
+</div>
+
 <script type="module">
-  // ================== Firebase ==================
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-  import { getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+  import { getDatabase, ref, push, update, remove, get, onChildAdded, onChildChanged, onChildRemoved, off } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
@@ -184,174 +477,519 @@
   const app = initializeApp(firebaseConfig);
   const db = getDatabase(app);
 
-  // ================== Данные семьи ==================
+  // ======== СЕМЬЯ ========
   const MEMBERS = [
-    { id: "dad",    name: "Папа",     emoji: "👨" },
-    { id: "mom",    name: "Мама",     emoji: "👩" },
-    { id: "sergey", name: "Сергей",   emoji: "👦" },
-    { id: "sveta",  name: "Света",    emoji: "👧" },
-    { id: "katya",  name: "Катя",     emoji: "👧" }
+    { id: 'dad',    name: 'Папа',     emoji: '👨' },
+    { id: 'mom',    name: 'Мама',     emoji: '👩' },
+    { id: 'sergey', name: 'Сергей',   emoji: '👦' },
+    { id: 'sveta',  name: 'Света',    emoji: '👧' },
+    { id: 'katya',  name: 'Катя',     emoji: '👧' }
   ];
 
-  // ================== Переменные ==================
-  let currentUser = localStorage.getItem("fc_user") || "dad";
-  let activeChatType = "general";           // general | private
-  let privateWith = null;                   // с кем ведём приватный чат
+  // ======== СОСТОЯНИЕ ========
+  let currentUser = localStorage.getItem('fc_user') || 'dad';
+  let activeChatType = localStorage.getItem('fc_chatType') || 'general';   // 'general' или 'private'
+  let privateWith = localStorage.getItem('fc_privateWith') || null;
 
-  // ================== DOM ==================
-  const chatWindow = document.getElementById("chatWindow");
-  const messageInput = document.getElementById("messageInput");
-  const sendBtn = document.getElementById("sendBtn");
-  const emojiBtn = document.getElementById("emojiBtn");
-  const attachBtn = document.getElementById("attachBtn");
-  const fileInput = document.getElementById("fileInput");
-  const emojiPicker = document.getElementById("emojiPicker");
-  const emojiBar = document.getElementById("emojiBar");
-  const userSelector = document.getElementById("userSelector");
-  const privateSelector = document.getElementById("privateSelector");
-  const privateRecipient = document.getElementById("privateRecipient");
+  // ======== DOM ========
+  const chatWindow = document.getElementById('chatWindow');
+  const messageInput = document.getElementById('messageInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const emojiBtn = document.getElementById('emojiBtn');
+  const micBtn = document.getElementById('micBtn');
+  const attachBtn = document.getElementById('attachBtn');
+  const fileInput = document.getElementById('fileInput');
+  const emojiPicker = document.getElementById('emojiPicker');
+  const emojiBar = document.getElementById('emojiBar');
+  const userSelector = document.getElementById('userSelector');
+  const privateSelector = document.getElementById('privateSelector');
+  const privateRecipient = document.getElementById('privateRecipient');
+  const autoDeleteSelect = document.getElementById('autoDeleteSelect');
+  const storageWarning = document.getElementById('storageWarning');
+  const pinOverlay = document.getElementById('pinOverlay');
+  const pinInput = document.getElementById('pinInput');
+  const pinUserName = document.getElementById('pinUserName');
+  const pinSubmit = document.getElementById('pinSubmit');
+  const pinCancel = document.getElementById('pinCancel');
 
-  // ================== IndexedDB для медиа ==================
+  // ======== IndexedDB для медиа ========
   let dbLocal = null;
-  const dbRequest = indexedDB.open("FChatMedia", 1);
+  const dbRequest = indexedDB.open('FChatMedia', 1);
   dbRequest.onupgradeneeded = e => {
     dbLocal = e.target.result;
-    dbLocal.createObjectStore("media", { keyPath: "id" });
+    dbLocal.createObjectStore('media', { keyPath: 'id' });
   };
-  dbRequest.onsuccess = e => dbLocal = e.target.result;
+  dbRequest.onsuccess = e => { dbLocal = e.target.result; checkStorageQuota(); };
+  dbRequest.onerror = e => console.error('IndexedDB error:', e);
 
-  async function saveMedia(id, blob) {
-    return new Promise((resolve) => {
-      const tx = dbLocal.transaction("media", "readwrite");
-      tx.objectStore("media").put({ id, blob, time: Date.now() });
-      tx.oncomplete = () => resolve(true);
+  function saveMedia(id, blob) {
+    return new Promise((resolve, reject) => {
+      if (!dbLocal) return reject('DB not ready');
+      const tx = dbLocal.transaction('media', 'readwrite');
+      tx.objectStore('media').put({ id, blob, time: Date.now() });
+      tx.oncomplete = () => { checkStorageQuota(); resolve(); };
+      tx.onerror = () => reject(tx.error);
     });
   }
-
-  async function getMedia(id) {
+  function getMedia(id) {
     return new Promise((resolve) => {
-      const tx = dbLocal.transaction("media", "readonly");
-      const req = tx.objectStore("media").get(id);
+      if (!dbLocal) return resolve(null);
+      const tx = dbLocal.transaction('media', 'readonly');
+      const req = tx.objectStore('media').get(id);
       req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+      req.onerror = () => resolve(null);
     });
   }
-
-  // ================== Основные функции ==================
-  function getChatRef() {
-    if (activeChatType === "general") {
-      return ref(db, "messages");
+  function deleteMedia(id) {
+    if (!dbLocal) return;
+    const tx = dbLocal.transaction('media', 'readwrite');
+    tx.objectStore('media').delete(id);
+    tx.oncomplete = () => checkStorageQuota();
+  }
+  async function getStorageSize() {
+    if (!dbLocal) return 0;
+    return new Promise((resolve) => {
+      const tx = dbLocal.transaction('media', 'readonly');
+      const req = tx.objectStore('media').getAll();
+      req.onsuccess = () => {
+        let size = 0;
+        req.result.forEach(item => { if (item.blob) size += item.blob.size; });
+        resolve(size);
+      };
+      req.onerror = () => resolve(0);
+    });
+  }
+  async function checkStorageQuota() {
+    const size = await getStorageSize();
+    const limit = 40 * 1024 * 1024; // 40 МБ
+    if (size > limit) {
+      storageWarning.style.display = 'block';
+      storageWarning.textContent = `⚠️ Локальное хранилище заполнено (${(size/1024/1024).toFixed(1)} МБ). Удалите старые вложения.`;
     } else {
-      const ids = [currentUser, privateWith].sort();
-      return ref(db, `private/${ids[0]}_${ids[1]}`);
+      storageWarning.style.display = 'none';
     }
   }
 
-  function renderMessage(msg) {
-    const isSent = msg.from === currentUser;
-    const member = MEMBERS.find(m => m.id === msg.from) || { name: msg.from, emoji: "👤" };
+  // ======== ПИН-коды ========
+  function getPins() {
+    try { return JSON.parse(localStorage.getItem('fc_pins')) || {}; } catch(e) { return {}; }
+  }
+  function savePins(pins) { localStorage.setItem('fc_pins', JSON.stringify(pins)); }
+  function hasPin(userId) { return !!getPins()[userId]; }
+  function checkPin(userId, pin) { return getPins()[userId] === pin; }
+  function setPin(userId, pin) { const p = getPins(); p[userId] = pin; savePins(p); }
 
-    const div = document.createElement("div");
-    div.className = `message ${isSent ? "sent" : "received"}`;
-    div.dataset.key = msg.key;
+  let pendingUserSwitch = null;
 
-    let content = msg.text || "";
-    if (msg.mediaId) {
-      content = `<div class="media-preview" data-id="${msg.mediaId}">📎 Медиа (локально)</div>`;
+  function attemptSwitchUser(userId) {
+    if (userId === currentUser) return;
+    if (hasPin(userId)) {
+      pendingUserSwitch = userId;
+      pinUserName.textContent = MEMBERS.find(m => m.id === userId)?.name || userId;
+      pinOverlay.style.display = 'flex';
+      pinInput.focus();
+    } else {
+      const pin = prompt(`Придумайте 4-значный ПИН для роли "${MEMBERS.find(m=>m.id===userId)?.name}"`);
+      if (pin && /^\d{4}$/.test(pin)) {
+        setPin(userId, pin);
+        switchUser(userId);
+      } else if (pin !== null) {
+        alert('ПИН должен состоять из 4 цифр');
+      }
     }
-
-    div.innerHTML = `
-      ${!isSent ? `<div style="font-size:0.8rem;opacity:0.8;">${member.emoji} ${member.name}</div>` : ''}
-      <div class="bubble">${content}</div>
-      <div class="meta">${new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
-    `;
-
-    chatWindow.appendChild(div);
-    chatWindow.scrollTop = chatWindow.scrollHeight;
   }
 
-  async function sendMessage() {
-    const text = messageInput.value.trim();
-    if (!text) return;
-
-    const messageData = {
-      from: currentUser,
-      text: text,
-      timestamp: Date.now()
-    };
-
-    const chatRef = getChatRef();
-    await push(chatRef, messageData);
-    messageInput.value = "";
+  function switchUser(userId) {
+    currentUser = userId;
+    localStorage.setItem('fc_user', currentUser);
+    if (activeChatType === 'private' && privateWith === userId) {
+      privateWith = null;
+      localStorage.removeItem('fc_privateWith');
+      updatePrivateSelector();
+    }
+    renderUserSelector();
+    chatWindow.innerHTML = '';
+    subscribeToMessages();
   }
 
-  // ================== Инициализация пользователей ==================
-  function initUserSelector() {
+  pinSubmit.addEventListener('click', () => {
+    const pin = pinInput.value.trim();
+    if (pin && pendingUserSwitch && checkPin(pendingUserSwitch, pin)) {
+      pinOverlay.style.display = 'none';
+      switchUser(pendingUserSwitch);
+      pendingUserSwitch = null;
+    } else {
+      alert('Неверный ПИН');
+    }
+  });
+  pinCancel.addEventListener('click', () => {
+    pinOverlay.style.display = 'none';
+    pendingUserSwitch = null;
+  });
+  pinInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') pinSubmit.click();
+  });
+
+  // ======== ПОЛЬЗОВАТЕЛЬСКИЙ ИНТЕРФЕЙС ========
+  function renderUserSelector() {
     userSelector.innerHTML = MEMBERS.map(m => `
       <button class="user-btn ${m.id === currentUser ? 'active' : ''}" data-id="${m.id}">
         ${m.emoji} ${m.name}
       </button>
     `).join('');
-
     userSelector.querySelectorAll('.user-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const newUser = btn.dataset.id;
-        if (newUser === currentUser) return;
-
-        const pin = prompt(`Введите ПИН для ${MEMBERS.find(m => m.id === newUser).name}:`);
-        if (pin === "0000" || pin === "1234") {   // простой пин для теста, потом можно усложнить
-          currentUser = newUser;
-          localStorage.setItem("fc_user", currentUser);
-          initUserSelector();
-          chatWindow.innerHTML = "";
-          subscribeToMessages();
-        } else {
-          alert("Неверный ПИН");
-        }
-      });
+      btn.addEventListener('click', () => attemptSwitchUser(btn.dataset.id));
     });
   }
+
+  function updatePrivateSelector() {
+    const others = MEMBERS.filter(m => m.id !== currentUser);
+    privateRecipient.innerHTML = others.map(m => `<option value="${m.id}">${m.emoji} ${m.name}</option>`).join('');
+    if (!privateWith && others.length) {
+      privateWith = others[0].id;
+      localStorage.setItem('fc_privateWith', privateWith);
+    } else if (others.length === 0) {
+      privateWith = null;
+    }
+    privateRecipient.value = privateWith || '';
+    privateSelector.style.display = (activeChatType === 'private') ? 'flex' : 'none';
+  }
+
+  // ======== FIREBASE ========
+  function getChatRef() {
+    if (activeChatType === 'general') {
+      return ref(db, 'messages');
+    } else if (privateWith) {
+      const users = [currentUser, privateWith].sort();
+      return ref(db, `private/${users[0]}_${users[1]}`);
+    }
+    return ref(db, 'messages'); // fallback
+  }
+
+  let currentChatUnsubscribe = null;
 
   function subscribeToMessages() {
+    if (currentChatUnsubscribe) {
+      // Отписка от предыдущих слушателей
+      const oldRef = getChatRef(); // нужно отписаться от того же ref
+      off(oldRef);
+      currentChatUnsubscribe = null;
+    }
+
     const chatRef = getChatRef();
-    onChildAdded(chatRef, (snapshot) => {
+
+    onChildAdded(chatRef, snapshot => {
       const msg = snapshot.val();
       msg.key = snapshot.key;
-      renderMessage(msg);
+      renderMessage(msg, 'add');
+    });
+
+    onChildChanged(chatRef, snapshot => {
+      const msg = snapshot.val();
+      msg.key = snapshot.key;
+      renderMessage(msg, 'update');
+    });
+
+    onChildRemoved(chatRef, snapshot => {
+      removeMessageElement(snapshot.key);
     });
   }
 
-  // ================== Запуск ==================
-  initUserSelector();
-  subscribeToMessages();
+  // ======== ОТОБРАЖЕНИЕ СООБЩЕНИЙ ========
+  function renderMessage(msg, action = 'add') {
+    if (action === 'update') {
+      const old = chatWindow.querySelector(`[data-key="${msg.key}"]`);
+      if (old) old.remove();
+    }
 
-  // Эмодзи
-  emojiBtn.addEventListener("click", () => {
-    emojiBar.style.display = emojiBar.style.display === "block" ? "none" : "block";
+    const isSent = msg.from === currentUser;
+    const member = MEMBERS.find(m => m.id === msg.from) || { name: msg.from, emoji: '👤' };
+    const div = document.createElement('div');
+    div.className = `message ${isSent ? 'sent' : 'received'}`;
+    div.dataset.key = msg.key;
+
+    let contentHTML = '';
+    if (msg.mediaId) {
+      if (msg.mediaType === 'image') {
+        contentHTML = `<div class="image-msg"><img src="" alt="фото" data-media-id="${msg.mediaId}"></div>`;
+      } else if (msg.mediaType === 'voice') {
+        contentHTML = `<div class="audio-msg"><audio controls src="" data-media-id="${msg.mediaId}"></audio></div>`;
+      } else {
+        contentHTML = '📎 Медиа';
+      }
+    } else {
+      contentHTML = msg.text || '';
+    }
+
+    const timeStr = new Date(msg.timestamp).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const metaHtml = isSent
+      ? `<span>${timeStr}</span><span class="msg-actions">⋯</span>`
+      : `<span>${timeStr}</span>`;
+
+    div.innerHTML = `
+      ${!isSent ? `<div class="sender-name">${member.emoji} ${member.name}</div>` : ''}
+      <div class="bubble">${contentHTML}</div>
+      <div class="meta">${metaHtml}</div>
+    `;
+
+    // Загрузка медиа
+    if (msg.mediaId) {
+      div.querySelectorAll('[data-media-id]').forEach(el => {
+        getMedia(msg.mediaId).then(blob => {
+          if (blob) {
+            const url = URL.createObjectURL(blob);
+            if (el.tagName === 'IMG') el.src = url;
+            else if (el.tagName === 'AUDIO') el.src = url;
+          }
+        });
+      });
+    }
+
+    // Меню для своих сообщений
+    if (isSent) {
+      const actionsBtn = div.querySelector('.msg-actions');
+      if (actionsBtn) {
+        actionsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          showMessageMenu(div, msg);
+        });
+      }
+    }
+
+    chatWindow.appendChild(div);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
+
+  function removeMessageElement(key) {
+    const el = chatWindow.querySelector(`[data-key="${key}"]`);
+    if (el) el.remove();
+  }
+
+  function showMessageMenu(messageDiv, msg) {
+    const existing = document.querySelector('.message-menu');
+    if (existing) existing.remove();
+
+    const menu = document.createElement('div');
+    menu.className = 'message-menu';
+    menu.innerHTML = `
+      <button id="editMsg">✏️ Редактировать</button>
+      <button id="deleteMsg">🗑️ Удалить</button>
+    `;
+    messageDiv.appendChild(menu);
+
+    menu.querySelector('#editMsg').addEventListener('click', async () => {
+      menu.remove();
+      const newText = prompt('Новый текст:', msg.text || '');
+      if (newText !== null && newText !== msg.text) {
+        await update(ref(db, `${getChatRef().key}/${msg.key}`), {
+          text: newText,
+          edited: true
+        });
+      }
+    });
+
+    menu.querySelector('#deleteMsg').addEventListener('click', async () => {
+      menu.remove();
+      if (confirm('Удалить это сообщение?')) {
+        await remove(ref(db, `${getChatRef().key}/${msg.key}`));
+      }
+    });
+
+    const closeMenu = (e) => {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+      }
+    };
+    setTimeout(() => document.addEventListener('click', closeMenu), 0);
+  }
+
+  // ======== ОТПРАВКА СООБЩЕНИЙ ========
+  async function sendMessage(type = 'text', content, mediaId = null) {
+    const name = currentUser;
+    let messageData = {
+      from: currentUser,
+      timestamp: Date.now()
+    };
+    if (type === 'text') {
+      if (!content) return;
+      messageData.text = content;
+    } else if (type === 'image') {
+      messageData.mediaId = mediaId;
+      messageData.mediaType = 'image';
+      messageData.text = '📷 Фото';
+    } else if (type === 'voice') {
+      messageData.mediaId = mediaId;
+      messageData.mediaType = 'voice';
+      messageData.text = '🎤 Голосовое';
+    }
+    await push(getChatRef(), messageData);
+    messageInput.value = '';
+    messageInput.style.height = 'auto';
+  }
+
+  // ======== ГОЛОСОВЫЕ ========
+  let mediaRecorder = null;
+  let audioChunks = [];
+  let recording = false;
+
+  async function startRecording() {
+    if (!navigator.mediaDevices || !window.MediaRecorder) {
+      alert('Запись голоса не поддерживается браузером');
+      return;
+    }
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+    mediaRecorder.onstop = async () => {
+      const blob = new Blob(audioChunks, { type: 'audio/webm' });
+      const mediaId = 'voice_' + Date.now();
+      await saveMedia(mediaId, blob);
+      sendMessage('voice', null, mediaId);
+      stream.getTracks().forEach(t => t.stop());
+      micBtn.classList.remove('recording');
+      recording = false;
+    };
+    mediaRecorder.start();
+    recording = true;
+    micBtn.classList.add('recording');
+    setTimeout(() => {
+      if (recording) mediaRecorder.stop();
+    }, 10000);
+  }
+
+  function stopRecording() {
+    if (mediaRecorder && recording) mediaRecorder.stop();
+  }
+
+  // ======== ОБРАБОТЧИКИ ========
+  sendBtn.addEventListener('click', () => {
+    const text = messageInput.value.trim();
+    if (text) sendMessage('text', text);
+  });
+  messageInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+  messageInput.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.min(this.scrollHeight, 120) + 'px';
   });
 
-  emojiPicker.addEventListener("emoji-click", e => {
+  // Эмодзи
+  emojiBtn.addEventListener('click', () => {
+    emojiBar.classList.toggle('show');
+  });
+  emojiPicker.addEventListener('emoji-click', e => {
     messageInput.value += e.detail.unicode;
     messageInput.focus();
   });
 
-  // Отправка
-  sendBtn.addEventListener("click", sendMessage);
-  messageInput.addEventListener("keypress", e => {
-    if (e.key === "Enter") sendMessage();
+  // Микрофон
+  micBtn.addEventListener('click', () => {
+    if (recording) stopRecording();
+    else startRecording();
   });
 
-  // Фото (локально)
-  attachBtn.addEventListener("click", () => fileInput.click());
-  fileInput.addEventListener("change", async (e) => {
-    const file = e.target.files[0];
+  // Фото
+  attachBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files[0];
     if (!file) return;
-    const mediaId = "img_" + Date.now();
+    const mediaId = 'img_' + Date.now();
     await saveMedia(mediaId, file);
-    alert("Фото сохранено локально (пока только у вас)");
-    // Можно добавить renderMessage с превью
+    sendMessage('image', null, mediaId);
+    fileInput.value = '';
   });
 
-  console.log("FChat упрощённая версия запущена");
+  // Вкладки чатов
+  document.querySelectorAll('.chat-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.chat-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      activeChatType = tab.dataset.type;
+      localStorage.setItem('fc_chatType', activeChatType);
+      if (activeChatType === 'private') {
+        updatePrivateSelector();
+      } else {
+        privateSelector.style.display = 'none';
+        privateWith = null;
+        localStorage.removeItem('fc_privateWith');
+      }
+      chatWindow.innerHTML = '';
+      subscribeToMessages();
+    });
+  });
+
+  // Выбор приватного собеседника
+  privateRecipient.addEventListener('change', () => {
+    privateWith = privateRecipient.value;
+    localStorage.setItem('fc_privateWith', privateWith);
+    chatWindow.innerHTML = '';
+    subscribeToMessages();
+  });
+
+  // Автоудаление
+  let autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
+  autoDeleteSelect.value = autoDeleteHours;
+  autoDeleteSelect.addEventListener('change', () => {
+    autoDeleteHours = parseInt(autoDeleteSelect.value);
+    localStorage.setItem('fc_autoDelete', autoDeleteHours);
+  });
+
+  // Периодическая очистка старых сообщений
+  setInterval(async () => {
+    const maxAge = autoDeleteHours * 3600 * 1000;
+    const now = Date.now();
+    const chatRef = getChatRef();
+    try {
+      const snapshot = await get(chatRef);
+      if (snapshot.exists()) {
+        const data = snapshot.val();
+        const promises = [];
+        Object.entries(data).forEach(([key, msg]) => {
+          if (now - msg.timestamp > maxAge) {
+            promises.push(remove(ref(db, `${chatRef.key}/${key}`)));
+          }
+        });
+        await Promise.all(promises);
+      }
+    } catch(e) {
+      console.error('Ошибка очистки:', e);
+    }
+  }, 60000); // проверка раз в минуту
+
+  // ======== ТЕМЫ ========
+  function applyTheme(theme) {
+    document.body.className = theme;
+    localStorage.setItem('fc_theme', theme);
+  }
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+  });
+  applyTheme(localStorage.getItem('fc_theme') || 'light');
+
+  // ======== ЗАПУСК ========
+  function init() {
+    renderUserSelector();
+    // Активируем нужную вкладку
+    document.querySelectorAll('.chat-tab').forEach(tab => {
+      tab.classList.remove('active');
+      if (tab.dataset.type === activeChatType) tab.classList.add('active');
+    });
+    if (activeChatType === 'private') {
+      updatePrivateSelector();
+    } else {
+      privateSelector.style.display = 'none';
+    }
+    subscribeToMessages();
+    checkStorageQuota();
+  }
+
+  init();
 </script>
 </body>
 </html>
