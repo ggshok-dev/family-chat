@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FChat — Семейный чат</title>
+    <script type="module" 
+    src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1/index.js"></script>
     <style>
         :root {
             --bg: #0d1b2a;
@@ -69,9 +71,9 @@
         }
 
         .message { 
-            max-width: 85%; 
+            max-width: 80%; 
             padding: 12px 16px; 
-            border-radius: 20px; 
+            border-radius: 22px; 
             font-size: clamp(0.95rem, 3.5vw, 1.05rem); 
             line-height: 1.45;
             box-shadow: 0 1px 4px rgba(0,0,0,0.3);
@@ -142,6 +144,18 @@
 
         button:hover { background: #52b788; }
 
+.input-btn { padding: 14px; font-size: 1.35rem; }
+
+        emoji-picker {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            border-radius: 18px;
+            display: none;
+        }
+       
         .welcome {
             align-self: center;
             background: #2d6a4f !important;
@@ -176,9 +190,13 @@
         </div>
         <div class="input-row">
             <input type="text" id="message-input" placeholder="Напишите сообщение...">
+            <button class="input-btn" id="emoji-btn" title="Эмодзи">😊</button>
             <button id="send-btn">Отправить</button>
         </div>
     </div>
+
+    <emoji-picker></emoji-picker>
+    <input type="file" id="file-input" accept="image/*" style="display: none;">
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
@@ -204,6 +222,8 @@
         const recipientInput = document.getElementById('recipient');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
+        const emojiBtn = document.getElementById('emoji-btn')
+        const picker = document.querySelector('emoji-picker');
         const btnGeneral = document.getElementById('btn-general');
         const btnPrivate = document.getElementById('btn-private');
 
@@ -253,6 +273,7 @@
 
             const myName = usernameInput.value.trim() || 'Гость';
             const isMy = msg.name === myName;
+	const key = snapshot.key;
 
             const html = `
                 <div class="message ${isMy ? 'outgoing' : 'incoming'}">
@@ -260,8 +281,14 @@
                     <div>${msg.text}</div>
                     <div class="message-time">${formatTime(msg.time || Date.now())}</div>
                 </div>`;
+            
             chatWindow.innerHTML += html;
             scrollToBottom();
+            const newMsg = chatWindow.lastElementChild;
+            if (isMy) {
+                newMsg.querySelector('.edit-btn').addEventListener('click', () => editMessage(newMsg, key));
+                newMsg.querySelector('.delete-btn').addEventListener('click', () => deleteMessage(key));
+
         }
 
         function loadChat() {
@@ -305,6 +332,16 @@
             push(ref(db, targetPath), { name, text, time: Date.now() });
             messageInput.value = '';
         }
+        // Эмодзи-пикер
+        emojiBtn.addEventListener('click', () => {
+            picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
+        });
+
+        picker.addEventListener('emoji-click', (e) => {
+            messageInput.value += e.detail.unicode;
+            picker.style.display = 'none';
+            messageInput.focus();
+        });
 
         // Переключение чатов
         btnGeneral.addEventListener('click', () => {
