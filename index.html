@@ -52,15 +52,15 @@
         const db = getDatabase(app);
 
         const chatWindow = document.getElementById('chat-window');
-const usernameInput = document.getElementById('username');
-const recipientSelect = document.getElementById('recipient-select');
-const messageInput = document.getElementById('message-input');
-const sendBtn = document.getElementById('send-btn');
-const btnGeneral = document.getElementById('btn-general');
-const btnPrivate = document.getElementById('btn-private');
+        const usernameInput = document.getElementById('username');
+        const recipientSelect = document.getElementById('recipient-select');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const btnGeneral = document.getElementById('btn-general');
+        const btnPrivate = document.getElementById('btn-private');
 
-// НОВАЯ ЧАСТЬ: Для уведомлений
-const notificationSound = document.getElementById('notificationSound');
+        // НОВАЯ ЧАСТЬ: Для уведомлений
+        const notificationSound = document.getElementById('notificationSound');
 
 async function requestNotificationPermission() {
     if ('Notification' in window) {
@@ -228,31 +228,34 @@ function sendMessage() {
     messageInput.value = '';
 }
 
-// Переключение чатов
-btnGeneral.addEventListener('click', () => {
-    currentChatType = 'general';
-    btnGeneral.classList.add('active');
-    btnPrivate.classList.remove('active');
-    recipientSelect.style.display = 'none';
-    loadChat();
-});
+        // Переключение чатов
+        btnGeneral.addEventListener('click', () => {
+        currentChatType = 'general';
+        btnGeneral.classList.add('active');
+        btnPrivate.classList.remove('active');
+        recipientSelect.style.display = 'none';
+        loadChat();
+        });
 
-btnPrivate.addEventListener('click', () => {
-    currentChatType = 'private';
-    btnGeneral.classList.remove('active');
-    btnPrivate.classList.add('active');
-    recipientSelect.style.display = 'block';
-    updateRecipientSelect();
-    loadChat();
-});
+        btnPrivate.addEventListener('click', () => {
+        currentChatType = 'private';
+        btnGeneral.classList.remove('active');
+        btnPrivate.classList.add('active');
+        recipientSelect.style.display = 'block';
+        updateRecipientSelect();
+        loadChat();
+        });
 
-sendBtn.addEventListener('click', sendMessage);
-messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
         // Запрос разрешения на уведомления при загрузке страницы
-window.addEventListener('load', () => {
-    requestNotificationPermission();  // НОВАЯ ЧАСТЬ: Запрашиваем разрешение на уведомления
-    updateRecipientSelect();
-    usernameInput.focus();
-    loadChat();
-    console.log("✅ FChat обновлён: с уведомлениями и запоминанием имён");
-});
+        window.addEventListener('load', () => {
+        requestNotificationPermission();  // НОВАЯ ЧАСТЬ: Запрашиваем разрешение на уведомления
+        updateRecipientSelect();
+        usernameInput.focus();
+        loadChat();
+        console.log("✅ FChat обновлён: с уведомлениями и запоминанием имён");
+       });
+    </script>
+</body>
+</html>
