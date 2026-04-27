@@ -13,14 +13,15 @@
             --incoming: #1e3a5f;
             --outgoing: #2d6a4f;
             --accent: #40916c;
+            --text: #e0e1dd;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body { 
-            font-family: system-ui, -apple-system, sans-serif; 
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; 
             background: var(--bg); 
-            color: #e0e1dd; 
+            color: var(--text); 
             display: flex; 
             flex-direction: column; 
             height: 100dvh; 
@@ -52,7 +53,7 @@
             color: #aaa;
             font-weight: 600;
             cursor: pointer;
-            transition: 0.2s;
+            transition: all 0.2s;
         }
 
         .chat-tabs button.active {
@@ -70,6 +71,7 @@
             gap: 14px;
             background: var(--chat-bg);
             scrollbar-width: thin;
+            scrollbar-color: var(--accent) #1b263b;
         }
 
         .message { 
@@ -102,8 +104,8 @@
             right: 12px;
             display: none;
             gap: 6px;
-            background: rgba(0,0,0,0.4);
-            padding: 4px 6px;
+            background: rgba(0,0,0,0.5);
+            padding: 4px 8px;
             border-radius: 9999px;
         }
         .outgoing:hover .actions { display: flex; }
@@ -123,7 +125,12 @@
             box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
         }
 
-        .input-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .input-row { 
+            display: flex; 
+            gap: 10px; 
+            margin-bottom: 10px; 
+            align-items: center; 
+        }
 
         input {
             flex: 1;
@@ -147,16 +154,18 @@
             font-weight: 700;
         }
 
-        .input-btn { padding: 14px; font-size: 1.35rem; }
+        .input-btn { padding: 14px; font-size: 1.35rem; min-width: 48px; }
 
         emoji-picker {
             position: fixed;
-            bottom: 80px;
+            bottom: 90px;
             right: 20px;
             z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
             border-radius: 18px;
             display: none;
+            width: 320px;
+            height: 380px;
         }
 
         .welcome {
@@ -166,6 +175,11 @@
             padding: 18px !important;
             border-radius: 20px;
             max-width: 85%;
+        }
+
+        @media (max-width: 480px) {
+            .message { max-width: 88%; }
+            emoji-picker { width: 92%; right: 4%; }
         }
     </style>
 </head>
@@ -188,7 +202,7 @@
         <div class="input-row">
             <input type="text" id="message-input" placeholder="Сообщение...">
             <button class="input-btn" id="emoji-btn" title="Эмодзи">😊</button>
-            <button class="input-btn" id="photo-btn" title="Фото">📷</button>
+            <button class="input-btn" id="photo-btn" title="Отправить фото">📷</button>
             <button id="send-btn">Отправить</button>
         </div>
     </div>
@@ -215,7 +229,7 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        // DOM
+        // DOM элементы
         const chatWindow = document.getElementById('chat-window');
         const usernameInput = document.getElementById('username');
         const recipientInput = document.getElementById('recipient');
@@ -236,7 +250,56 @@
 
         const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/296/296-preview.mp3');
 
-        // ... (функции saveRecentRecipient, updateDatalist, getChatId, formatTime, scrollToBottom, clearChat, addWelcomeMessage — оставлены как в предыдущей версии)
+        function saveRecentRecipient(name) {
+            if (!name) return;
+            recentRecipients = recentRecipients.filter(n => n.toLowerCase() !== name.toLowerCase());
+            recentRecipients.unshift(name);
+            if (recentRecipients.length > 8) recentRecipients.pop();
+            localStorage.setItem('recentRecipients', JSON.stringify(recentRecipients));
+            updateDatalist();
+        }
+
+        function updateDatalist() {
+            const datalist = document.getElementById('recipients');
+            datalist.innerHTML = '';
+            recentRecipients.forEach(name => {
+                const opt = document.createElement('option');
+                opt.value = name;
+                datalist.appendChild(opt);
+            });
+        }
+
+        function getChatId(user1, user2) {
+            const u1 = (user1 || '').trim().toLowerCase();
+            const u2 = (user2 || '').trim().toLowerCase();
+            return u1 < u2 ? `\( {u1}_ \){u2}` : `\( {u2}_ \){u1}`;
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            const now = new Date();
+            const isToday = date.getFullYear() === now.getFullYear() && 
+                           date.getMonth() === now.getMonth() && 
+                           date.getDate() === now.getDate();
+            if (isToday) return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+            return date.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function scrollToBottom() {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
+
+        function clearChat() {
+            chatWindow.innerHTML = '';
+        }
+
+        function addWelcomeMessage(isPrivate) {
+            const text = isPrivate 
+                ? `👋 Личный чат с <strong>${currentRecipient}</strong>. Только вы видите эти сообщения.` 
+                : `👋 Добро пожаловать в общий чат!`;
+            chatWindow.innerHTML += `<div class="message welcome">${text}</div>`;
+            scrollToBottom();
+        }
 
         function addMessage(snapshot) {
             const msg = snapshot.val();
@@ -257,8 +320,8 @@
                     <div class="message-time">${formatTime(msg.time || Date.now())}</div>
                     ${isMy ? `
                     <div class="actions">
-                        <button class="action-btn edit-btn">✏️</button>
-                        <button class="action-btn delete-btn">🗑️</button>
+                        <button class="action-btn edit-btn" title="Редактировать">✏️</button>
+                        <button class="action-btn delete-btn" title="Удалить">🗑️</button>
                     </div>` : ''}
                 </div>`;
 
@@ -266,6 +329,7 @@
             scrollToBottom();
 
             const newMsg = chatWindow.lastElementChild;
+
             if (isMy) {
                 newMsg.querySelector('.edit-btn').addEventListener('click', () => editMessage(newMsg, key));
                 newMsg.querySelector('.delete-btn').addEventListener('click', () => deleteMessage(key));
@@ -273,8 +337,9 @@
 
             // Клик по имени → открыть личный чат
             newMsg.querySelector('.user-name').addEventListener('click', (e) => {
-                if (currentChatType === 'general' && e.target.dataset.recipient) {
-                    openPrivateChat(e.target.dataset.recipient);
+                const recipient = e.target.dataset.recipient;
+                if (currentChatType === 'general' && recipient && recipient !== myName) {
+                    openPrivateChat(recipient);
                 }
             });
 
@@ -284,16 +349,100 @@
             }
         }
 
-        function openPrivateChat(recipientName) {
+        function openPrivateChat(recipient) {
             currentChatType = 'private';
             btnGeneral.classList.remove('active');
             btnPrivate.classList.add('active');
             recipientInput.style.display = 'block';
-            recipientInput.value = recipientName;
+            recipientInput.value = recipient;
             loadChat();
         }
 
-        // Отправка текста, фото, эмодзи — оставлены с улучшениями (см. полный код в предыдущих сообщениях + исправления загрузки)
+        function editMessage(msgDiv, key) {
+            alert("Редактирование сообщений будет улучшено в следующей версии. Пока можно удалить и отправить заново.");
+            // При необходимости можно расширить как раньше
+        }
+
+        function deleteMessage(key) {
+            if (!confirm("Удалить это сообщение навсегда?")) return;
+            let path = currentChatType === 'general' ? 'messages' : `privateChats/${getChatId(usernameInput.value, currentRecipient)}/messages`;
+            remove(ref(db, `\( {path}/ \){key}`));
+            loadChat();
+        }
+
+        async function sendPhoto(file) {
+            const name = usernameInput.value.trim() || 'Гость';
+            if (!file) return;
+
+            const fileRef = storageRef(storage, `chat-images/\( {Date.now()}- \){file.name}`);
+
+            try {
+                await uploadBytes(fileRef, file);
+                const imageUrl = await getDownloadURL(fileRef);
+
+                let targetPath = currentChatType === 'general' ? 'messages' : null;
+                if (currentChatType === 'private') {
+                    const rec = recipientInput.value.trim();
+                    if (!rec) return alert("Укажите получателя для личного чата");
+                    currentRecipient = rec;
+                    saveRecentRecipient(rec);
+                    const chatId = getChatId(name, rec);
+                    targetPath = `privateChats/${chatId}/messages`;
+                }
+
+                push(ref(db, targetPath), {
+                    name: name,
+                    imageUrl: imageUrl,
+                    time: Date.now()
+                });
+            } catch (error) {
+                console.error(error);
+                alert("Не удалось отправить фото. Проверьте подключение.");
+            }
+        }
+
+        function sendMessage() {
+            const name = usernameInput.value.trim() || 'Гость';
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            let targetPath = currentChatType === 'general' ? 'messages' : null;
+            if (currentChatType === 'private') {
+                const rec = recipientInput.value.trim();
+                if (!rec) return alert("Укажите получателя");
+                currentRecipient = rec;
+                saveRecentRecipient(rec);
+                const chatId = getChatId(name, rec);
+                targetPath = `privateChats/${chatId}/messages`;
+            }
+
+            push(ref(db, targetPath), { name, text, time: Date.now() });
+            messageInput.value = '';
+        }
+
+        // Переключение чатов
+        btnGeneral.addEventListener('click', () => {
+            currentChatType = 'general';
+            btnGeneral.classList.add('active');
+            btnPrivate.classList.remove('active');
+            recipientInput.style.display = 'none';
+            loadChat();
+        });
+
+        btnPrivate.addEventListener('click', () => {
+            currentChatType = 'private';
+            btnGeneral.classList.remove('active');
+            btnPrivate.classList.add('active');
+            recipientInput.style.display = 'block';
+            updateDatalist();
+            loadChat();
+        });
+
+        // Обработчики ввода
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
 
         // Эмодзи-пикер
         emojiBtn.addEventListener('click', () => {
@@ -302,24 +451,43 @@
 
         picker.addEventListener('emoji-click', (e) => {
             messageInput.value += e.detail.unicode;
-            picker.style.display = 'none';
             messageInput.focus();
+            picker.style.display = 'none';
         });
 
         // Фото
         photoBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            // Здесь функция sendPhoto (как в предыдущей версии)
-            await sendPhoto(file);
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files[0]) sendPhoto(e.target.files[0]);
         });
+
+        function loadChat() {
+            clearChat();
+            if (currentUnsubscribe) currentUnsubscribe();
+
+            let path = currentChatType === 'general' ? 'messages' : null;
+
+            if (currentChatType === 'private') {
+                if (!usernameInput.value.trim() || !recipientInput.value.trim()) {
+                    alert("Введите своё имя и имя получателя");
+                    return;
+                }
+                currentRecipient = recipientInput.value.trim();
+                saveRecentRecipient(currentRecipient);
+                const chatId = getChatId(usernameInput.value, currentRecipient);
+                path = `privateChats/${chatId}/messages`;
+            }
+
+            currentChatRef = ref(db, path);
+            addWelcomeMessage(currentChatType === 'private');
+            currentUnsubscribe = onChildAdded(currentChatRef, addMessage);
+        }
 
         window.addEventListener('load', () => {
             updateDatalist();
             usernameInput.focus();
             loadChat();
-            console.log("✅ FChat значительно улучшен: красивый эмодзи-пикер, фото, переход в личный чат по клику");
+            console.log("✅ FChat полностью обновлён с красивым эмодзи-пикером, фото и переходом в личный чат по клику");
         });
     </script>
 </body>
