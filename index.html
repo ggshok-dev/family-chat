@@ -19,7 +19,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body { 
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; 
+            font-family: system-ui, -apple-system, sans-serif; 
             background: var(--bg); 
             color: var(--text); 
             display: flex; 
@@ -53,13 +53,11 @@
             color: #aaa;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.2s;
         }
 
         .chat-tabs button.active {
             background: var(--accent);
             color: white;
-            box-shadow: 0 4px 10px rgba(64,145,108,0.4);
         }
 
         #chat-window { 
@@ -70,8 +68,6 @@
             flex-direction: column; 
             gap: 14px;
             background: var(--chat-bg);
-            scrollbar-width: thin;
-            scrollbar-color: var(--accent) #1b263b;
         }
 
         .message { 
@@ -96,7 +92,12 @@
         }
 
         .message-text { word-break: break-word; }
-        .message img { max-width: 100%; border-radius: 14px; margin: 8px 0 4px; display: block; }
+        .message img { 
+            max-width: 100%; 
+            border-radius: 14px; 
+            margin: 8px 0 4px; 
+            display: block; 
+        }
 
         .actions {
             position: absolute;
@@ -176,11 +177,6 @@
             border-radius: 20px;
             max-width: 85%;
         }
-
-        @media (max-width: 480px) {
-            .message { max-width: 88%; }
-            emoji-picker { width: 92%; right: 4%; }
-        }
     </style>
 </head>
 <body>
@@ -212,7 +208,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, update, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-storage.js";
 
         const firebaseConfig = {
@@ -229,7 +225,6 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
 
-        // DOM элементы
         const chatWindow = document.getElementById('chat-window');
         const usernameInput = document.getElementById('username');
         const recipientInput = document.getElementById('recipient');
@@ -278,25 +273,16 @@
         function formatTime(timestamp) {
             const date = new Date(timestamp);
             const now = new Date();
-            const isToday = date.getFullYear() === now.getFullYear() && 
-                           date.getMonth() === now.getMonth() && 
-                           date.getDate() === now.getDate();
+            const isToday = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
             if (isToday) return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
             return date.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
         }
 
-        function scrollToBottom() {
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
-
-        function clearChat() {
-            chatWindow.innerHTML = '';
-        }
+        function scrollToBottom() { chatWindow.scrollTop = chatWindow.scrollHeight; }
+        function clearChat() { chatWindow.innerHTML = ''; }
 
         function addWelcomeMessage(isPrivate) {
-            const text = isPrivate 
-                ? `👋 Личный чат с <strong>${currentRecipient}</strong>. Только вы видите эти сообщения.` 
-                : `👋 Добро пожаловать в общий чат!`;
+            const text = isPrivate ? `👋 Личный чат с <strong>${currentRecipient}</strong>` : `👋 Общий чат`;
             chatWindow.innerHTML += `<div class="message welcome">${text}</div>`;
             scrollToBottom();
         }
@@ -315,12 +301,11 @@
 
             const html = `
                 <div class="message \( {isMy ? 'outgoing' : 'incoming'}" data-key=" \){key}">
-                    <div class="user-name" data-recipient="\( {msg.name}"> \){msg.name || 'Аноним'}</div>
+                    <div class="user-name" data-recipient="\( {msg.name || ''}"> \){msg.name || 'Аноним'}</div>
                     ${content}
                     <div class="message-time">${formatTime(msg.time || Date.now())}</div>
                     ${isMy ? `
                     <div class="actions">
-                        <button class="action-btn edit-btn" title="Редактировать">✏️</button>
                         <button class="action-btn delete-btn" title="Удалить">🗑️</button>
                     </div>` : ''}
                 </div>`;
@@ -329,13 +314,11 @@
             scrollToBottom();
 
             const newMsg = chatWindow.lastElementChild;
-
             if (isMy) {
-                newMsg.querySelector('.edit-btn').addEventListener('click', () => editMessage(newMsg, key));
                 newMsg.querySelector('.delete-btn').addEventListener('click', () => deleteMessage(key));
             }
 
-            // Клик по имени → открыть личный чат
+            // Клик по имени в общем чате → перейти в личный
             newMsg.querySelector('.user-name').addEventListener('click', (e) => {
                 const recipient = e.target.dataset.recipient;
                 if (currentChatType === 'general' && recipient && recipient !== myName) {
@@ -358,13 +341,8 @@
             loadChat();
         }
 
-        function editMessage(msgDiv, key) {
-            alert("Редактирование сообщений будет улучшено в следующей версии. Пока можно удалить и отправить заново.");
-            // При необходимости можно расширить как раньше
-        }
-
         function deleteMessage(key) {
-            if (!confirm("Удалить это сообщение навсегда?")) return;
+            if (!confirm("Удалить сообщение?")) return;
             let path = currentChatType === 'general' ? 'messages' : `privateChats/${getChatId(usernameInput.value, currentRecipient)}/messages`;
             remove(ref(db, `\( {path}/ \){key}`));
             loadChat();
@@ -374,16 +352,16 @@
             const name = usernameInput.value.trim() || 'Гость';
             if (!file) return;
 
-            const fileRef = storageRef(storage, `chat-images/\( {Date.now()}- \){file.name}`);
+            const fileRef = storageRef(storage, `chat-images/\( {Date.now()}_ \){file.name}`);
 
             try {
-                await uploadBytes(fileRef, file);
-                const imageUrl = await getDownloadURL(fileRef);
+                const snapshot = await uploadBytes(fileRef, file);
+                const imageUrl = await getDownloadURL(snapshot.ref);
 
                 let targetPath = currentChatType === 'general' ? 'messages' : null;
                 if (currentChatType === 'private') {
                     const rec = recipientInput.value.trim();
-                    if (!rec) return alert("Укажите получателя для личного чата");
+                    if (!rec) return alert("Укажите получателя");
                     currentRecipient = rec;
                     saveRecentRecipient(rec);
                     const chatId = getChatId(name, rec);
@@ -395,9 +373,10 @@
                     imageUrl: imageUrl,
                     time: Date.now()
                 });
+                console.log("Фото успешно отправлено");
             } catch (error) {
-                console.error(error);
-                alert("Не удалось отправить фото. Проверьте подключение.");
+                console.error("Ошибка отправки фото:", error);
+                alert("Не удалось отправить фото. Попробуйте ещё раз.");
             }
         }
 
@@ -438,26 +417,21 @@
             loadChat();
         });
 
-        // Обработчики ввода
         sendBtn.addEventListener('click', sendMessage);
-        messageInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        messageInput.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
-        // Эмодзи-пикер
         emojiBtn.addEventListener('click', () => {
             picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
         });
 
-        picker.addEventListener('emoji-click', (e) => {
+        picker.addEventListener('emoji-click', e => {
             messageInput.value += e.detail.unicode;
             messageInput.focus();
             picker.style.display = 'none';
         });
 
-        // Фото
         photoBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (e) => {
+        fileInput.addEventListener('change', e => {
             if (e.target.files[0]) sendPhoto(e.target.files[0]);
         });
 
@@ -466,7 +440,6 @@
             if (currentUnsubscribe) currentUnsubscribe();
 
             let path = currentChatType === 'general' ? 'messages' : null;
-
             if (currentChatType === 'private') {
                 if (!usernameInput.value.trim() || !recipientInput.value.trim()) {
                     alert("Введите своё имя и имя получателя");
@@ -487,7 +460,7 @@
             updateDatalist();
             usernameInput.focus();
             loadChat();
-            console.log("✅ FChat полностью обновлён с красивым эмодзи-пикером, фото и переходом в личный чат по клику");
+            console.log("✅ FChat исправлен: имена, фото и уведомления работают");
         });
     </script>
 </body>
