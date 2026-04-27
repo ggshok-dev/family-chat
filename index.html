@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FChat — Семейный чат</title>
-    <!-- Библиотека эмодзи -->
-    <script type="module" src="https://jsdelivr.net"></script>
+    <!-- Исправлено: правильное подключение библиотеки эмодзи -->
+    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.20.2/index.js"></script>
     <style>
         :root {
             --bg: #0d1b2a;
@@ -38,6 +38,14 @@
             font-weight: 700; 
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
             z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header-emoji {
+            font-size: 1.5rem;
         }
 
         .chat-tabs {
@@ -57,6 +65,7 @@
             font-weight: 600;
             cursor: pointer;
             transition: 0.3s;
+            font-size: 0.9rem;
         }
 
         .chat-tabs button.active {
@@ -74,7 +83,6 @@
             background: var(--chat-bg);
         }
 
-        /* Стиль облачков сообщений */
         .message { 
             position: relative;
             max-width: 80%; 
@@ -83,6 +91,18 @@
             line-height: 1.4;
             margin-bottom: 2px;
             box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .incoming { 
@@ -106,6 +126,7 @@
             text-align: center;
             margin: 10px 0;
             max-width: 90%;
+            padding: 10px;
         }
 
         .user-name { 
@@ -123,7 +144,10 @@
             margin-top: 4px;
         }
 
-        /* Панель ввода */
+        .text {
+            word-wrap: break-word;
+        }
+
         .input-area { 
             background: var(--input-panel); 
             padding: 10px 12px; 
@@ -145,6 +169,12 @@
             background: #2a3942;
             color: white;
             font-size: 0.9rem;
+            outline: none;
+            transition: background 0.3s;
+        }
+
+        .input-top-row input:focus {
+            background: #3a4952;
         }
 
         .input-main-row {
@@ -166,6 +196,11 @@
             font-size: 1rem;
             resize: none;
             outline: none;
+            transition: background 0.3s;
+        }
+
+        textarea:focus {
+            background: #3a4952;
         }
 
         .icon-btn {
@@ -177,42 +212,73 @@
             cursor: pointer;
             display: flex;
             align-items: center;
+            transition: transform 0.2s;
         }
 
-        #send-btn { color: var(--accent); }
+        .icon-btn:hover {
+            transform: scale(1.1);
+        }
 
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        #send-btn { 
+            color: var(--accent); 
+            font-weight: bold;
+        }
+
+        /* Исправлено: стили для emoji-picker */
         emoji-picker {
             position: fixed;
             bottom: 80px;
             left: 10px;
             right: 10px;
+            max-width: 400px;
             z-index: 100;
             display: none;
             height: 350px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
+            border-radius: 12px;
+        }
+
+        @media (min-width: 768px) {
+            .message {
+                max-width: 60%;
+            }
+            
+            emoji-picker {
+                right: auto;
+                width: 350px;
+            }
         }
     </style>
 </head>
 <body>
-    <header>FChat</header>
+    <header>
+        <span class="header-emoji">👨‍👩‍👧‍👦</span>
+        FChat
+    </header>
     
     <div class="chat-tabs">
-        <button id="btn-general" class="active">Общий</button>
-        <button id="btn-private">Личный</button>
+        <button id="btn-general" class="active">💬 Общий</button>
+        <button id="btn-private">🔒 Личный</button>
     </div>
 
     <div id="chat-window"></div>
 
-    <emoji-picker class="dark"></emoji-picker>
+    <!-- Исправлено: emoji-picker теперь должен корректно отображаться -->
+    <emoji-picker class="dark" id="emoji-picker"></emoji-picker>
 
     <div class="input-area">
         <div class="input-top-row">
-            <input type="text" id="username" placeholder="Ваше имя">
-            <input type="text" id="recipient" placeholder="Кому..." style="display: none;">
+            <input type="text" id="username" placeholder="👤 Ваше имя">
+            <input type="text" id="recipient" placeholder="👥 Кому..." style="display: none;">
         </div>
         <div class="input-main-row">
-            <button class="icon-btn" id="emoji-btn">😊</button>
-            <textarea id="message-input" rows="1" placeholder="Сообщение"></textarea>
-            <button class="icon-btn" id="send-btn">➤</button>
+            <button class="icon-btn" id="emoji-btn" title="Эмодзи">😊</button>
+            <textarea id="message-input" rows="1" placeholder="✍️ Сообщение..."></textarea>
+            <button class="icon-btn" id="send-btn" title="Отправить">➤</button>
         </div>
     </div>
 
@@ -231,145 +297,196 @@
             measurementId: "G-11PJ481DDP"
         };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-    const chatWindow = document.getElementById('chat-window');
-    const usernameInput = document.getElementById('username');
-    const recipientInput = document.getElementById('recipient');
-    const messageInput = document.getElementById('message-input');
-    const sendBtn = document.getElementById('send-btn');
-    const emojiBtn = document.getElementById('emoji-btn');
-    const picker = document.querySelector('emoji-picker');
-    const btnGeneral = document.getElementById('btn-general');
-    const btnPrivate = document.getElementById('btn-private');
+        const chatWindow = document.getElementById('chat-window');
+        const usernameInput = document.getElementById('username');
+        const recipientInput = document.getElementById('recipient');
+        const messageInput = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+        const emojiBtn = document.getElementById('emoji-btn');
+        const picker = document.getElementById('emoji-picker');
+        const btnGeneral = document.getElementById('btn-general');
+        const btnPrivate = document.getElementById('btn-private');
 
-    let currentChatType = 'general';
-    let currentChatRef = null;
+        let currentChatType = 'general';
+        let currentChatRef = null;
 
-    // ИСПРАВЛЕНО: генерация ID для личного чата
-    function getChatId(u1, u2) {
-        const users = [u1.trim().toLowerCase(), u2.trim().toLowerCase()].sort();
-        return `${users[0]}_${users[1]}`;
-    }
+        // Генерация ID для личного чата
+        function getChatId(u1, u2) {
+            const users = [u1.trim().toLowerCase(), u2.trim().toLowerCase()].sort();
+            return `${users[0]}_${users[1]}`;
+        }
 
-    function formatTime(ts) {
-        return new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-    }
+        function formatTime(ts) {
+            return new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+        }
 
-    function scrollToBottom() {
-        chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
+        function scrollToBottom() {
+            chatWindow.scrollTop = chatWindow.scrollHeight;
+        }
 
-    function addMessage(snapshot) {
-        const msg = snapshot.val();
-        if (!msg?.text) return;
+        function addMessage(snapshot) {
+            const msg = snapshot.val();
+            if (!msg?.text) return;
 
-        const isMy = msg.name === usernameInput.value.trim();
-        const html = `
-            <div class="message ${isMy ? 'outgoing' : 'incoming'}">
-                <div class="user-name">${msg.name}</div>
-                <div class="text">${msg.text}</div>
-                <div class="message-time">${formatTime(msg.time)}</div>
-            </div>`;
-        chatWindow.insertAdjacentHTML('beforeend', html);
-        scrollToBottom();
-    }
+            const currentUser = usernameInput.value.trim();
+            const isMy = msg.name === currentUser;
+            
+            const html = `
+                <div class="message ${isMy ? 'outgoing' : 'incoming'}">
+                    <div class="user-name">${msg.name}</div>
+                    <div class="text">${msg.text}</div>
+                    <div class="message-time">${formatTime(msg.time)}</div>
+                </div>`;
+            chatWindow.insertAdjacentHTML('beforeend', html);
+            scrollToBottom();
+        }
 
-    function loadChat() {
-        // Теперь off() определен и ошибки не будет
-        if (currentChatRef) off(currentChatRef); 
-        chatWindow.innerHTML = '';
-
-        let path = 'messages';
-        let welcomeText = '👋 Добро пожаловать в общий чат!';
-
-        if (currentChatType === 'private') {
-            const me = usernameInput.value.trim();
-            const target = recipientInput.value.trim();
-            if (!me || !target) {
-                chatWindow.innerHTML = '<div class="message welcome">Введите оба имени для личного чата</div>';
-                return;
+        function loadChat() {
+            // Отключаем предыдущий слушатель
+            if (currentChatRef) {
+                off(currentChatRef);
             }
-            path = `privateChats/${getChatId(me, target)}/messages`;
-            welcomeText = `🔒 Личный чат: ${target}`;
+            chatWindow.innerHTML = '';
+
+            let path = 'messages';
+            let welcomeText = '👋 Добро пожаловать в общий чат!';
+
+            if (currentChatType === 'private') {
+                const me = usernameInput.value.trim();
+                const target = recipientInput.value.trim();
+                if (!me || !target) {
+                    chatWindow.innerHTML = '<div class="message welcome">Введите оба имени для личного чата</div>';
+                    return;
+                }
+                path = `privateChats/${getChatId(me, target)}/messages`;
+                welcomeText = `🔒 Личный чат с ${target}`;
+            }
+
+            chatWindow.innerHTML = `<div class="message welcome">${welcomeText}</div>`;
+            currentChatRef = ref(db, path);
+            onChildAdded(currentChatRef, addMessage);
         }
 
-        chatWindow.innerHTML = `<div class="message welcome">${welcomeText}</div>`;
-        currentChatRef = ref(db, path);
-        onChildAdded(currentChatRef, addMessage);
-    }
+        function sendMessage() {
+            const name = usernameInput.value.trim() || 'Гость';
+            const text = messageInput.value.trim();
+            if (!text) return;
 
-    function sendMessage() {
-        const name = usernameInput.value.trim() || 'Гость';
-        const text = messageInput.value.trim();
-        if (!text) return;
+            let path = 'messages';
+            if (currentChatType === 'private') {
+                const target = recipientInput.value.trim();
+                if (!target) {
+                    alert('Укажите получателя');
+                    return;
+                }
+                path = `privateChats/${getChatId(name, target)}/messages`;
+            }
 
-        let path = 'messages';
-        if (currentChatType === 'private') {
-            const target = recipientInput.value.trim();
-            if (!target) return;
-            path = `privateChats/${getChatId(name, target)}/messages`;
+            push(ref(db, path), { 
+                name, 
+                text, 
+                time: Date.now() 
+            });
+            
+            messageInput.value = '';
+            messageInput.style.height = '40px';
+            messageInput.focus();
         }
 
-        push(ref(db, path), { name, text, time: Date.now() });
-        messageInput.value = '';
-        messageInput.style.height = '40px';
-    }
+        // Обработка эмодзи
+        emojiBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = picker.style.display === 'block';
+            picker.style.display = isVisible ? 'none' : 'block';
+        });
 
-    // Обработка эмодзи
-    emojiBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        picker.style.display = (picker.style.display === 'block') ? 'none' : 'block';
-    });
+        // Исправлено: слушаем правильное событие для emoji-picker-element
+        picker.addEventListener('emoji-click', (event) => {
+            const emoji = event.detail.unicode;
+            if (emoji) {
+                messageInput.value += emoji;
+                messageInput.focus();
+                // Обновляем высоту textarea
+                messageInput.dispatchEvent(new Event('input'));
+            }
+        });
 
-    picker.addEventListener('emoji-click', event => {
-        messageInput.value += event.detail.unicode;
-        messageInput.dispatchEvent(new Event('input')); 
-        messageInput.focus();
-    });
+        // Закрытие пикера при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!picker.contains(e.target) && e.target !== emojiBtn) {
+                picker.style.display = 'none';
+            }
+        });
 
-    document.addEventListener('click', () => picker.style.display = 'none');
-    picker.addEventListener('click', e => e.stopPropagation());
+        picker.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
 
-    // Поле ввода
-    messageInput.addEventListener('input', function() {
-        this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
-    });
+        // Авторесайз textarea
+        messageInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
 
-    messageInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-        }
-    });
+        // Отправка по Enter
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
 
-    // Кнопки переключения
-    btnGeneral.addEventListener('click', () => {
-        currentChatType = 'general';
-        btnGeneral.classList.add('active');
-        btnPrivate.classList.remove('active');
-        recipientInput.style.display = 'none';
-        loadChat();
-    });
-
-    btnPrivate.addEventListener('click', () => {
-        currentChatType = 'private';
-        btnPrivate.classList.add('active');
-        btnGeneral.classList.remove('active');
-        recipientInput.style.display = 'block';
-        loadChat();
-    });
-
-    sendBtn.addEventListener('click', sendMessage);
-    recipientInput.addEventListener('change', loadChat);
-
-     // Запуск
-        window.addEventListener('load', () => {
-            usernameInput.focus();
+        // Кнопки переключения чатов
+        btnGeneral.addEventListener('click', () => {
+            currentChatType = 'general';
+            btnGeneral.classList.add('active');
+            btnPrivate.classList.remove('active');
+            recipientInput.style.display = 'none';
             loadChat();
-            console.log("✅ FChat запущен (исправленная версия)");
+        });
+
+        btnPrivate.addEventListener('click', () => {
+            currentChatType = 'private';
+            btnPrivate.classList.add('active');
+            btnGeneral.classList.remove('active');
+            recipientInput.style.display = 'block';
+            recipientInput.focus();
+            loadChat();
+        });
+
+        // Отправка по клику
+        sendBtn.addEventListener('click', sendMessage);
+
+        // Обновление чата при смене получателя
+        recipientInput.addEventListener('change', loadChat);
+        
+        // Автообновление при вводе имени
+        usernameInput.addEventListener('change', () => {
+            if (currentChatType === 'private') {
+                loadChat();
+            }
+        });
+
+        // Сохранение имени в localStorage
+        const savedName = localStorage.getItem('fchat_username');
+        if (savedName) {
+            usernameInput.value = savedName;
+        }
+        
+        usernameInput.addEventListener('input', () => {
+            localStorage.setItem('fchat_username', usernameInput.value);
+        });
+
+        // Запуск
+        window.addEventListener('load', () => {
+            if (!savedName) {
+                usernameInput.focus();
+            }
+            loadChat();
+            console.log("✅ FChat успешно запущен!");
         });
     </script>
 </body>
