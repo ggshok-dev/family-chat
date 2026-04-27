@@ -3,491 +3,452 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FChat — Семейный чат</title>
-    <!-- Исправлено: правильное подключение библиотеки эмодзи -->
-    <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.20.2/index.js"></script>
+    <title>Семейный мессенджер</title>
     <style>
-        :root {
-            --bg: #0d1b2a;
-            --header: #1b4332;
-            --chat-bg: #0b141a;
-            --incoming: #202c33;
-            --outgoing: #005c4b;
-            --text: #e9edef;
-            --accent: #00a884;
-            --input-panel: #202c33;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
 
-        body { 
-            font-family: system-ui, -apple-system, sans-serif; 
-            background: var(--bg); 
-            color: var(--text); 
-            display: flex; 
-            flex-direction: column; 
-            height: 100dvh;
+        .messenger {
+            width: 400px;
+            height: 90vh;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
             overflow: hidden;
         }
 
-        header { 
-            background: var(--header); 
-            padding: 12px; 
-            text-align: center; 
-            font-size: 1.2rem; 
-            font-weight: 700; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .header-emoji {
-            font-size: 1.5rem;
-        }
-
-        .chat-tabs {
-            display: flex;
-            background: #1b263b;
-            padding: 4px;
-            gap: 4px;
-        }
-
-        .chat-tabs button {
-            flex: 1;
-            padding: 10px;
-            border: none;
-            border-radius: 8px;
-            background: transparent;
-            color: #8696a0;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 0.9rem;
-        }
-
-        .chat-tabs button.active {
-            background: #40916c;
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-        }
-
-        #chat-window { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 15px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 4px;
-            background: var(--chat-bg);
-        }
-
-        .message { 
-            position: relative;
-            max-width: 80%; 
-            padding: 8px 12px; 
-            font-size: 0.95rem; 
-            line-height: 1.4;
-            margin-bottom: 2px;
-            box-shadow: 0 1px 1px rgba(0,0,0,0.2);
-            animation: fadeIn 0.3s ease;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .incoming { 
-            background: var(--incoming); 
-            align-self: flex-start; 
-            border-radius: 0 12px 12px 12px;
-        }
-
-        .outgoing { 
-            background: var(--outgoing); 
-            align-self: flex-end; 
-            border-radius: 12px 0 12px 12px;
-        }
-
-        .welcome {
-            align-self: center;
-            background: rgba(64, 145, 108, 0.2);
-            color: #94a3b8;
-            border-radius: 10px;
-            font-size: 0.85rem;
+            padding: 20px;
             text-align: center;
-            margin: 10px 0;
-            max-width: 90%;
-            padding: 10px;
-        }
-
-        .user-name { 
-            font-size: 0.75rem; 
-            font-weight: 700; 
-            color: #52b788; 
-            margin-bottom: 2px;
-        }
-        .outgoing .user-name { display: none; }
-
-        .message-time { 
-            font-size: 0.65rem; 
-            text-align: right; 
-            opacity: 0.5;
-            margin-top: 4px;
-        }
-
-        .text {
-            word-wrap: break-word;
-        }
-
-        .input-area { 
-            background: var(--input-panel); 
-            padding: 10px 12px; 
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .input-top-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .input-top-row input {
-            flex: 1;
-            padding: 8px 12px;
-            border-radius: 8px;
-            border: none;
-            background: #2a3942;
-            color: white;
-            font-size: 0.9rem;
-            outline: none;
-            transition: background 0.3s;
-        }
-
-        .input-top-row input:focus {
-            background: #3a4952;
-        }
-
-        .input-main-row {
-            display: flex;
-            align-items: flex-end;
-            gap: 8px;
-        }
-
-        textarea {
-            flex: 1;
-            min-height: 40px;
-            max-height: 120px;
-            background: #2a3942;
-            border: none;
-            border-radius: 20px;
-            padding: 10px 15px;
-            color: white;
-            font-family: inherit;
-            font-size: 1rem;
-            resize: none;
-            outline: none;
-            transition: background 0.3s;
-        }
-
-        textarea:focus {
-            background: #3a4952;
-        }
-
-        .icon-btn {
-            background: none;
-            border: none;
-            padding: 8px;
-            font-size: 1.5rem;
-            color: #8696a0;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            transition: transform 0.2s;
-        }
-
-        .icon-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .icon-btn:active {
-            transform: scale(0.95);
-        }
-
-        #send-btn { 
-            color: var(--accent); 
+            font-size: 24px;
             font-weight: bold;
         }
 
-        /* Исправлено: стили для emoji-picker */
-        emoji-picker {
-            position: fixed;
-            bottom: 80px;
-            left: 10px;
-            right: 10px;
-            max-width: 400px;
-            z-index: 100;
-            display: none;
-            height: 350px;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.5);
-            border-radius: 12px;
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f5f5f5;
         }
 
-        @media (min-width: 768px) {
-            .message {
-                max-width: 60%;
-            }
-            
-            emoji-picker {
-                right: auto;
-                width: 350px;
-            }
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.sent {
+            align-items: flex-end;
+        }
+
+        .message.received {
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            font-size: 16px;
+        }
+
+        .message.sent .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.received .message-bubble {
+            background: white;
+            border: 2px solid #e0e0e0;
+        }
+
+        .message-author {
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #666;
+        }
+
+        .input-container {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .emoji-picker {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .emoji-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px 8px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .emoji-btn:hover {
+            background: #e0e0e0;
+            transform: scale(1.2);
+        }
+
+        .input-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn, .emoji-toggle {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover, .emoji-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        .sent-time {
+            font-size: 12px;
+            margin-top: 4px;
+            color: #999;
+        }
+
+        .family-members {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            background: white;
+            justify-content: center;
+        }
+
+        .member {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+
+        .member:hover, .member.active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .member-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 3px solid transparent;
+        }
+
+        .member.active .member-avatar {
+            border-color: #667eea;
+        }
+
+        .member-name {
+            font-size: 12px;
+            color: #333;
+        }
+
+        .typing-indicator {
+            font-size: 14px;
+            color: #999;
+            padding: 10px 20px;
+            display: none;
+        }
+
+        .typing-indicator.show {
+            display: block;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <header>
-        <span class="header-emoji">👨‍👩‍👧‍👦</span>
-        FChat
-    </header>
-    
-    <div class="chat-tabs">
-        <button id="btn-general" class="active">💬 Общий</button>
-        <button id="btn-private">🔒 Личный</button>
+    <div class="messenger">
+        <div class="header">👨‍👩‍👧‍👦 Семейный чат</div>
+        
+        <div class="family-members">
+            <div class="member active" data-user="me">
+                <div class="member-avatar" style="background: #667eea;">😎</div>
+                <span class="member-name">Я</span>
+            </div>
+            <div class="member" data-user="mom">
+                <div class="member-avatar" style="background: #ff6b6b;">👩</div>
+                <span class="member-name">Мама</span>
+            </div>
+            <div class="member" data-user="dad">
+                <div class="member-avatar" style="background: #4ecdc4;">👨</div>
+                <span class="member-name">Папа</span>
+            </div>
+            <div class="member" data-user="sister">
+                <div class="member-avatar" style="background: #ffe66d;">👧</div>
+                <span class="member-name">Сестра</span>
+            </div>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <!-- Сообщения будут добавляться здесь -->
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            Кто-то печатает...
+        </div>
+
+        <div class="input-container">
+            <div class="emoji-picker" id="emojiPicker" style="display: none;">
+                <!-- Эмодзи будут добавлены JavaScript -->
+            </div>
+            
+            <div class="input-box">
+                <button class="emoji-toggle" id="emojiToggle">😊</button>
+                <input type="text" id="messageInput" placeholder="Введите сообщение...">
+                <button class="send-btn" id="sendBtn">📤</button>
+            </div>
+        </div>
     </div>
 
-    <div id="chat-window"></div>
+    <script>
+        // Массив эмодзи для выбора
+        const emojis = [
+            '😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊',
+            '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗',
+            '😋', '😛', '😜', '🤪', '😝', '🤑', '🤗', '🤭',
+            '🤫', '🤔', '🤐', '🤨', '😐', '😑', '😶', '😏',
+            '😒', '🙄', '😬', '😮', '😯', '😲', '😳', '🥺',
+            '😢', '😭', '😤', '😡', '🤬', '😈', '👿', '💀',
+            '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
+            '👍', '👎', '👏', '🙌', '🤝', '💪', '✌️', '🤞',
+            '🌹', '🌸', '🌺', '🌻', '🌼', '💐', '🎉', '🎊',
+            '🍕', '🍔', '🍟', '🌭', '🍿', '🧁', '🍰', '🎂'
+        ];
 
-    <!-- Исправлено: emoji-picker теперь должен корректно отображаться -->
-    <emoji-picker class="dark" id="emoji-picker"></emoji-picker>
-
-    <div class="input-area">
-        <div class="input-top-row">
-            <input type="text" id="username" placeholder="👤 Ваше имя">
-            <input type="text" id="recipient" placeholder="👥 Кому..." style="display: none;">
-        </div>
-        <div class="input-main-row">
-            <button class="icon-btn" id="emoji-btn" title="Эмодзи">😊</button>
-            <textarea id="message-input" rows="1" placeholder="✍️ Сообщение..."></textarea>
-            <button class="icon-btn" id="send-btn" title="Отправить">➤</button>
-        </div>
-    </div>
-
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded, off } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
-            authDomain: "fchat-d6879.firebaseapp.com",
-            databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "fchat-d6879",
-            storageBucket: "fchat-d6879.firebasestorage.app",
-            messagingSenderId: "1049514912319",
-            appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a",
-            measurementId: "G-11PJ481DDP"
+        // Сообщения разных членов семьи
+        const familyMessages = {
+            mom: [
+                "Как дела в школе?", "Не забудь пообедать!", "Я приготовила твой любимый пирог 🥧",
+                "Когда домой?", "Купи молоко по дороге 🥛", "Папа уже едет с работы"
+            ],
+            dad: [
+                "Как успехи?", "Нужна помощь с уроками?", "Давайте сходим в кино в выходные 🎬",
+                "Я задержусь на работе", "Кто хочет пиццу? 🍕"
+            ],
+            sister: [
+                "Привет! Как дела?", "Ты видел новое видео? 📱", "Мам сказала убраться в комнате",
+                "Поиграем в настолку? 🎲", "Одолжишь наушники?"
+            ]
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+        let currentUser = 'me';
+        
+        // DOM элементы
+        const chatContainer = document.getElementById('chatContainer');
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const emojiToggle = document.getElementById('emojiToggle');
+        const emojiPicker = document.getElementById('emojiPicker');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const members = document.querySelectorAll('.member');
 
-        const chatWindow = document.getElementById('chat-window');
-        const usernameInput = document.getElementById('username');
-        const recipientInput = document.getElementById('recipient');
-        const messageInput = document.getElementById('message-input');
-        const sendBtn = document.getElementById('send-btn');
-        const emojiBtn = document.getElementById('emoji-btn');
-        const picker = document.getElementById('emoji-picker');
-        const btnGeneral = document.getElementById('btn-general');
-        const btnPrivate = document.getElementById('btn-private');
-
-        let currentChatType = 'general';
-        let currentChatRef = null;
-
-        // Генерация ID для личного чата
-        function getChatId(u1, u2) {
-            const users = [u1.trim().toLowerCase(), u2.trim().toLowerCase()].sort();
-            return `${users[0]}_${users[1]}`;
-        }
-
-        function formatTime(ts) {
-            return new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function scrollToBottom() {
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
-
-        function addMessage(snapshot) {
-            const msg = snapshot.val();
-            if (!msg?.text) return;
-
-            const currentUser = usernameInput.value.trim();
-            const isMy = msg.name === currentUser;
-            
-            const html = `
-                <div class="message ${isMy ? 'outgoing' : 'incoming'}">
-                    <div class="user-name">${msg.name}</div>
-                    <div class="text">${msg.text}</div>
-                    <div class="message-time">${formatTime(msg.time)}</div>
-                </div>`;
-            chatWindow.insertAdjacentHTML('beforeend', html);
-            scrollToBottom();
-        }
-
-        function loadChat() {
-            // Отключаем предыдущий слушатель
-            if (currentChatRef) {
-                off(currentChatRef);
-            }
-            chatWindow.innerHTML = '';
-
-            let path = 'messages';
-            let welcomeText = '👋 Добро пожаловать в общий чат!';
-
-            if (currentChatType === 'private') {
-                const me = usernameInput.value.trim();
-                const target = recipientInput.value.trim();
-                if (!me || !target) {
-                    chatWindow.innerHTML = '<div class="message welcome">Введите оба имени для личного чата</div>';
-                    return;
-                }
-                path = `privateChats/${getChatId(me, target)}/messages`;
-                welcomeText = `🔒 Личный чат с ${target}`;
-            }
-
-            chatWindow.innerHTML = `<div class="message welcome">${welcomeText}</div>`;
-            currentChatRef = ref(db, path);
-            onChildAdded(currentChatRef, addMessage);
-        }
-
-        function sendMessage() {
-            const name = usernameInput.value.trim() || 'Гость';
-            const text = messageInput.value.trim();
-            if (!text) return;
-
-            let path = 'messages';
-            if (currentChatType === 'private') {
-                const target = recipientInput.value.trim();
-                if (!target) {
-                    alert('Укажите получателя');
-                    return;
-                }
-                path = `privateChats/${getChatId(name, target)}/messages`;
-            }
-
-            push(ref(db, path), { 
-                name, 
-                text, 
-                time: Date.now() 
+        // Инициализация эмодзи пикера
+        function initEmojiPicker() {
+            emojis.forEach(emoji => {
+                const emojiBtn = document.createElement('button');
+                emojiBtn.className = 'emoji-btn';
+                emojiBtn.textContent = emoji;
+                emojiBtn.addEventListener('click', () => {
+                    messageInput.value += emoji;
+                    messageInput.focus();
+                });
+                emojiPicker.appendChild(emojiBtn);
             });
-            
-            messageInput.value = '';
-            messageInput.style.height = '40px';
-            messageInput.focus();
         }
 
-        // Обработка эмодзи
-        emojiBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const isVisible = picker.style.display === 'block';
-            picker.style.display = isVisible ? 'none' : 'block';
+        // Переключение эмодзи пикера
+        emojiToggle.addEventListener('click', () => {
+            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
         });
 
-        // Исправлено: слушаем правильное событие для emoji-picker-element
-        picker.addEventListener('emoji-click', (event) => {
-            const emoji = event.detail.unicode;
-            if (emoji) {
-                messageInput.value += emoji;
-                messageInput.focus();
-                // Обновляем высоту textarea
-                messageInput.dispatchEvent(new Event('input'));
+        // Выбор члена семьи
+        members.forEach(member => {
+            member.addEventListener('click', () => {
+                members.forEach(m => m.classList.remove('active'));
+                member.classList.add('active');
+                currentUser = member.dataset.user;
+                
+                if (currentUser !== 'me') {
+                    simulateTyping();
+                }
+            });
+        });
+
+        // Симуляция печати
+        function simulateTyping() {
+            typingIndicator.classList.add('show');
+            
+            setTimeout(() => {
+                typingIndicator.classList.remove('show');
+                
+                if (currentUser !== 'me') {
+                    const messages = familyMessages[currentUser];
+                    const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                    addMessage(randomMessage, false, getMemberName(currentUser), getMemberEmoji(currentUser));
+                }
+            }, 2000 + Math.random() * 2000);
+        }
+
+        // Получить имя члена семьи
+        function getMemberName(user) {
+            const names = {
+                'me': 'Я',
+                'mom': 'Мама',
+                'dad': 'Папа',
+                'sister': 'Сестра'
+            };
+            return names[user] || 'Пользователь';
+        }
+
+        // Получить эмодзи члена семьи
+        function getMemberEmoji(user) {
+            const emojis = {
+                'me': '😎',
+                'mom': '👩',
+                'dad': '👨',
+                'sister': '👧'
+            };
+            return emojis[user] || '👤';
+        }
+
+        // Добавление сообщения в чат
+        function addMessage(text, isSent = true, author = '', avatarEmoji = '') {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
+            
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            
+            messageDiv.innerHTML = `
+                ${!isSent ? `<div class="message-author">${avatarEmoji} ${author}</div>` : ''}
+                <div class="message-bubble">${text}</div>
+                <div class="sent-time">${timeString}</div>
+            `;
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            // Анимация появления
+            messageDiv.style.opacity = '0';
+            messageDiv.style.transform = 'translateY(20px)';
+            messageDiv.style.transition = 'all 0.3s ease';
+            
+            setTimeout(() => {
+                messageDiv.style.opacity = '1';
+                messageDiv.style.transform = 'translateY(0)';
+            }, 50);
+        }
+
+        // Отправка сообщения
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (text) {
+                addMessage(text, true);
+                messageInput.value = '';
+                
+                // Ответ от текущего выбранного члена семьи
+                if (currentUser !== 'me') {
+                    setTimeout(() => {
+                        simulateTyping();
+                    }, 1000);
+                }
             }
-        });
+        }
 
-        // Закрытие пикера при клике вне его
-        document.addEventListener('click', (e) => {
-            if (!picker.contains(e.target) && e.target !== emojiBtn) {
-                picker.style.display = 'none';
-            }
-        });
-
-        picker.addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
-        // Авторесайз textarea
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
-
-        // Отправка по Enter
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
+        // Обработчики событий
+        sendBtn.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
                 sendMessage();
             }
         });
 
-        // Кнопки переключения чатов
-        btnGeneral.addEventListener('click', () => {
-            currentChatType = 'general';
-            btnGeneral.classList.add('active');
-            btnPrivate.classList.remove('active');
-            recipientInput.style.display = 'none';
-            loadChat();
-        });
-
-        btnPrivate.addEventListener('click', () => {
-            currentChatType = 'private';
-            btnPrivate.classList.add('active');
-            btnGeneral.classList.remove('active');
-            recipientInput.style.display = 'block';
-            recipientInput.focus();
-            loadChat();
-        });
-
-        // Отправка по клику
-        sendBtn.addEventListener('click', sendMessage);
-
-        // Обновление чата при смене получателя
-        recipientInput.addEventListener('change', loadChat);
-        
-        // Автообновление при вводе имени
-        usernameInput.addEventListener('change', () => {
-            if (currentChatType === 'private') {
-                loadChat();
+        // Закрытие эмодзи пикера при клике вне его
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.emoji-picker') && 
+                !e.target.closest('.emoji-toggle') && 
+                emojiPicker.style.display === 'flex') {
+                emojiPicker.style.display = 'none';
             }
         });
 
-        // Сохранение имени в localStorage
-        const savedName = localStorage.getItem('fchat_username');
-        if (savedName) {
-            usernameInput.value = savedName;
-        }
-        
-        usernameInput.addEventListener('input', () => {
-            localStorage.setItem('fchat_username', usernameInput.value);
-        });
+        // Инициализация
+        initEmojiPicker();
 
-        // Запуск
-        window.addEventListener('load', () => {
-            if (!savedName) {
-                usernameInput.focus();
-            }
-            loadChat();
-            console.log("✅ FChat успешно запущен!");
-        });
+        // Добавление приветственного сообщения
+        setTimeout(() => {
+            addMessage('Добро пожаловать в семейный чат! 👨‍👩‍👧‍👦', false, 'Система', '💬');
+        }, 500);
+
+        // Автоответ от мамы при запуске
+        setTimeout(() => {
+            simulateTyping();
+        }, 2000);
     </script>
 </body>
 </html>
