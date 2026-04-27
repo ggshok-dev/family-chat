@@ -218,7 +218,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-        import { getDatabase, ref, push, onChildAdded } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+        import { getDatabase, ref, push, onChildAdded, off } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
@@ -247,10 +247,10 @@
     let currentChatType = 'general';
     let currentChatRef = null;
 
-    // Генерируем уникальный ID для пары пользователей
+    // ИСПРАВЛЕНО: генерация ID для личного чата
     function getChatId(u1, u2) {
         const users = [u1.trim().toLowerCase(), u2.trim().toLowerCase()].sort();
-        return `${users[0]}_${users[1]}`; // Исправлено: берем элементы массива
+        return `${users[0]}_${users[1]}`;
     }
 
     function formatTime(ts) {
@@ -277,7 +277,8 @@
     }
 
     function loadChat() {
-        if (currentChatRef) off(currentChatRef); // Отключаем старый чат перед загрузкой нового
+        // Теперь off() определен и ошибки не будет
+        if (currentChatRef) off(currentChatRef); 
         chatWindow.innerHTML = '';
 
         let path = 'messages';
@@ -287,11 +288,11 @@
             const me = usernameInput.value.trim();
             const target = recipientInput.value.trim();
             if (!me || !target) {
-                chatWindow.innerHTML = '<div class="message welcome">Введите своё имя и имя получателя</div>';
+                chatWindow.innerHTML = '<div class="message welcome">Введите оба имени для личного чата</div>';
                 return;
             }
             path = `privateChats/${getChatId(me, target)}/messages`;
-            welcomeText = `🔒 Личный чат: ${me} и ${target}`;
+            welcomeText = `🔒 Личный чат: ${target}`;
         }
 
         chatWindow.innerHTML = `<div class="message welcome">${welcomeText}</div>`;
@@ -307,23 +308,36 @@
         let path = 'messages';
         if (currentChatType === 'private') {
             const target = recipientInput.value.trim();
-            if (!target) return alert("Введите имя получателя");
+            if (!target) return;
             path = `privateChats/${getChatId(name, target)}/messages`;
         }
 
         push(ref(db, path), { name, text, time: Date.now() });
         messageInput.value = '';
         messageInput.style.height = '40px';
-        picker.style.display = 'none';
     }
 
-    // Авто-высота
+    // Обработка эмодзи
+    emojiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        picker.style.display = (picker.style.display === 'block') ? 'none' : 'block';
+    });
+
+    picker.addEventListener('emoji-click', event => {
+        messageInput.value += event.detail.unicode;
+        messageInput.dispatchEvent(new Event('input')); 
+        messageInput.focus();
+    });
+
+    document.addEventListener('click', () => picker.style.display = 'none');
+    picker.addEventListener('click', e => e.stopPropagation());
+
+    // Поле ввода
     messageInput.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
     });
 
-    // Отправка по Enter
     messageInput.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -331,27 +345,8 @@
         }
     });
 
-    // Эмодзи (Исправлено)
-    emojiBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
-    });
-
-    picker.addEventListener('emoji-click', event => {
-        const emoji = event.detail.unicode;
-        messageInput.value += emoji;
-        // Важно: триггерим событие, чтобы сработал скрипт авто-высоты
-        messageInput.dispatchEvent(new Event('input')); 
-        messageInput.focus();
-    });
-
-    // Закрыть пикер при клике в любое другое место
-    document.addEventListener('click', () => picker.style.display = 'none');
-    picker.addEventListener('click', (e) => e.stopPropagation());
-
-    // Вкладки
+    // Кнопки переключения
     btnGeneral.addEventListener('click', () => {
-        if (currentChatType === 'general') return;
         currentChatType = 'general';
         btnGeneral.classList.add('active');
         btnPrivate.classList.remove('active');
@@ -360,7 +355,6 @@
     });
 
     btnPrivate.addEventListener('click', () => {
-        if (currentChatType === 'private') return;
         currentChatType = 'private';
         btnPrivate.classList.add('active');
         btnGeneral.classList.remove('active');
@@ -369,10 +363,14 @@
     });
 
     sendBtn.addEventListener('click', sendMessage);
-    
-    // Перезагружаем чат при смене имен в полях
-    usernameInput.addEventListener('blur', loadChat);
-    recipientInput.addEventListener('blur', loadChat);
-    
-    window.addEventListener('load', loadChat);
-</script>
+    recipientInput.addEventListener('change', loadChat);
+
+     // Запуск
+        window.addEventListener('load', () => {
+            usernameInput.focus();
+            loadChat();
+            console.log("✅ FChat запущен (исправленная версия)");
+        });
+    </script>
+</body>
+</html>
