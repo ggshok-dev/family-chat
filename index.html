@@ -56,11 +56,9 @@
           storageBucket: "fchat-d6879.firebasestorage.app",
           messagingSenderId: "1049514912319",
           appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a",
-          measurementId: "G-11PJ481DDP"
         };
 
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
         let mode = 'common'; // или 'private'
