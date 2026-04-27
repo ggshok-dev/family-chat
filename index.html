@@ -213,114 +213,68 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const storage = getStorage(app);
 
-        // DOM
         const chatWindow = document.getElementById('chat-window');
         const usernameInput = document.getElementById('username');
-        const recipientInput = document.getElementById('recipient');
         const messageInput = document.getElementById('message-input');
         const sendBtn = document.getElementById('send-btn');
-        const emojiBtn = document.getElementById('emoji-btn');
-        const photoBtn = document.getElementById('photo-btn');
-        const fileInput = document.getElementById('file-input');
-        const picker = document.querySelector('emoji-picker');
-        const btnGeneral = document.getElementById('btn-general');
-        const btnPrivate = document.getElementById('btn-private');
+        const sound = new Audio('https://mixkit.co');
 
-        let currentChatType = 'general';
-        let currentRecipient = '';
-        let currentChatRef = null;
-        let currentUnsubscribe = null;
-        let recentRecipients = JSON.parse(localStorage.getItem('recentRecipients') || '[]');
+        // Запрос разрешения на уведомления
+        if (Notification.permission !== "granted") {
+            Notification.requestPermission();
+        }
 
-        const notificationSound = new Audio('https://assets.mixkit.co/sfx/preview/296/296-preview.mp3');
-
-        // ... (функции saveRecentRecipient, updateDatalist, getChatId, formatTime, scrollToBottom, clearChat, addWelcomeMessage — оставлены как в предыдущей версии)
-
-        function addMessage(snapshot) {
+        // Функция отрисовки сообщения
+        function renderMessage(snapshot) {
             const msg = snapshot.val();
-            if (!msg) return;
+            const isMyMessage = msg.user === usernameInput.value;
+            
+            const div = document.createElement('div');
+            div.className = `message ${isMyMessage ? 'outgoing' : 'incoming'}`;
+            div.id = snapshot.key;
+            div.innerHTML = `
+                <div class="user-name">${msg.user}</div>
+                <div class="message-text">${msg.text}</div>
+            `;
+            chatWindow.appendChild(div);
+            chatWindow.scrollTop = chatWindow.scrollHeight;
 
-            const myName = usernameInput.value.trim() || 'Гость';
-            const isMy = msg.name === myName;
-            const key = snapshot.key;
-
-            let content = msg.imageUrl 
-                ? `<img src="${msg.imageUrl}" alt="Фото">` 
-                : `<div class="message-text">${msg.text || ''}</div>`;
-
-            const html = `
-                <div class="message \( {isMy ? 'outgoing' : 'incoming'}" data-key=" \){key}">
-                    <div class="user-name" data-recipient="\( {msg.name}"> \){msg.name || 'Аноним'}</div>
-                    ${content}
-                    <div class="message-time">${formatTime(msg.time || Date.now())}</div>
-                    ${isMy ? `
-                    <div class="actions">
-                        <button class="action-btn edit-btn">✏️</button>
-                        <button class="action-btn delete-btn">🗑️</button>
-                    </div>` : ''}
-                </div>`;
-
-            chatWindow.innerHTML += html;
-            scrollToBottom();
-
-            const newMsg = chatWindow.lastElementChild;
-            if (isMy) {
-                newMsg.querySelector('.edit-btn').addEventListener('click', () => editMessage(newMsg, key));
-                newMsg.querySelector('.delete-btn').addEventListener('click', () => deleteMessage(key));
-            }
-
-            // Клик по имени → открыть личный чат
-            newMsg.querySelector('.user-name').addEventListener('click', (e) => {
-                if (currentChatType === 'general' && e.target.dataset.recipient) {
-                    openPrivateChat(e.target.dataset.recipient);
+            // Уведомления, если сообщение чужое
+            if (!isMyMessage) {
+                sound.play().catch(() => {}); // Звук
+                if (document.hidden && Notification.permission === "granted") {
+                    new Notification(`Новое сообщение от ${msg.user}`, { body: msg.text });
                 }
-            });
-
-            if (!isMy) {
-                notificationSound.currentTime = 0;
-                notificationSound.play().catch(() => {});
             }
         }
 
-        function openPrivateChat(recipientName) {
-            currentChatType = 'private';
-            btnGeneral.classList.remove('active');
-            btnPrivate.classList.add('active');
-            recipientInput.style.display = 'block';
-            recipientInput.value = recipientName;
-            loadChat();
+        // Отправка
+        async function send() {
+            const user = usernameInput.value.trim();
+            const text = messageInput.value.trim();
+            
+            if (!user) { alert("Введите имя!"); return; }
+            if (!text) return;
+
+            await push(ref(db, 'messages'), {
+                user: user,
+                text: text,
+                timestamp: Date.now()
+            });
+            messageInput.value = "";
         }
 
-        // Отправка текста, фото, эмодзи — оставлены с улучшениями (см. полный код в предыдущих сообщениях + исправления загрузки)
+        // Слушатели
+        sendBtn.onclick = send;
+        messageInput.onkeydown = (e) => { if(e.key === 'Enter') send(); };
 
-        // Эмодзи-пикер
-        emojiBtn.addEventListener('click', () => {
-            picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
-        });
+        // Главный поток: получение сообщений
+        onChildAdded(ref(db, 'messages'), renderMessage);
 
-        picker.addEventListener('emoji-click', (e) => {
-            messageInput.value += e.detail.unicode;
-            picker.style.display = 'none';
-            messageInput.focus();
-        });
-
-        // Фото
-        photoBtn.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            // Здесь функция sendPhoto (как в предыдущей версии)
-            await sendPhoto(file);
-        });
-
-        window.addEventListener('load', () => {
-            updateDatalist();
-            usernameInput.focus();
-            loadChat();
-            console.log("✅ FChat значительно улучшен: красивый эмодзи-пикер, фото, переход в личный чат по клику");
+        // Удаление из интерфейса при удалении из базы
+        onChildRemoved(ref(db, 'messages'), (snapshot) => {
+            const el = document.getElementById(snapshot.key);
+            if(el) el.remove();
         });
     </script>
-</body>
-</html>
