@@ -49,16 +49,18 @@
       import { getDatabase, ref, push, onChildAdded, update } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
       const firebaseConfig = {
-            apiKey: "AIzaSyAgQZPNL2eihYYxr0ZJoE-Tedg1c05cVo",
-            authDomain: "://firebaseapp.com",
-            projectId: "fchat-d6879",
-            storageBucket: "fchat-d6879.firebasestorage.app",
-            messagingSenderId: "1049514912319",
-            appId: "1:1049514912319:web:2ec9ca065eca5dc5da668a",
-            databaseURL: "https://firebasedatabase.app"
+          apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
+          authDomain: "fchat-d6879.firebaseapp.com",
+          databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
+          projectId: "fchat-d6879",
+          storageBucket: "fchat-d6879.firebasestorage.app",
+          messagingSenderId: "1049514912319",
+          appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a",
+          measurementId: "G-11PJ481DDP"
         };
 
         const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
         let mode = 'common'; // или 'private'
