@@ -13,7 +13,6 @@
             --incoming: #1e3a5f;
             --outgoing: #2d6a4f;
             --accent: #40916c;
-            --text: #e0e1dd;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,7 +20,7 @@
         body { 
             font-family: system-ui, -apple-system, sans-serif; 
             background: var(--bg); 
-            color: var(--text); 
+            color: #e0e1dd; 
             display: flex; 
             flex-direction: column; 
             height: 100dvh; 
@@ -34,149 +33,63 @@
             text-align: center; 
             font-size: clamp(1.3rem, 4.5vw, 1.7rem); 
             font-weight: 700; 
-            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
         }
 
-        .chat-tabs {
-            display: flex;
-            background: #1b263b;
-            padding: 8px;
-            gap: 10px;
-        }
-
+        .chat-tabs { display: flex; background: #1b263b; padding: 8px; gap: 10px; }
         .chat-tabs button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 9999px;
-            background: transparent;
-            color: #aaa;
-            font-weight: 600;
-            cursor: pointer;
+            flex: 1; padding: 12px; border: none; border-radius: 9999px;
+            background: transparent; color: #aaa; font-weight: 600; cursor: pointer;
         }
-
-        .chat-tabs button.active {
-            background: var(--accent);
-            color: white;
-        }
+        .chat-tabs button.active { background: var(--accent); color: white; }
 
         #chat-window { 
-            flex: 1; 
-            overflow-y: auto; 
-            padding: 20px 16px; 
-            display: flex; 
-            flex-direction: column; 
-            gap: 14px;
+            flex: 1; overflow-y: auto; padding: 20px 16px; 
+            display: flex; flex-direction: column; gap: 14px;
             background: var(--chat-bg);
         }
 
         .message { 
-            max-width: 82%; 
-            padding: 13px 17px; 
-            border-radius: 22px; 
-            font-size: clamp(0.97rem, 3.6vw, 1.07rem); 
-            line-height: 1.5;
-            position: relative;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+            max-width: 82%; padding: 13px 17px; border-radius: 22px; 
+            font-size: clamp(0.97rem, 3.6vw, 1.07rem); line-height: 1.5;
+            position: relative; box-shadow: 0 2px 8px rgba(0,0,0,0.35);
         }
-
         .incoming { background: var(--incoming); align-self: flex-start; border-bottom-left-radius: 6px; }
         .outgoing { background: var(--outgoing); align-self: flex-end; border-bottom-right-radius: 6px; }
 
-        .user-name { 
-            font-size: 0.8rem; 
-            opacity: 0.9; 
-            margin-bottom: 5px; 
-            font-weight: 600; 
-            cursor: pointer;
-        }
-
+        .user-name { font-size: 0.8rem; opacity: 0.9; margin-bottom: 5px; font-weight: 600; cursor: pointer; }
         .message-text { word-break: break-word; }
-        .message img { 
-            max-width: 100%; 
-            border-radius: 14px; 
-            margin: 8px 0 4px; 
-            display: block; 
-        }
+        .message img { max-width: 100%; border-radius: 14px; margin: 8px 0 4px; display: block; }
 
-        .actions {
-            position: absolute;
-            top: 10px;
-            right: 12px;
-            display: none;
-            gap: 6px;
-            background: rgba(0,0,0,0.5);
-            padding: 4px 8px;
-            border-radius: 9999px;
+        .actions { 
+            position: absolute; top: 10px; right: 12px; display: none; gap: 6px; 
+            background: rgba(0,0,0,0.5); padding: 4px 8px; border-radius: 9999px;
         }
         .outgoing:hover .actions { display: flex; }
 
-        .action-btn {
-            background: none;
-            border: none;
-            color: #ddd;
-            font-size: 1.25rem;
-            cursor: pointer;
-            padding: 4px;
-        }
+        .action-btn { background: none; border: none; color: #ddd; font-size: 1.25rem; cursor: pointer; }
 
-        .input-area { 
-            background: #1b263b; 
-            padding: 14px 16px 20px; 
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.5);
-        }
+        .input-area { background: #1b263b; padding: 14px 16px 20px; box-shadow: 0 -4px 15px rgba(0,0,0,0.5); }
+        .input-row { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
 
-        .input-row { 
-            display: flex; 
-            gap: 10px; 
-            margin-bottom: 10px; 
-            align-items: center; 
+        input { 
+            flex: 1; padding: 15px 18px; border-radius: 9999px; border: none; 
+            background: #0f1626; color: white; font-size: 1.02rem;
         }
-
-        input {
-            flex: 1;
-            padding: 15px 18px;
-            border-radius: 9999px;
-            border: none; 
-            background: #0f1626; 
-            color: white; 
-            font-size: 1.02rem;
-        }
-
         #username { width: 130px; flex: none; }
 
-        button, .input-btn {
-            background: var(--accent); 
-            color: white; 
-            border: none; 
-            padding: 14px 20px; 
-            border-radius: 9999px; 
-            cursor: pointer; 
-            font-weight: 700;
+        button, .input-btn { 
+            background: var(--accent); color: white; border: none; 
+            padding: 14px 20px; border-radius: 9999px; cursor: pointer; font-weight: 700;
         }
-
         .input-btn { padding: 14px; font-size: 1.35rem; min-width: 48px; }
 
         emoji-picker {
-            position: fixed;
-            bottom: 90px;
-            right: 20px;
-            z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-            border-radius: 18px;
-            display: none;
-            width: 320px;
-            height: 380px;
+            position: fixed; bottom: 90px; right: 20px; z-index: 1000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7); border-radius: 18px;
+            display: none; width: 320px; height: 380px;
         }
 
-        .welcome {
-            align-self: center;
-            background: #2d6a4f !important;
-            text-align: center;
-            padding: 18px !important;
-            border-radius: 20px;
-            max-width: 85%;
-        }
+        .welcome { align-self: center; background: #2d6a4f !important; text-align: center; padding: 18px !important; border-radius: 20px; max-width: 85%; }
     </style>
 </head>
 <body>
@@ -255,12 +168,12 @@
         }
 
         function updateDatalist() {
-            const datalist = document.getElementById('recipients');
-            datalist.innerHTML = '';
+            const dl = document.getElementById('recipients');
+            dl.innerHTML = '';
             recentRecipients.forEach(name => {
                 const opt = document.createElement('option');
                 opt.value = name;
-                datalist.appendChild(opt);
+                dl.appendChild(opt);
             });
         }
 
@@ -270,12 +183,12 @@
             return u1 < u2 ? `\( {u1}_ \){u2}` : `\( {u2}_ \){u1}`;
         }
 
-        function formatTime(timestamp) {
-            const date = new Date(timestamp);
+        function formatTime(ts) {
+            const d = new Date(ts);
             const now = new Date();
-            const isToday = date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth() && date.getDate() === now.getDate();
-            if (isToday) return date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-            return date.toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+            const isToday = d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth() && d.getDate() === now.getDate();
+            if (isToday) return d.toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
+            return d.toLocaleString('ru-RU', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'});
         }
 
         function scrollToBottom() { chatWindow.scrollTop = chatWindow.scrollHeight; }
@@ -293,14 +206,13 @@
 
             const myName = usernameInput.value.trim() || 'Гость';
             const isMy = msg.name === myName;
-            const key = snapshot.key;
 
             let content = msg.imageUrl 
                 ? `<img src="${msg.imageUrl}" alt="Фото">` 
                 : `<div class="message-text">${msg.text || ''}</div>`;
 
             const html = `
-                <div class="message \( {isMy ? 'outgoing' : 'incoming'}" data-key=" \){key}">
+                <div class="message \( {isMy ? 'outgoing' : 'incoming'}" data-key=" \){snapshot.key}">
                     <div class="user-name" data-recipient="\( {msg.name || ''}"> \){msg.name || 'Аноним'}</div>
                     ${content}
                     <div class="message-time">${formatTime(msg.time || Date.now())}</div>
@@ -315,15 +227,13 @@
 
             const newMsg = chatWindow.lastElementChild;
             if (isMy) {
-                newMsg.querySelector('.delete-btn').addEventListener('click', () => deleteMessage(key));
+                newMsg.querySelector('.delete-btn').addEventListener('click', () => deleteMessage(snapshot.key));
             }
 
-            // Клик по имени в общем чате → перейти в личный
+            // Клик по имени → личный чат
             newMsg.querySelector('.user-name').addEventListener('click', (e) => {
-                const recipient = e.target.dataset.recipient;
-                if (currentChatType === 'general' && recipient && recipient !== myName) {
-                    openPrivateChat(recipient);
-                }
+                const rec = e.target.dataset.recipient;
+                if (currentChatType === 'general' && rec && rec !== myName) openPrivateChat(rec);
             });
 
             if (!isMy) {
@@ -342,7 +252,7 @@
         }
 
         function deleteMessage(key) {
-            if (!confirm("Удалить сообщение?")) return;
+            if (!confirm("Удалить это сообщение?")) return;
             let path = currentChatType === 'general' ? 'messages' : `privateChats/${getChatId(usernameInput.value, currentRecipient)}/messages`;
             remove(ref(db, `\( {path}/ \){key}`));
             loadChat();
@@ -352,11 +262,12 @@
             const name = usernameInput.value.trim() || 'Гость';
             if (!file) return;
 
-            const fileRef = storageRef(storage, `chat-images/\( {Date.now()}_ \){file.name}`);
+            const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const fileRef = storageRef(storage, `chat-images/\( {Date.now()}_ \){safeName}`);
 
             try {
-                const snapshot = await uploadBytes(fileRef, file);
-                const imageUrl = await getDownloadURL(snapshot.ref);
+                await uploadBytes(fileRef, file);
+                const imageUrl = await getDownloadURL(fileRef);
 
                 let targetPath = currentChatType === 'general' ? 'messages' : null;
                 if (currentChatType === 'private') {
@@ -373,10 +284,10 @@
                     imageUrl: imageUrl,
                     time: Date.now()
                 });
-                console.log("Фото успешно отправлено");
+                console.log("✅ Фото отправлено успешно");
             } catch (error) {
-                console.error("Ошибка отправки фото:", error);
-                alert("Не удалось отправить фото. Попробуйте ещё раз.");
+                console.error("Ошибка при отправке фото:", error);
+                alert("Ошибка отправки фото.\n\nПроверь настройки CORS и правила Storage в Firebase Console.");
             }
         }
 
@@ -460,7 +371,7 @@
             updateDatalist();
             usernameInput.focus();
             loadChat();
-            console.log("✅ FChat исправлен: имена, фото и уведомления работают");
+            console.log("✅ FChat запущен (исправленная версия)");
         });
     </script>
 </body>
