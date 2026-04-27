@@ -3,12 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Семейный мессенджер</title>
+  <title>FChat — Семейный мессенджер</title>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.20.2/index.js"></script>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --header: linear-gradient(135deg, #667eea, #764ba2);
+      --chat-bg: #f8f9fa;
+      --bubble-sent: #667eea;
+      --bubble-received: #ffffff;
+      --text-sent: white;
+      --text-received: #333;
+    }
+    body.dark { --bg: #1a1a2e; --chat-bg: #16213e; --bubble-received: #1e2a44; --text-received: #e0e0e0; }
+    body.green { --bg: linear-gradient(135deg, #2d6a4f, #40916c); --bubble-sent: #2d6a4f; }
+    body.purple { --bg: linear-gradient(135deg, #5a189a, #9d4edd); --bubble-sent: #5a189a; }
+
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--bg);
       min-height: 100vh;
       display: flex;
       justify-content: center;
@@ -17,834 +31,327 @@
     }
     .messenger {
       width: 100%;
-      max-width: 500px;
-      height: 90vh;
-      background: #fff;
+      max-width: 480px;
+      height: 94vh;
+      background: var(--chat-bg);
       border-radius: 24px;
-      box-shadow: 0 25px 50px rgba(0,0,0,0.25);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
     }
     .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--header);
       color: white;
-      padding: 12px 16px;
+      padding: 14px 16px;
       display: flex;
-      align-items: center;
       justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 8px;
+      align-items: center;
     }
-    .header h2 { font-size: 1.2rem; display: flex; align-items: center; gap: 6px; }
-    .user-selector {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
+    .header h1 { font-size: 1.35rem; }
     .user-btn {
-      background: rgba(255,255,255,0.2);
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.25);
       border: none;
       border-radius: 20px;
-      padding: 6px 12px;
       color: white;
-      font-weight: 600;
-      font-size: 0.8rem;
+      font-size: 0.85rem;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      transition: 0.2s;
     }
-    .user-btn.active {
-      background: white;
-      color: #764ba2;
-    }
-    .chat-tabs {
-      display: flex;
-      background: #f0f0f0;
-      padding: 4px;
-      gap: 4px;
-    }
+    .user-btn.active { background: white; color: #333; font-weight: bold; }
+
+    .chat-tabs { display: flex; background: rgba(0,0,0,0.08); padding: 6px; gap: 6px; }
     .chat-tab {
-      flex: 1;
-      text-align: center;
-      padding: 10px;
-      border: none;
-      background: transparent;
-      font-weight: 600;
-      border-radius: 12px;
-      cursor: pointer;
-      color: #555;
+      flex: 1; padding: 10px; border: none; border-radius: 12px;
+      background: transparent; font-weight: 600; cursor: pointer;
     }
-    .chat-tab.active {
-      background: white;
-      color: #764ba2;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .private-selector {
-      display: none;
-      padding: 6px 12px;
-      background: #f9f9f9;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.9rem;
-      border-bottom: 1px solid #eee;
-    }
-    .private-selector select {
-      padding: 4px 8px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      flex: 1;
-    }
-    .settings-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 12px;
-      background: #fff3e0;
-      font-size: 0.8rem;
-      border-bottom: 1px solid #eee;
-    }
-    .settings-bar select {
-      padding: 4px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-    }
+    .chat-tab.active { background: white; color: #333; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+
     .chat-window {
       flex: 1;
       overflow-y: auto;
-      padding: 12px;
-      background: #f9f9f9;
+      padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 10px;
+      background: var(--chat-bg);
     }
-    .message { display: flex; flex-direction: column; max-width: 85%; animation: fadeIn 0.2s ease; }
+    .message {
+      max-width: 80%;
+      animation: fadeIn 0.3s;
+    }
     .message.sent { align-self: flex-end; }
     .message.received { align-self: flex-start; }
     .bubble {
       padding: 10px 14px;
       border-radius: 18px;
-      font-size: 0.95rem;
-      line-height: 1.4;
-      word-wrap: break-word;
-      background: white;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      font-size: 0.97rem;
+      line-height: 1.45;
     }
-    .sent .bubble {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      border-bottom-right-radius: 4px;
-    }
-    .received .bubble {
-      background: white;
-      border: 1px solid #eee;
-      border-bottom-left-radius: 4px;
-    }
-    .meta {
-      font-size: 0.7rem;
-      color: #999;
-      margin: 2px 6px 0;
-    }
-    .sender-name {
-      font-weight: 700;
-      font-size: 0.75rem;
-      margin-bottom: 2px;
-      color: #764ba2;
-    }
-    .image-msg img {
-      max-width: 200px;
-      border-radius: 12px;
-      margin-top: 4px;
-      cursor: pointer;
-    }
-    .audio-msg audio {
-      max-width: 220px;
-      height: 32px;
-    }
-    .welcome {
-      align-self: center;
-      background: #e0e0e0;
-      border-radius: 12px;
-      padding: 8px 16px;
-      font-size: 0.8rem;
-      color: #555;
-    }
+    .sent .bubble { background: var(--bubble-sent); color: var(--text-sent); border-bottom-right-radius: 4px; }
+    .received .bubble { background: var(--bubble-received); color: var(--text-received); border-bottom-left-radius: 4px; }
+
+    .meta { font-size: 0.72rem; color: #888; margin-top: 3px; text-align: right; }
+
     .input-panel {
       background: white;
       padding: 10px 12px;
       border-top: 1px solid #eee;
-    }
-    .emoji-bar {
-      display: none;
-      flex-wrap: wrap;
-      gap: 4px;
-      padding: 8px;
-      background: white;
-      border-radius: 12px;
-      margin-bottom: 8px;
-      max-height: 120px;
-      overflow-y: auto;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .emoji-bar.show { display: flex; }
-    .emoji-item {
-      background: none;
-      border: none;
-      font-size: 1.4rem;
-      cursor: pointer;
-      padding: 4px;
     }
     .input-row {
       display: flex;
       gap: 8px;
       align-items: flex-end;
     }
-    .input-actions { display: flex; gap: 4px; }
-    .icon-btn {
-      background: none;
-      border: none;
-      font-size: 1.6rem;
-      padding: 6px;
-      cursor: pointer;
-      border-radius: 50%;
-      transition: 0.2s;
-    }
-    .icon-btn:hover { background: #f0f0f0; }
-    .icon-btn.recording { color: red; animation: pulse 1s infinite; }
-    @keyframes pulse { 0%,100%{transform:scale(1);} 50%{transform:scale(1.2);} }
     .text-input {
       flex: 1;
       border: 1px solid #ddd;
       border-radius: 24px;
-      padding: 10px 16px;
-      font-size: 0.95rem;
-      outline: none;
+      padding: 12px 16px;
+      font-size: 1rem;
       resize: none;
-      max-height: 100px;
+      max-height: 120px;
+    }
+    .icon-btn {
+      width: 44px; height: 44px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 50%;
+      font-size: 1.5rem;
+      cursor: pointer;
     }
     .send-btn {
-      background: linear-gradient(135deg, #667eea, #764ba2);
+      width: 44px; height: 44px;
+      background: #667eea;
       color: white;
       border: none;
       border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      font-size: 1.3rem;
+      font-size: 1.4rem;
       cursor: pointer;
     }
-    .pin-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .pin-dialog {
-      background: white;
-      padding: 24px;
-      border-radius: 16px;
-      text-align: center;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    .pin-dialog input {
-      width: 140px;
-      padding: 8px;
-      font-size: 1.2rem;
-      text-align: center;
-      margin: 8px 0;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    .pin-dialog button {
-      margin-top: 8px;
-      padding: 8px 20px;
-      border: none;
-      background: #764ba2;
-      color: white;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    .storage-warning {
-      background: #ffebee;
-      color: #c62828;
-      padding: 8px 12px;
-      text-align: center;
-      font-size: 0.8rem;
-      display: none;
-      border-bottom: 1px solid #ef9a9a;
-    }
+    emoji-picker { height: 320px; width: 100%; }
   </style>
 </head>
-<body>
+<body class="light">
 <div class="messenger">
   <div class="header">
-    <h2>👨‍👩‍👧‍👦 Семья</h2>
-    <div class="user-selector" id="userSelector"></div>
+    <h1>👨‍👩‍👧‍👦 FChat</h1>
+    <div id="userSelector"></div>
   </div>
-  <div class="storage-warning" id="storageWarning">
-    ⚠️ Мало свободного места! Очистите старые сообщения или вложения.
-  </div>
-  <div class="settings-bar">
-    <span>🗑️ Автоудаление:</span>
-    <select id="autoDeleteSelect">
-      <option value="1">1 час</option>
-      <option value="6">6 часов</option>
-      <option value="12">12 часов</option>
-      <option value="24" selected>1 день</option>
-      <option value="168">1 неделя</option>
-      <option value="720">1 месяц</option>
-    </select>
-  </div>
+
   <div class="chat-tabs">
-    <button class="chat-tab active" data-chat="general">💬 Общий</button>
-    <button class="chat-tab" data-chat="private">🔒 Приватный</button>
+    <button class="chat-tab active" data-type="general">Общий чат</button>
+    <button class="chat-tab" data-type="private">Приватный</button>
   </div>
-  <div class="private-selector" id="privateSelector">
-    <span>Собеседник:</span>
-    <select id="privateRecipient"></select>
+
+  <div id="privateSelector" class="private-selector" style="display:none; padding:8px 12px; background:#f8f9fa; border-bottom:1px solid #eee;">
+    <strong>С кем переписываемся:</strong>
+    <select id="privateRecipient" style="margin-left:10px; padding:6px;"></select>
   </div>
+
   <div class="chat-window" id="chatWindow"></div>
+
   <div class="input-panel">
-    <div class="emoji-bar" id="emojiBar"></div>
+    <div id="emojiBar" style="display:none; margin-bottom:8px;">
+      <emoji-picker id="emojiPicker"></emoji-picker>
+    </div>
     <div class="input-row">
-      <div class="input-actions">
-        <button class="icon-btn" id="emojiBtn">😊</button>
-        <button class="icon-btn" id="micBtn">🎤</button>
-        <button class="icon-btn" id="attachBtn">📎</button>
-      </div>
-      <textarea class="text-input" id="messageInput" rows="1" placeholder="Сообщение..."></textarea>
+      <button class="icon-btn" id="emojiBtn">😊</button>
+      <button class="icon-btn" id="attachBtn">📷</button>
+      <textarea class="text-input" id="messageInput" placeholder="Напишите сообщение..."></textarea>
       <button class="send-btn" id="sendBtn">➤</button>
     </div>
   </div>
-  <input type="file" id="fileInput" accept="image/*" style="display:none">
 </div>
 
-<!-- Окно ПИН-кода -->
-<div class="pin-overlay" id="pinOverlay">
-  <div class="pin-dialog">
-    <div id="pinMessage">Введите ПИН-код для входа как <span id="pinUserName"></span></div>
-    <input type="password" id="pinInput" maxlength="4" placeholder="0000">
-    <br>
-    <button id="pinSubmit">OK</button>
-    <button id="pinCancel" style="background:#888;">Отмена</button>
-  </div>
-</div>
+<input type="file" id="fileInput" accept="image/*" style="display:none">
 
-<script>
-  (function() {
-    // ---------- Имена и участники ----------
-    const MEMBERS = [
-      { id: 'dad',    name: 'Папа',       emoji: '👨' },
-      { id: 'mom',    name: 'Мама',       emoji: '👩' },
-      { id: 'sergey', name: 'Сын Сергей', emoji: '👦' },
-      { id: 'sveta',  name: 'Дочь Света', emoji: '👧' },
-      { id: 'katya',  name: 'Дочь Катя',  emoji: '👧' }
-    ];
+<script type="module">
+  // ================== Firebase ==================
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import { getDatabase, ref, push, onChildAdded, onChildChanged, onChildRemoved, remove } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
 
-    // ---------- Ключи localStorage ----------
-    const STORAGE_MSGS = 'familyChat_messages';
-    const STORAGE_PINS = 'familyChat_pins';        // { userId: pin }
-    const STORAGE_AUTO_DELETE = 'familyChat_autoDeleteHours';
+  const firebaseConfig = {
+    apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
+    authDomain: "fchat-d6879.firebaseapp.com",
+    databaseURL: "https://fchat-d6879-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "fchat-d6879",
+    storageBucket: "fchat-d6879.firebasestorage.app",
+    messagingSenderId: "1049514912319",
+    appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a"
+  };
 
-    // ---------- DOM ----------
-    const userSelector = document.getElementById('userSelector');
-    const chatTabs = document.querySelectorAll('.chat-tab');
-    const chatWindow = document.getElementById('chatWindow');
-    const privateSelector = document.getElementById('privateSelector');
-    const privateRecipient = document.getElementById('privateRecipient');
-    const autoDeleteSelect = document.getElementById('autoDeleteSelect');
-    const storageWarning = document.getElementById('storageWarning');
-    const emojiBar = document.getElementById('emojiBar');
-    const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const emojiBtn = document.getElementById('emojiBtn');
-    const micBtn = document.getElementById('micBtn');
-    const attachBtn = document.getElementById('attachBtn');
-    const fileInput = document.getElementById('fileInput');
-    const pinOverlay = document.getElementById('pinOverlay');
-    const pinInput = document.getElementById('pinInput');
-    const pinSubmit = document.getElementById('pinSubmit');
-    const pinCancel = document.getElementById('pinCancel');
-    const pinMessage = document.getElementById('pinMessage');
-    const pinUserName = document.getElementById('pinUserName');
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
 
-    // ---------- Состояние ----------
-    let currentUser = localStorage.getItem('fc_currentUser') || null;
-    let activeChat = localStorage.getItem('fc_activeChat') || 'general';
-    let activePrivateUserId = localStorage.getItem('fc_activePrivate') || null;
-    let autoDeleteHours = parseInt(localStorage.getItem(STORAGE_AUTO_DELETE) || '24');
-    let messages = loadMessages();
-    let mediaRecorder = null;
-    let audioChunks = [];
-    let recording = false;
-    let pendingUserSwitch = null; // id пользователя, которого пытаемся выбрать
+  // ================== Данные семьи ==================
+  const MEMBERS = [
+    { id: "dad",    name: "Папа",     emoji: "👨" },
+    { id: "mom",    name: "Мама",     emoji: "👩" },
+    { id: "sergey", name: "Сергей",   emoji: "👦" },
+    { id: "sveta",  name: "Света",    emoji: "👧" },
+    { id: "katya",  name: "Катя",     emoji: "👧" }
+  ];
 
-    // Инициализация, если текущий пользователь не задан – показываем первого
-    if (!currentUser || !MEMBERS.find(m => m.id === currentUser)) {
-      currentUser = MEMBERS[0].id;
-      localStorage.setItem('fc_currentUser', currentUser);
+  // ================== Переменные ==================
+  let currentUser = localStorage.getItem("fc_user") || "dad";
+  let activeChatType = "general";           // general | private
+  let privateWith = null;                   // с кем ведём приватный чат
+
+  // ================== DOM ==================
+  const chatWindow = document.getElementById("chatWindow");
+  const messageInput = document.getElementById("messageInput");
+  const sendBtn = document.getElementById("sendBtn");
+  const emojiBtn = document.getElementById("emojiBtn");
+  const attachBtn = document.getElementById("attachBtn");
+  const fileInput = document.getElementById("fileInput");
+  const emojiPicker = document.getElementById("emojiPicker");
+  const emojiBar = document.getElementById("emojiBar");
+  const userSelector = document.getElementById("userSelector");
+  const privateSelector = document.getElementById("privateSelector");
+  const privateRecipient = document.getElementById("privateRecipient");
+
+  // ================== IndexedDB для медиа ==================
+  let dbLocal = null;
+  const dbRequest = indexedDB.open("FChatMedia", 1);
+  dbRequest.onupgradeneeded = e => {
+    dbLocal = e.target.result;
+    dbLocal.createObjectStore("media", { keyPath: "id" });
+  };
+  dbRequest.onsuccess = e => dbLocal = e.target.result;
+
+  async function saveMedia(id, blob) {
+    return new Promise((resolve) => {
+      const tx = dbLocal.transaction("media", "readwrite");
+      tx.objectStore("media").put({ id, blob, time: Date.now() });
+      tx.oncomplete = () => resolve(true);
+    });
+  }
+
+  async function getMedia(id) {
+    return new Promise((resolve) => {
+      const tx = dbLocal.transaction("media", "readonly");
+      const req = tx.objectStore("media").get(id);
+      req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+    });
+  }
+
+  // ================== Основные функции ==================
+  function getChatRef() {
+    if (activeChatType === "general") {
+      return ref(db, "messages");
+    } else {
+      const ids = [currentUser, privateWith].sort();
+      return ref(db, `private/${ids[0]}_${ids[1]}`);
+    }
+  }
+
+  function renderMessage(msg) {
+    const isSent = msg.from === currentUser;
+    const member = MEMBERS.find(m => m.id === msg.from) || { name: msg.from, emoji: "👤" };
+
+    const div = document.createElement("div");
+    div.className = `message ${isSent ? "sent" : "received"}`;
+    div.dataset.key = msg.key;
+
+    let content = msg.text || "";
+    if (msg.mediaId) {
+      content = `<div class="media-preview" data-id="${msg.mediaId}">📎 Медиа (локально)</div>`;
     }
 
-    // ---------- ПИН-коды ----------
-    function getPins() {
-      try { return JSON.parse(localStorage.getItem(STORAGE_PINS)) || {}; }
-      catch(e) { return {}; }
-    }
-    function savePins(pins) { localStorage.setItem(STORAGE_PINS, JSON.stringify(pins)); }
+    div.innerHTML = `
+      ${!isSent ? `<div style="font-size:0.8rem;opacity:0.8;">${member.emoji} ${member.name}</div>` : ''}
+      <div class="bubble">${content}</div>
+      <div class="meta">${new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'})}</div>
+    `;
 
-    function hasPin(userId) {
-      const pins = getPins();
-      return !!pins[userId];
-    }
+    chatWindow.appendChild(div);
+    chatWindow.scrollTop = chatWindow.scrollHeight;
+  }
 
-    function checkPin(userId, pin) {
-      const pins = getPins();
-      return pins[userId] === pin;
-    }
+  async function sendMessage() {
+    const text = messageInput.value.trim();
+    if (!text) return;
 
-    function setPin(userId, pin) {
-      const pins = getPins();
-      pins[userId] = pin;
-      savePins(pins);
-    }
+    const messageData = {
+      from: currentUser,
+      text: text,
+      timestamp: Date.now()
+    };
 
-    // ---------- Загрузка и очистка сообщений ----------
-    function loadMessages() {
-      try {
-        const raw = localStorage.getItem(STORAGE_MSGS);
-        const data = raw ? JSON.parse(raw) : { general: [], private: {} };
-        cleanOldMessages(data);
-        return data;
-      } catch(e) {
-        return { general: [], private: {} };
-      }
-    }
+    const chatRef = getChatRef();
+    await push(chatRef, messageData);
+    messageInput.value = "";
+  }
 
-    function cleanOldMessages(data) {
-      const now = Date.now();
-      const maxAge = autoDeleteHours * 3600 * 1000;
-      const isOld = msg => (now - msg.timestamp) > maxAge;
-      data.general = (data.general || []).filter(m => !isOld(m));
-      if (data.private) {
-        Object.keys(data.private).forEach(key => {
-          data.private[key] = data.private[key].filter(m => !isOld(m));
-          if (data.private[key].length === 0) delete data.private[key];
-        });
-      }
-    }
+  // ================== Инициализация пользователей ==================
+  function initUserSelector() {
+    userSelector.innerHTML = MEMBERS.map(m => `
+      <button class="user-btn ${m.id === currentUser ? 'active' : ''}" data-id="${m.id}">
+        ${m.emoji} ${m.name}
+      </button>
+    `).join('');
 
-    function saveMessages() {
-      cleanOldMessages(messages);
-      localStorage.setItem(STORAGE_MSGS, JSON.stringify(messages));
-      checkStorageQuota();
-    }
+    userSelector.querySelectorAll('.user-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const newUser = btn.dataset.id;
+        if (newUser === currentUser) return;
 
-    // ---------- Проверка размера хранилища ----------
-    function getStorageUsage() {
-      let total = 0;
-      for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
-          total += localStorage.getItem(key).length * 2; // UTF-16
-        }
-      }
-      return total; // байт
-    }
-
-    function checkStorageQuota() {
-      const usage = getStorageUsage();
-      const limit = 5 * 1024 * 1024; // 5 МБ – типичный лимит localStorage
-      const percent = (usage / limit) * 100;
-      if (percent > 80) {
-        storageWarning.style.display = 'block';
-        storageWarning.textContent = `⚠️ Занято ${(usage/1024/1024).toFixed(2)} МБ из 5 МБ. Удалите старые вложения или сообщения.`;
-      } else {
-        storageWarning.style.display = 'none';
-      }
-      // Если превышен лимит, можно предложить очистку
-      if (usage >= limit) {
-        alert('Хранилище переполнено! Старые сообщения будут удалены.');
-        cleanOldMessages(messages);
-        saveMessages();
-        renderChat();
-      }
-    }
-
-    // ---------- Работа с чатом ----------
-    function getChatPath() {
-      if (activeChat === 'general') return ['general'];
-      if (activePrivateUserId) {
-        const users = [currentUser, activePrivateUserId].sort();
-        return ['private', `${users[0]}_${users[1]}`];
-      }
-      return ['general'];
-    }
-
-    function getMessagesForActiveChat() {
-      const [scope, key] = getChatPath();
-      if (scope === 'general') return messages.general || [];
-      return (messages.private && messages.private[key]) ? messages.private[key] : [];
-    }
-
-    function addMessageToChat(msg) {
-      const [scope, key] = getChatPath();
-      if (scope === 'general') {
-        if (!messages.general) messages.general = [];
-        messages.general.push(msg);
-      } else {
-        if (!messages.private) messages.private = {};
-        if (!messages.private[key]) messages.private[key] = [];
-        messages.private[key].push(msg);
-      }
-      saveMessages();
-      renderChat();
-      if (msg.from !== currentUser) {
-        notifyNewMessage(msg);
-      }
-    }
-
-    // ---------- Рендеринг ----------
-    function renderUserSelector() {
-      userSelector.innerHTML = MEMBERS.map(m => `
-        <button class="user-btn ${m.id === currentUser ? 'active' : ''}" data-user="${m.id}">
-          ${m.emoji} ${m.name}
-        </button>
-      `).join('');
-      document.querySelectorAll('.user-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const userId = btn.dataset.user;
-          if (userId === currentUser) return;
-          attemptSwitchUser(userId);
-        });
-      });
-    }
-
-    function attemptSwitchUser(userId) {
-      if (hasPin(userId)) {
-        // Запрашиваем ПИН
-        pendingUserSwitch = userId;
-        pinUserName.textContent = MEMBERS.find(m => m.id === userId)?.name || userId;
-        pinMessage.innerHTML = `Введите ПИН-код для входа как <b>${pinUserName.textContent}</b>`;
-        pinInput.value = '';
-        pinOverlay.style.display = 'flex';
-        pinInput.focus();
-      } else {
-        // Устанавливаем новый ПИН
-        setInitialPin(userId);
-      }
-    }
-
-    function setInitialPin(userId) {
-      const pin = prompt(`Придумайте 4-значный ПИН-код для роли "${MEMBERS.find(m=>m.id===userId)?.name}". Остальные члены семьи не должны его знать.`);
-      if (pin && /^\d{4}$/.test(pin)) {
-        setPin(userId, pin);
-        switchUser(userId);
-      } else if (pin !== null) {
-        alert('ПИН должен состоять из 4 цифр.');
-      }
-    }
-
-    function switchUser(userId) {
-      currentUser = userId;
-      localStorage.setItem('fc_currentUser', currentUser);
-      if (activeChat === 'private' && activePrivateUserId === userId) {
-        activePrivateUserId = null;
-        localStorage.removeItem('fc_activePrivate');
-        updatePrivateSelector();
-      }
-      renderUserSelector();
-      renderChat();
-    }
-
-    // Обработчики ПИН-окна
-    pinSubmit.addEventListener('click', () => {
-      const pin = pinInput.value.trim();
-      if (pin && pendingUserSwitch) {
-        if (checkPin(pendingUserSwitch, pin)) {
-          pinOverlay.style.display = 'none';
-          switchUser(pendingUserSwitch);
+        const pin = prompt(`Введите ПИН для ${MEMBERS.find(m => m.id === newUser).name}:`);
+        if (pin === "0000" || pin === "1234") {   // простой пин для теста, потом можно усложнить
+          currentUser = newUser;
+          localStorage.setItem("fc_user", currentUser);
+          initUserSelector();
+          chatWindow.innerHTML = "";
+          subscribeToMessages();
         } else {
-          alert('Неверный ПИН-код');
+          alert("Неверный ПИН");
         }
-      }
-    });
-    pinCancel.addEventListener('click', () => {
-      pinOverlay.style.display = 'none';
-      pendingUserSwitch = null;
-    });
-    pinInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') pinSubmit.click();
-    });
-
-    function updatePrivateSelector() {
-      const others = MEMBERS.filter(m => m.id !== currentUser);
-      privateRecipient.innerHTML = others.map(m => `<option value="${m.id}">${m.emoji} ${m.name}</option>`).join('');
-      if (others.length > 0 && !activePrivateUserId) {
-        activePrivateUserId = others[0].id;
-        localStorage.setItem('fc_activePrivate', activePrivateUserId);
-      } else if (others.length === 0) {
-        activePrivateUserId = null;
-      }
-      privateRecipient.value = activePrivateUserId || '';
-      privateSelector.style.display = activeChat === 'private' ? 'flex' : 'none';
-    }
-
-    function renderChat() {
-      const msgs = getMessagesForActiveChat();
-      chatWindow.innerHTML = msgs.length === 0 
-        ? '<div class="welcome">Нет сообщений. Напишите первым!</div>'
-        : msgs.map(msg => createMessageHTML(msg)).join('');
-      chatWindow.scrollTop = chatWindow.scrollHeight;
-    }
-
-    function createMessageHTML(msg) {
-      const isSent = msg.from === currentUser;
-      const sender = MEMBERS.find(m => m.id === msg.from) || { name: msg.from, emoji: '👤' };
-      let content = '';
-      if (msg.type === 'image') {
-        content = `<div class="image-msg"><img src="${msg.content}" alt="Фото" loading="lazy"></div>`;
-      } else if (msg.type === 'voice') {
-        content = `<div class="audio-msg"><audio controls src="${msg.content}"></audio></div>`;
-      } else {
-        content = msg.content;
-      }
-      return `
-        <div class="message ${isSent ? 'sent' : 'received'}">
-          ${!isSent ? `<div class="sender-name">${sender.emoji} ${sender.name}</div>` : ''}
-          <div class="bubble">${content}</div>
-          <div class="meta">${new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
-        </div>`;
-    }
-
-    // ---------- Отправка сообщений ----------
-    function sendMessage(type, content) {
-      if (!content && type === 'text') return;
-      const msg = {
-        from: currentUser,
-        type: type || 'text',
-        content: content,
-        timestamp: Date.now()
-      };
-      addMessageToChat(msg);
-      setTimeout(() => generateReply(), 1500 + Math.random() * 1500);
-    }
-
-    function generateReply() {
-      const [scope, key] = getChatPath();
-      let replyFrom = null;
-      if (scope === 'general') {
-        const candidates = MEMBERS.filter(m => m.id !== currentUser);
-        if (candidates.length === 0) return;
-        replyFrom = candidates[Math.floor(Math.random() * candidates.length)];
-      } else {
-        replyFrom = MEMBERS.find(m => m.id === activePrivateUserId);
-        if (!replyFrom) return;
-      }
-      const phrases = {
-        dad: ["Молодец!", "Скоро буду", "Купи хлеба"],
-        mom: ["Суп готов 🍲", "Обниму при встрече", "Не забудь уроки"],
-        sergey: ["Привет!", "Поиграем в приставку?", "Я сделал домашку"],
-        sveta: ["Какой сегодня план?", "Смотрела новый фильм 🎬", "Давай погуляем"],
-        katya: ["Приветики!", "Помоги с математикой", "У меня новая кукла 👗"]
-      };
-      const pool = phrases[replyFrom.id] || ["Привет!"];
-      const text = pool[Math.floor(Math.random() * pool.length)];
-      const replyMsg = {
-        from: replyFrom.id,
-        type: 'text',
-        content: text,
-        timestamp: Date.now()
-      };
-      if (scope === 'general') {
-        if (!messages.general) messages.general = [];
-        messages.general.push(replyMsg);
-      } else {
-        if (!messages.private) messages.private = {};
-        if (!messages.private[key]) messages.private[key] = [];
-        messages.private[key].push(replyMsg);
-      }
-      saveMessages();
-      renderChat();
-      notifyNewMessage(replyMsg);
-    }
-
-    // ---------- Голосовые сообщения ----------
-    async function startRecording() {
-      if (!navigator.mediaDevices || !window.MediaRecorder) {
-        alert('Запись голоса не поддерживается');
-        return;
-      }
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream);
-      audioChunks = [];
-      mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-        const url = URL.createObjectURL(blob);
-        sendMessage('voice', url);
-        stream.getTracks().forEach(t => t.stop());
-        micBtn.classList.remove('recording');
-        recording = false;
-      };
-      mediaRecorder.start();
-      recording = true;
-      micBtn.classList.add('recording');
-      setTimeout(() => {
-        if (recording) mediaRecorder.stop();
-      }, 10000);
-    }
-
-    function stopRecording() {
-      if (mediaRecorder && recording) mediaRecorder.stop();
-    }
-
-    // ---------- Уведомления ----------
-    let notifyEnabled = false;
-    Notification.requestPermission().then(perm => {
-      if (perm === 'granted') notifyEnabled = true;
-    });
-
-    function playSound() {
-      try {
-        const ctx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.frequency.value = 800;
-        gain.gain.value = 0.1;
-        osc.start();
-        osc.stop(ctx.currentTime + 0.15);
-      } catch(e) {}
-    }
-
-    function notifyNewMessage(msg) {
-      const sender = MEMBERS.find(m => m.id === msg.from);
-      const title = sender ? `${sender.emoji} ${sender.name}` : msg.from;
-      const body = msg.type === 'image' ? '📷 Фото' : msg.type === 'voice' ? '🎤 Голосовое' : msg.content;
-      if (notifyEnabled) {
-        new Notification(title, { body, icon: '👨‍👩‍👧‍👦' });
-      }
-      playSound();
-    }
-
-    // ---------- Обработчики интерфейса ----------
-    sendBtn.addEventListener('click', () => {
-      const text = messageInput.value.trim();
-      if (text) {
-        sendMessage('text', text);
-        messageInput.value = '';
-        messageInput.style.height = 'auto';
-      }
-    });
-
-    messageInput.addEventListener('keydown', e => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendBtn.click();
-      }
-    });
-
-    messageInput.addEventListener('input', function() {
-      this.style.height = 'auto';
-      this.style.height = this.scrollHeight + 'px';
-    });
-
-    // Эмодзи
-    const emojis = ['😀','😂','😍','🥰','😘','😎','🤩','😇','🤗','🤔','😴','😢','😡','👍','👎','❤️','💔','🎉','🔥','🌟'];
-    emojiBar.innerHTML = emojis.map(e => `<button class="emoji-item">${e}</button>`).join('');
-    emojiBar.addEventListener('click', e => {
-      if (e.target.classList.contains('emoji-item')) {
-        messageInput.value += e.target.textContent;
-        messageInput.focus();
-      }
-    });
-    emojiBtn.addEventListener('click', () => emojiBar.classList.toggle('show'));
-
-    // Микрофон
-    micBtn.addEventListener('click', () => recording ? stopRecording() : startRecording());
-
-    // Фото
-    attachBtn.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', () => {
-      const file = fileInput.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = () => {
-        sendMessage('image', reader.result);
-        fileInput.value = '';
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Вкладки чатов
-    chatTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        chatTabs.forEach(t => t.classList.remove('active'));
-        tab.classList.add('active');
-        activeChat = tab.dataset.chat;
-        localStorage.setItem('fc_activeChat', activeChat);
-        if (activeChat === 'private') {
-          updatePrivateSelector();
-        } else {
-          privateSelector.style.display = 'none';
-          activePrivateUserId = null;
-          localStorage.removeItem('fc_activePrivate');
-        }
-        renderChat();
       });
     });
+  }
 
-    // Выбор собеседника в приватном чате
-    privateRecipient.addEventListener('change', () => {
-      activePrivateUserId = privateRecipient.value;
-      localStorage.setItem('fc_activePrivate', activePrivateUserId);
-      renderChat();
+  function subscribeToMessages() {
+    const chatRef = getChatRef();
+    onChildAdded(chatRef, (snapshot) => {
+      const msg = snapshot.val();
+      msg.key = snapshot.key;
+      renderMessage(msg);
     });
+  }
 
-    // Автоудаление
-    autoDeleteSelect.value = autoDeleteHours.toString();
-    autoDeleteSelect.addEventListener('change', () => {
-      autoDeleteHours = parseInt(autoDeleteSelect.value);
-      localStorage.setItem(STORAGE_AUTO_DELETE, autoDeleteHours);
-      cleanOldMessages(messages);
-      saveMessages();
-      renderChat();
-    });
+  // ================== Запуск ==================
+  initUserSelector();
+  subscribeToMessages();
 
-    // Периодическая очистка и проверка памяти
-    setInterval(() => {
-      cleanOldMessages(messages);
-      saveMessages();
-      renderChat();
-    }, 30000);
+  // Эмодзи
+  emojiBtn.addEventListener("click", () => {
+    emojiBar.style.display = emojiBar.style.display === "block" ? "none" : "block";
+  });
 
-    // ---------- Запуск ----------
-    function init() {
-      // Устанавливаем автоудаление из настроек
-      autoDeleteSelect.value = autoDeleteHours;
-      renderUserSelector();
-      chatTabs.forEach(t => t.classList.remove('active'));
-      const activeTab = document.querySelector(`.chat-tab[data-chat="${activeChat}"]`);
-      if (activeTab) activeTab.classList.add('active');
-      if (activeChat === 'private') {
-        updatePrivateSelector();
-        if (!activePrivateUserId) {
-          const others = MEMBERS.filter(m => m.id !== currentUser);
-          if (others.length > 0) activePrivateUserId = others[0].id;
-        }
-        privateRecipient.value = activePrivateUserId || '';
-        privateSelector.style.display = 'flex';
-      }
-      renderChat();
-      checkStorageQuota();
-    }
+  emojiPicker.addEventListener("emoji-click", e => {
+    messageInput.value += e.detail.unicode;
+    messageInput.focus();
+  });
 
-    init();
-  })();
+  // Отправка
+  sendBtn.addEventListener("click", sendMessage);
+  messageInput.addEventListener("keypress", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+
+  // Фото (локально)
+  attachBtn.addEventListener("click", () => fileInput.click());
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const mediaId = "img_" + Date.now();
+    await saveMedia(mediaId, file);
+    alert("Фото сохранено локально (пока только у вас)");
+    // Можно добавить renderMessage с превью
+  });
+
+  console.log("FChat упрощённая версия запущена");
 </script>
 </body>
 </html>
