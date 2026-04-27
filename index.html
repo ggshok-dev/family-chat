@@ -231,135 +231,148 @@
             measurementId: "G-11PJ481DDP"
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-        const chatWindow = document.getElementById('chat-window');
-        const usernameInput = document.getElementById('username');
-        const recipientInput = document.getElementById('recipient');
-        const messageInput = document.getElementById('message-input');
-        const sendBtn = document.getElementById('send-btn');
-        const emojiBtn = document.getElementById('emoji-btn');
-        const picker = document.querySelector('emoji-picker');
-        const btnGeneral = document.getElementById('btn-general');
-        const btnPrivate = document.getElementById('btn-private');
+    const chatWindow = document.getElementById('chat-window');
+    const usernameInput = document.getElementById('username');
+    const recipientInput = document.getElementById('recipient');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const emojiBtn = document.getElementById('emoji-btn');
+    const picker = document.querySelector('emoji-picker');
+    const btnGeneral = document.getElementById('btn-general');
+    const btnPrivate = document.getElementById('btn-private');
 
-        let currentChatType = 'general';
-        let currentChatRef = null;
+    let currentChatType = 'general';
+    let currentChatRef = null;
 
-        // Генерация ID личного чата
-        function getChatId(u1, u2) {
-            const users = [u1.trim().toLowerCase(), u2.trim().toLowerCase()].sort();
-            return `${users[0]}_${users[1]}`;
-        }
+    // Генерируем уникальный ID для пары пользователей
+    function getChatId(u1, u2) {
+        const users = [u1.trim().toLowerCase(), u2.trim().toLowerCase()].sort();
+        return `${users[0]}_${users[1]}`; // Исправлено: берем элементы массива
+    }
 
-        function formatTime(ts) {
-            return new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        }
+    function formatTime(ts) {
+        return new Date(ts).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    }
 
-        function scrollToBottom() {
-            chatWindow.scrollTop = chatWindow.scrollHeight;
-        }
+    function scrollToBottom() {
+        chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
 
-        function addMessage(snapshot) {
-            const msg = snapshot.val();
-            if (!msg?.text) return;
+    function addMessage(snapshot) {
+        const msg = snapshot.val();
+        if (!msg?.text) return;
 
-            const isMy = msg.name === usernameInput.value.trim();
-            const html = `
-                <div class="message ${isMy ? 'outgoing' : 'incoming'}">
-                    <div class="user-name">${msg.name}</div>
-                    <div class="text">${msg.text}</div>
-                    <div class="message-time">${formatTime(msg.time)}</div>
-                </div>`;
-            chatWindow.insertAdjacentHTML('beforeend', html);
-            scrollToBottom();
-        }
+        const isMy = msg.name === usernameInput.value.trim();
+        const html = `
+            <div class="message ${isMy ? 'outgoing' : 'incoming'}">
+                <div class="user-name">${msg.name}</div>
+                <div class="text">${msg.text}</div>
+                <div class="message-time">${formatTime(msg.time)}</div>
+            </div>`;
+        chatWindow.insertAdjacentHTML('beforeend', html);
+        scrollToBottom();
+    }
 
-        function loadChat() {
-            chatWindow.innerHTML = '';
-            if (currentChatRef) off(currentChatRef);
+    function loadChat() {
+        if (currentChatRef) off(currentChatRef); // Отключаем старый чат перед загрузкой нового
+        chatWindow.innerHTML = '';
 
-            let path = 'messages';
-            let welcomeText = '👋 Добро пожаловать в общий чат!';
+        let path = 'messages';
+        let welcomeText = '👋 Добро пожаловать в общий чат!';
 
-            if (currentChatType === 'private') {
-                const me = usernameInput.value.trim();
-                const target = recipientInput.value.trim();
-                if (!me || !target) {
-                    chatWindow.innerHTML = '<div class="message welcome">Укажите оба имени для личного чата</div>';
-                    return;
-                }
-                path = `privateChats/${getChatId(me, target)}/messages`;
-                welcomeText = `🔒 Личный чат с ${target}`;
+        if (currentChatType === 'private') {
+            const me = usernameInput.value.trim();
+            const target = recipientInput.value.trim();
+            if (!me || !target) {
+                chatWindow.innerHTML = '<div class="message welcome">Введите своё имя и имя получателя</div>';
+                return;
             }
-
-            chatWindow.innerHTML = `<div class="message welcome">${welcomeText}</div>`;
-            currentChatRef = ref(db, path);
-            onChildAdded(currentChatRef, addMessage);
+            path = `privateChats/${getChatId(me, target)}/messages`;
+            welcomeText = `🔒 Личный чат: ${me} и ${target}`;
         }
 
-        function sendMessage() {
-            const name = usernameInput.value.trim() || 'Гость';
-            const text = messageInput.value.trim();
-            if (!text) return;
+        chatWindow.innerHTML = `<div class="message welcome">${welcomeText}</div>`;
+        currentChatRef = ref(db, path);
+        onChildAdded(currentChatRef, addMessage);
+    }
 
-            let path = 'messages';
-            if (currentChatType === 'private') {
-                path = `privateChats/${getChatId(name, recipientInput.value)}/messages`;
-            }
+    function sendMessage() {
+        const name = usernameInput.value.trim() || 'Гость';
+        const text = messageInput.value.trim();
+        if (!text) return;
 
-            push(ref(db, path), { name, text, time: Date.now() });
-            messageInput.value = '';
-            messageInput.style.height = '40px';
-            picker.style.display = 'none';
+        let path = 'messages';
+        if (currentChatType === 'private') {
+            const target = recipientInput.value.trim();
+            if (!target) return alert("Введите имя получателя");
+            path = `privateChats/${getChatId(name, target)}/messages`;
         }
 
-        // Авто-высота текста
-        messageInput.addEventListener('input', function() {
-            this.style.height = 'auto';
-            this.style.height = (this.scrollHeight) + 'px';
-        });
+        push(ref(db, path), { name, text, time: Date.now() });
+        messageInput.value = '';
+        messageInput.style.height = '40px';
+        picker.style.display = 'none';
+    }
 
-        // Обработка Enter
-        messageInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
+    // Авто-высота
+    messageInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
 
-        // Эмодзи
-        emojiBtn.addEventListener('click', () => {
-            picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
-        });
+    // Отправка по Enter
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
 
-        picker.addEventListener('emoji-click', event => {
-            messageInput.value += event.detail.unicode;
-            messageInput.dispatchEvent(new Event('input')); // Обновить высоту
-        });
+    // Эмодзи (Исправлено)
+    emojiBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        picker.style.display = picker.style.display === 'block' ? 'none' : 'block';
+    });
 
-        // Вкладки
-        btnGeneral.addEventListener('click', () => {
-            currentChatType = 'general';
-            btnGeneral.classList.add('active');
-            btnPrivate.classList.remove('active');
-            recipientInput.style.display = 'none';
-            loadChat();
-        });
+    picker.addEventListener('emoji-click', event => {
+        const emoji = event.detail.unicode;
+        messageInput.value += emoji;
+        // Важно: триггерим событие, чтобы сработал скрипт авто-высоты
+        messageInput.dispatchEvent(new Event('input')); 
+        messageInput.focus();
+    });
 
-        btnPrivate.addEventListener('click', () => {
-            currentChatType = 'private';
-            btnPrivate.classList.add('active');
-            btnGeneral.classList.remove('active');
-            recipientInput.style.display = 'block';
-            loadChat();
-        });
+    // Закрыть пикер при клике в любое другое место
+    document.addEventListener('click', () => picker.style.display = 'none');
+    picker.addEventListener('click', (e) => e.stopPropagation());
 
-        sendBtn.addEventListener('click', sendMessage);
-        recipientInput.addEventListener('change', loadChat);
-        
-        window.addEventListener('load', loadChat);
-    </script>
-</body>
-</html>
+    // Вкладки
+    btnGeneral.addEventListener('click', () => {
+        if (currentChatType === 'general') return;
+        currentChatType = 'general';
+        btnGeneral.classList.add('active');
+        btnPrivate.classList.remove('active');
+        recipientInput.style.display = 'none';
+        loadChat();
+    });
+
+    btnPrivate.addEventListener('click', () => {
+        if (currentChatType === 'private') return;
+        currentChatType = 'private';
+        btnPrivate.classList.add('active');
+        btnGeneral.classList.remove('active');
+        recipientInput.style.display = 'block';
+        loadChat();
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+    
+    // Перезагружаем чат при смене имен в полях
+    usernameInput.addEventListener('blur', loadChat);
+    recipientInput.addEventListener('blur', loadChat);
+    
+    window.addEventListener('load', loadChat);
+</script>
