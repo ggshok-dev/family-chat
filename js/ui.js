@@ -151,22 +151,30 @@ function updatePrivateHeader() {
 function applyStoredSettings() {
   if (isDarkTheme) {
     document.body.classList.add('dark-theme');
-    document.getElementById('themeBtn').textContent = '☀️';
+    const themeBtn = document.getElementById('themeBtn');
+    if (themeBtn) themeBtn.textContent = '☀️';
   }
   
   document.documentElement.style.setProperty('--font-scale', fontSize / 100);
   const fv = document.getElementById('fontValue');
   if (fv) fv.textContent = fontSize + '%';
   
-  document.getElementById('notifToggle').checked = notifEnabled;
-  document.getElementById('soundToggle').checked = soundEnabled;
-  document.getElementById('autoDelete').value = autoDeleteHours;
-  document.getElementById('notifBtn').textContent = notifEnabled ? '🔔' : '🔕';
-  document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+  const notifToggle = document.getElementById('notifToggle');
+  const soundToggle = document.getElementById('soundToggle');
+  const autoDelete = document.getElementById('autoDelete');
+  const notifBtn = document.getElementById('notifBtn');
+  const soundBtn = document.getElementById('soundBtn');
+  
+  if (notifToggle) notifToggle.checked = notifEnabled;
+  if (soundToggle) soundToggle.checked = soundEnabled;
+  if (autoDelete) autoDelete.value = autoDeleteHours;
+  if (notifBtn) notifBtn.textContent = notifEnabled ? '🔔' : '🔕';
+  if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
 }
 
 function applyFontSize() {
   document.documentElement.style.setProperty('--font-scale', fontSize / 100);
-  document.getElementById('fontValue').textContent = fontSize + '%';
+  const fv = document.getElementById('fontValue');
+  if (fv) fv.textContent = fontSize + '%';
   localStorage.setItem('fc_font', fontSize);
 }
