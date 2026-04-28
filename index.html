@@ -10,6 +10,10 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   
   <style>
+    :root {
+      --font-size-multiplier: 1;
+    }
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
@@ -20,6 +24,7 @@
       justify-content: center;
       align-items: center;
       padding: 10px;
+      font-size: calc(1rem * var(--font-size-multiplier));
     }
     
     /* ===== СЕКРЕТНЫЙ КОД ===== */
@@ -54,18 +59,18 @@
     .secret-code-dialog h2 {
       color: #333;
       margin-bottom: 10px;
-      font-size: 1.5rem;
+      font-size: calc(1.5rem * var(--font-size-multiplier));
     }
     
     .secret-code-dialog .family-icon {
-      font-size: 50px;
+      font-size: calc(50px * var(--font-size-multiplier));
       margin-bottom: 15px;
     }
     
     .secret-code-dialog p {
       color: #666;
       margin-bottom: 20px;
-      font-size: 0.9rem;
+      font-size: calc(0.9rem * var(--font-size-multiplier));
     }
     
     .secret-code-input {
@@ -73,7 +78,7 @@
       padding: 12px;
       border: 2px solid #e0e0e0;
       border-radius: 12px;
-      font-size: 1.1rem;
+      font-size: calc(1.1rem * var(--font-size-multiplier));
       text-align: center;
       margin-bottom: 15px;
       outline: none;
@@ -92,7 +97,7 @@
       color: white;
       border: none;
       border-radius: 12px;
-      font-size: 1rem;
+      font-size: calc(1rem * var(--font-size-multiplier));
       font-weight: 600;
       cursor: pointer;
       transition: transform 0.2s;
@@ -104,7 +109,7 @@
     
     .error-message {
       color: #ff4444;
-      font-size: 0.85rem;
+      font-size: calc(0.85rem * var(--font-size-multiplier));
       margin-top: 10px;
       display: none;
     }
@@ -138,11 +143,11 @@
     }
     
     .header-logo {
-      font-size: 28px;
+      font-size: calc(28px * var(--font-size-multiplier));
     }
     
     .header-title {
-      font-size: 1.3rem;
+      font-size: calc(1.3rem * var(--font-size-multiplier));
       font-weight: 700;
       flex: 1;
     }
@@ -156,7 +161,7 @@
       background: rgba(255,255,255,0.2);
       border: none;
       color: white;
-      font-size: 18px;
+      font-size: calc(18px * var(--font-size-multiplier));
       width: 35px;
       height: 35px;
       border-radius: 50%;
@@ -171,10 +176,6 @@
     .header-btn:hover {
       background: rgba(255,255,255,0.3);
       transform: scale(1.1);
-    }
-    
-    .header-btn.disabled {
-      opacity: 0.5;
     }
     
     /* User avatars */
@@ -210,7 +211,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: calc(24px * var(--font-size-multiplier));
       border: 3px solid transparent;
       transition: all 0.2s;
       background: #e0e0e0;
@@ -223,7 +224,7 @@
     }
     
     .avatar-name {
-      font-size: 0.75rem;
+      font-size: calc(0.75rem * var(--font-size-multiplier));
       font-weight: 600;
       color: #666;
     }
@@ -238,18 +239,26 @@
       background: white;
       border-bottom: 1px solid #eee;
       padding: 12px 15px;
+      color: #333;
     }
     
     .settings-panel.show {
       display: block;
     }
     
+    .settings-panel h3 {
+      font-size: calc(1rem * var(--font-size-multiplier));
+      margin-bottom: 10px;
+      color: #667eea;
+    }
+    
     .setting-item {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 0;
+      padding: 10px 0;
       border-bottom: 1px solid #f0f0f0;
+      color: #333;
     }
     
     .setting-item:last-child {
@@ -257,8 +266,9 @@
     }
     
     .setting-label {
-      font-size: 0.9rem;
+      font-size: calc(0.9rem * var(--font-size-multiplier));
       font-weight: 500;
+      color: #333;
     }
     
     /* Toggle switch */
@@ -304,6 +314,70 @@
       transform: translateX(24px);
     }
     
+    /* Font size buttons */
+    .font-size-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    
+    .font-size-btn {
+      width: 30px;
+      height: 30px;
+      border: 2px solid #667eea;
+      background: white;
+      color: #667eea;
+      border-radius: 50%;
+      font-size: calc(1.2rem * var(--font-size-multiplier));
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    
+    .font-size-btn:hover {
+      background: #667eea;
+      color: white;
+    }
+    
+    .font-size-value {
+      font-weight: 600;
+      color: #333;
+      min-width: 40px;
+      text-align: center;
+    }
+    
+    /* Action buttons in settings */
+    .action-btn-settings {
+      padding: 6px 14px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: calc(0.85rem * var(--font-size-multiplier));
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .action-btn-settings.primary {
+      background: #667eea;
+      color: white;
+    }
+    
+    .action-btn-settings.danger {
+      background: #ff4444;
+      color: white;
+    }
+    
+    .action-btn-settings.warning {
+      background: #ff9800;
+      color: white;
+    }
+    
+    .action-btn-settings:hover {
+      transform: scale(1.05);
+    }
+    
     /* Tabs */
     .tabs {
       display: flex;
@@ -321,7 +395,7 @@
       border-radius: 12px;
       cursor: pointer;
       font-weight: 600;
-      font-size: 0.9rem;
+      font-size: calc(0.9rem * var(--font-size-multiplier));
       transition: all 0.2s;
     }
     
@@ -330,41 +404,13 @@
       color: white;
     }
     
-    /* Settings bar */
-    .settings-bar {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 15px;
-      background: #fff;
-      border-bottom: 1px solid #eee;
-      font-size: 0.85rem;
-    }
-    
-    .settings-bar select {
-      padding: 4px 8px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
-      font-size: 0.85rem;
-    }
-    
-    .clear-btn {
-      padding: 4px 12px;
-      background: #ff4444;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      margin-left: auto;
-    }
-    
     /* Private selector */
     .private-selector {
       display: none;
       padding: 8px 15px;
       background: white;
       border-bottom: 1px solid #eee;
+      color: #333;
     }
     
     .private-selector select {
@@ -372,6 +418,8 @@
       padding: 6px;
       border-radius: 6px;
       border: 1px solid #ddd;
+      font-size: calc(0.9rem * var(--font-size-multiplier));
+      color: #333;
     }
     
     /* Chat */
@@ -392,7 +440,7 @@
     }
     
     .empty-icon {
-      font-size: 50px;
+      font-size: calc(50px * var(--font-size-multiplier));
       margin-bottom: 10px;
     }
     
@@ -421,6 +469,7 @@
       line-height: 1.4;
       word-wrap: break-word;
       position: relative;
+      font-size: calc(0.95rem * var(--font-size-multiplier));
     }
     
     .sent .bubble {
@@ -433,10 +482,11 @@
       background: white;
       border: 1px solid #e0e0e0;
       border-bottom-left-radius: 4px;
+      color: #333;
     }
     
     .msg-sender {
-      font-size: 0.75rem;
+      font-size: calc(0.75rem * var(--font-size-multiplier));
       font-weight: 600;
       color: #764ba2;
       margin-bottom: 2px;
@@ -452,12 +502,12 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      font-size: 12px;
+      font-size: calc(12px * var(--font-size-multiplier));
       background: #e0e0e0;
     }
     
     .msg-time {
-      font-size: 0.7rem;
+      font-size: calc(0.7rem * var(--font-size-multiplier));
       color: #999;
       margin-top: 4px;
       text-align: right;
@@ -481,17 +531,6 @@
     .msg-menu-btn:hover {
       opacity: 1;
       background: rgba(0,0,0,0.1);
-    }
-    
-    .new-message-indicator {
-      text-align: center;
-      padding: 8px;
-      background: rgba(102, 126, 234, 0.1);
-      border-radius: 20px;
-      color: #667eea;
-      font-size: 0.8rem;
-      margin: 5px 0;
-      cursor: pointer;
     }
     
     /* Media */
@@ -533,7 +572,7 @@
     }
     
     .emoji-item {
-      font-size: 1.5rem;
+      font-size: calc(1.5rem * var(--font-size-multiplier));
       padding: 5px;
       cursor: pointer;
       text-align: center;
@@ -567,7 +606,7 @@
       border: none;
       background: #f0f0f0;
       border-radius: 50%;
-      font-size: 1.2rem;
+      font-size: calc(1.2rem * var(--font-size-multiplier));
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -596,11 +635,12 @@
       border: 1px solid #ddd;
       border-radius: 20px;
       padding: 10px 15px;
-      font-size: 0.95rem;
+      font-size: calc(0.95rem * var(--font-size-multiplier));
       resize: none;
       max-height: 100px;
       font-family: inherit;
       outline: none;
+      color: #333;
     }
     
     .msg-input:focus {
@@ -614,7 +654,7 @@
       background: #667eea;
       color: white;
       border-radius: 50%;
-      font-size: 1.2rem;
+      font-size: calc(1.2rem * var(--font-size-multiplier));
       cursor: pointer;
       transition: all 0.2s;
     }
@@ -648,8 +688,9 @@
       background: none;
       text-align: left;
       cursor: pointer;
-      font-size: 0.9rem;
+      font-size: calc(0.9rem * var(--font-size-multiplier));
       transition: background 0.2s;
+      color: #333;
     }
     
     .context-menu button:hover {
@@ -660,7 +701,7 @@
       color: #ff4444;
     }
     
-    /* Dark theme */
+    /* Dark theme - исправленные цвета */
     body.dark-theme .app {
       background: #1a1a2e;
     }
@@ -670,76 +711,150 @@
     }
     
     body.dark-theme .received .bubble {
-      background: #1a1a2e;
-      border-color: #2a2a4a;
-      color: #eee;
+      background: #1e2a44;
+      border-color: #2a3a5c;
+      color: #e8e8e8;
+    }
+    
+    body.dark-theme .msg-sender {
+      color: #a78bfa;
     }
     
     body.dark-theme .msg-input {
-      background: #1a1a2e;
-      color: white;
-      border-color: #2a2a4a;
+      background: #1e2a44;
+      color: #e8e8e8;
+      border-color: #2a3a5c;
+    }
+    
+    body.dark-theme .msg-input::placeholder {
+      color: #6b7280;
     }
     
     body.dark-theme .input-panel,
     body.dark-theme .tabs,
     body.dark-theme .users-avatars,
-    body.dark-theme .settings-bar,
-    body.dark-theme .private-selector,
+    body.dark-theme .private-selector {
+      background: #1a1a2e;
+      border-color: #2a3a5c;
+    }
+    
     body.dark-theme .settings-panel {
-      background: #16213e;
-      border-color: #2a2a4a;
+      background: #1a1a2e;
+      border-color: #2a3a5c;
+      color: #e8e8e8;
+    }
+    
+    body.dark-theme .settings-panel h3 {
+      color: #a78bfa;
+    }
+    
+    body.dark-theme .setting-item {
+      border-color: #2a3a5c;
+      color: #e8e8e8;
+    }
+    
+    body.dark-theme .setting-label {
+      color: #e8e8e8;
+    }
+    
+    body.dark-theme .font-size-btn {
+      background: #1e2a44;
+      color: #a78bfa;
+      border-color: #a78bfa;
+    }
+    
+    body.dark-theme .font-size-btn:hover {
+      background: #a78bfa;
+      color: white;
+    }
+    
+    body.dark-theme .font-size-value {
+      color: #e8e8e8;
     }
     
     body.dark-theme .tab {
-      background: #1a1a2e;
-      color: #eee;
+      background: #1e2a44;
+      color: #e8e8e8;
+    }
+    
+    body.dark-theme .tab.active {
+      background: #667eea;
+      color: white;
     }
     
     body.dark-theme .icon-btn {
-      background: #1a1a2e;
-      color: #eee;
+      background: #1e2a44;
+      color: #e8e8e8;
     }
     
     body.dark-theme .avatar-name {
-      color: #aaa;
+      color: #c0c0c0;
     }
     
     body.dark-theme .emoji-picker-wrapper {
-      background: #1a1a2e;
-      border-color: #2a2a4a;
+      background: #1e2a44;
+      border-color: #2a3a5c;
     }
     
     body.dark-theme .emoji-item:hover {
-      background: #2a2a4a;
+      background: #2a3a5c;
     }
     
     body.dark-theme .context-menu {
-      background: #1a1a2e;
-      color: #eee;
+      background: #1e2a44;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+    }
+    
+    body.dark-theme .context-menu button {
+      color: #e8e8e8;
     }
     
     body.dark-theme .context-menu button:hover {
-      background: #2a2a4a;
+      background: #2a3a5c;
     }
     
     body.dark-theme .secret-code-dialog {
-      background: #1a1a2e;
-      color: #eee;
+      background: #1e2a44;
     }
     
     body.dark-theme .secret-code-dialog h2 {
-      color: #eee;
+      color: #e8e8e8;
     }
     
     body.dark-theme .secret-code-dialog p {
-      color: #aaa;
+      color: #c0c0c0;
     }
     
     body.dark-theme .secret-code-input {
       background: #16213e;
       color: white;
-      border-color: #2a2a4a;
+      border-color: #2a3a5c;
+    }
+    
+    body.dark-theme select {
+      background: #1e2a44;
+      color: #e8e8e8;
+      border-color: #2a3a5c;
+    }
+    
+    body.dark-theme .action-btn-settings.primary {
+      background: #667eea;
+    }
+    
+    body.dark-theme .empty-chat {
+      color: #6b7280;
+    }
+    
+    /* Mobile optimizations */
+    @media (max-width: 480px) {
+      .app {
+        height: 100vh;
+        border-radius: 0;
+      }
+      
+      body {
+        padding: 0;
+      }
     }
   </style>
 </head>
@@ -751,10 +866,10 @@
       <h2>Семейный чат</h2>
       <p>Введите секретный код семьи для входа</p>
       <input type="password" class="secret-code-input" id="secretCodeInput" 
-             placeholder="••••" maxlength="10" autocomplete="off">
+             placeholder="••••" maxlength="10" autocomplete="off" inputmode="text">
       <button class="secret-code-btn" id="secretCodeBtn">Войти</button>
       <div class="error-message" id="errorMessage">Неверный код</div>
-      <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+      <p style="margin-top: 15px; font-size: calc(0.8rem * var(--font-size-multiplier)); color: #999;">
         Подсказка: код по умолчанию "family2024"
       </p>
     </div>
@@ -776,6 +891,8 @@
 
     <!-- Settings panel -->
     <div class="settings-panel" id="settingsPanel">
+      <h3>⚙️ Настройки</h3>
+      
       <div class="setting-item">
         <span class="setting-label">🔔 Push-уведомления</span>
         <label class="toggle-switch">
@@ -783,6 +900,7 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
+      
       <div class="setting-item">
         <span class="setting-label">🔊 Звуковые уведомления</span>
         <label class="toggle-switch">
@@ -790,6 +908,16 @@
           <span class="toggle-slider"></span>
         </label>
       </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">📝 Размер шрифта</span>
+        <div class="font-size-controls">
+          <button class="font-size-btn" id="fontSizeDown">A-</button>
+          <span class="font-size-value" id="fontSizeValue">100%</span>
+          <button class="font-size-btn" id="fontSizeUp">A+</button>
+        </div>
+      </div>
+      
       <div class="setting-item">
         <span class="setting-label">🗑️ Автоудаление</span>
         <select id="autoDeleteSelect" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #ddd;">
@@ -800,11 +928,20 @@
           <option value="168">7 дней</option>
         </select>
       </div>
+      
       <div class="setting-item">
         <span class="setting-label">🔑 Сменить код семьи</span>
-        <button id="changeCodeBtn" style="padding: 4px 12px; border: none; background: #667eea; color: white; border-radius: 6px; cursor: pointer;">
-          Изменить
-        </button>
+        <button class="action-btn-settings primary" id="changeCodeBtn">Изменить</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🔄 Очистить кэш</span>
+        <button class="action-btn-settings warning" id="clearCacheBtn">Перезагрузить</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🗑️ Очистить чат</span>
+        <button class="action-btn-settings danger" id="clearChatBtn">Удалить все</button>
       </div>
     </div>
 
@@ -865,11 +1002,56 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    // ============ FONT SIZE ============
+    let fontSize = parseInt(localStorage.getItem('fc_fontSize') || '100');
+    
+    function applyFontSize() {
+      const multiplier = fontSize / 100;
+      document.documentElement.style.setProperty('--font-size-multiplier', multiplier);
+      document.getElementById('fontSizeValue').textContent = fontSize + '%';
+    }
+
+    document.getElementById('fontSizeUp').addEventListener('click', () => {
+      if (fontSize < 150) {
+        fontSize += 10;
+        localStorage.setItem('fc_fontSize', fontSize);
+        applyFontSize();
+      }
+    });
+
+    document.getElementById('fontSizeDown').addEventListener('click', () => {
+      if (fontSize > 80) {
+        fontSize -= 10;
+        localStorage.setItem('fc_fontSize', fontSize);
+        applyFontSize();
+      }
+    });
+
+    // Apply on load
+    applyFontSize();
+
+    // ============ CLEAR CACHE ============
+    document.getElementById('clearCacheBtn').addEventListener('click', () => {
+      if (confirm('Перезагрузить страницу? Все несохранённые данные будут потеряны.')) {
+        // Clear any temporary caches but keep settings
+        sessionStorage.clear();
+        
+        // Clear IndexedDB cache if exists
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+          });
+        }
+        
+        // Reload page
+        window.location.reload();
+      }
+    });
+
     // ============ SECRET CODE ============
     const DEFAULT_CODE = 'family2024';
     let secretCode = localStorage.getItem('fc_secret_code') || DEFAULT_CODE;
     
-    // Save default code if not set
     if (!localStorage.getItem('fc_secret_code')) {
       localStorage.setItem('fc_secret_code', DEFAULT_CODE);
     }
@@ -894,10 +1076,8 @@
       if (e.key === 'Enter') checkSecretCode();
     });
 
-    // Auto-focus on code input
     document.getElementById('secretCodeInput').focus();
 
-    // Change code
     document.getElementById('changeCodeBtn').addEventListener('click', () => {
       const oldCode = prompt('Введите текущий код семьи:');
       if (oldCode !== secretCode) {
@@ -916,15 +1096,38 @@
       alert('✅ Код семьи изменён!');
     });
 
+    // ============ SERVICE WORKER FOR PUSH NOTIFICATIONS ============
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(registration => {
+          console.log('ServiceWorker registered');
+        }).catch(err => {
+          console.log('ServiceWorker registration failed: ', err);
+        });
+      });
+    }
+
     // ============ NOTIFICATIONS ============
     let notificationsEnabled = localStorage.getItem('fc_notifications') !== 'false';
     let soundEnabled = localStorage.getItem('fc_sound') !== 'false';
     let chatVisible = true;
     let lastMessageTime = 0;
 
-    // Request notification permission
     async function requestNotificationPermission() {
-      if (!('Notification' in window)) return false;
+      if (!('Notification' in window)) {
+        // Try to use service worker for mobile
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            // For now, just log that SW is ready
+            console.log('Service Worker ready for push');
+            return true;
+          } catch (err) {
+            console.log('Service Worker error:', err);
+          }
+        }
+        return false;
+      }
       
       if (Notification.permission === 'granted') return true;
       
@@ -936,7 +1139,6 @@
       return false;
     }
 
-    // Play notification sound
     function playNotificationSound() {
       if (!soundEnabled) return;
       
@@ -953,44 +1155,62 @@
         gainNode.gain.value = 0.1;
         
         oscillator.start();
-        
-        // Fade out
         gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
         oscillator.stop(audioCtx.currentTime + 0.3);
       } catch (e) {
-        // Audio not supported
+        console.log('Audio not supported');
       }
     }
 
-    // Show notification only if chat is not visible
     function showNotification(title, body) {
       const now = Date.now();
       
-      // Don't spam notifications (minimum 2 seconds between)
       if (now - lastMessageTime < 2000) return;
       lastMessageTime = now;
       
-      // Check if chat is visible
-      if (document.visibilityState === 'visible' && chatVisible) {
-        // Chat is open, just play sound
+      // Don't show popup if chat is visible
+      if (document.visibilityState === 'visible') {
         playNotificationSound();
         return;
       }
       
-      // Show push notification
-      if (notificationsEnabled && Notification.permission === 'granted') {
-        new Notification(title, {
-          body: body,
-          icon: '👨‍👩‍👧‍👦',
-          tag: 'fchat-message'
+      // Try native notification first
+      if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
+        // Use service worker if available for background notifications
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(title, {
+              body: body,
+              icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">👨‍👩‍👧‍👦</text></svg>',
+              badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">💬</text></svg>',
+              tag: 'fchat-message',
+              requireInteraction: false,
+              vibrate: [200, 100, 200]
+            });
+          });
+        } else {
+          // Fallback to regular notification
+          new Notification(title, {
+            body: body,
+            icon: '👨‍👩‍👧‍👦',
+            tag: 'fchat-message'
+          });
+        }
+      } else if (notificationsEnabled && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        // Use service worker for mobile
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification(title, {
+            body: body,
+            icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">👨‍👩‍👧‍👦</text></svg>',
+            tag: 'fchat-message',
+            vibrate: [200, 100, 200]
+          });
         });
       }
       
-      // Play sound
       playNotificationSound();
     }
 
-    // Track visibility
     document.addEventListener('visibilitychange', () => {
       chatVisible = !document.hidden;
     });
@@ -1026,6 +1246,18 @@
     }
 
     // ============ EMOJI PICKER ============
+    const EMOJIS = [
+      '😀','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','😙',
+      '😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯',
+      '😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️',
+      '🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵',
+      '🥶','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','😇','🤠','🤡','🥳',
+      '🥴','🥺','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩',
+      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖',
+      '👍','👎','👏','🙌','🤝','💪','✌️','🤞','👌','🤏','✋','👋','🤚','🖐️','✍️','🙏',
+      '👨‍👩‍👧‍👦','🏠','🎉','🎂','🍕','🍔','🌮','🍩','☕','🍰','🎄','🎁','🎈','⭐','🌟','🔥'
+    ];
+
     function renderEmojiPicker() {
       const grid = document.getElementById('emojiGrid');
       grid.innerHTML = EMOJIS.map(emoji => 
@@ -1117,6 +1349,11 @@
       if (privateWith) resetChat();
     });
 
+    // Rest of the code continues with same message handling, sending, etc.
+    // (Same as previous version but with updated dark theme colors)
+    
+    // ... (Previous message handling code remains the same) ...
+    
     // ============ MESSAGES ============
     function getChatPath() {
       if (activeTab === 'private' && privateWith) {
@@ -1145,7 +1382,6 @@
         msg.id = snap.key;
         displayMessage(msg);
         
-        // Notify for new messages from others
         if (msg.from !== currentUser) {
           const sender = FAMILY[msg.from] || { name: 'Кто-то' };
           showNotification(
@@ -1339,22 +1575,8 @@
       });
     }
 
-    // ============ EMOJI LIST ============
-    const EMOJIS = [
-      '😀','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','😙',
-      '😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯',
-      '😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️',
-      '🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵',
-      '🥶','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','😇','🤠','🤡','🥳',
-      '🥴','🥺','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩',
-      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖',
-      '👍','👎','👏','🙌','🤝','💪','✌️','🤞','👌','🤏','✋','👋','🤚','🖐️','✍️','🙏',
-      '👨‍👩‍👧‍👦','🏠','🎉','🎂','🍕','🍔','🌮','🍩','☕','🍰','🎄','🎁','🎈','⭐','🌟','🔥'
-    ];
-
     // ============ LISTENERS ============
     function setupListeners() {
-      // Send
       document.getElementById('sendBtn').addEventListener('click', () => {
         sendMessage(document.getElementById('msgInput').value);
       });
@@ -1366,13 +1588,11 @@
         }
       });
 
-      // Emoji toggle
       document.getElementById('emojiBtn').addEventListener('click', () => {
         const picker = document.getElementById('emojiPicker');
         picker.classList.toggle('show');
       });
 
-      // Close emoji picker when clicking outside
       document.addEventListener('click', (e) => {
         const picker = document.getElementById('emojiPicker');
         const emojiBtn = document.getElementById('emojiBtn');
@@ -1381,7 +1601,6 @@
         }
       });
 
-      // File upload
       document.getElementById('attachBtn').addEventListener('click', () => {
         document.getElementById('fileInput').click();
       });
@@ -1397,7 +1616,6 @@
         }
       });
 
-      // Voice recording
       document.getElementById('micBtn').addEventListener('click', async () => {
         const micBtn = document.getElementById('micBtn');
         
@@ -1443,12 +1661,10 @@
         }
       });
 
-      // Settings panel toggle
       document.getElementById('settingsBtn').addEventListener('click', () => {
         document.getElementById('settingsPanel').classList.toggle('show');
       });
 
-      // Theme
       document.getElementById('themeBtn').addEventListener('click', () => {
         document.body.classList.toggle('dark-theme');
         const isDark = document.body.classList.contains('dark-theme');
@@ -1456,7 +1672,6 @@
         localStorage.setItem('fc_theme', isDark ? 'dark' : 'light');
       });
 
-      // Notification toggles
       document.getElementById('notificationsToggle').addEventListener('change', (e) => {
         notificationsEnabled = e.target.checked;
         localStorage.setItem('fc_notifications', notificationsEnabled);
@@ -1473,34 +1688,33 @@
         document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
       });
 
-      // Auto delete
       document.getElementById('autoDeleteSelect').addEventListener('change', (e) => {
         autoDeleteHours = parseInt(e.target.value);
         localStorage.setItem('fc_autoDelete', autoDeleteHours);
       });
 
-      // Clear chat button removed from settings bar (now in settings panel)
+      document.getElementById('clearChatBtn').addEventListener('click', () => {
+        if (confirm('Удалить все сообщения в этом чате?')) {
+          db.ref(getChatPath()).remove();
+        }
+      });
     }
 
     function loadSettings() {
-      // Theme
       const theme = localStorage.getItem('fc_theme') || 'light';
       if (theme === 'dark') {
         document.body.classList.add('dark-theme');
         document.getElementById('themeBtn').textContent = '☀️';
       }
 
-      // Notifications
       notificationsEnabled = localStorage.getItem('fc_notifications') !== 'false';
       document.getElementById('notificationsToggle').checked = notificationsEnabled;
       document.getElementById('notificationBtn').textContent = notificationsEnabled ? '🔔' : '🔕';
 
-      // Sound
       soundEnabled = localStorage.getItem('fc_sound') !== 'false';
       document.getElementById('soundToggle').checked = soundEnabled;
       document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
 
-      // Auto delete
       autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
       document.getElementById('autoDeleteSelect').value = autoDeleteHours;
     }
