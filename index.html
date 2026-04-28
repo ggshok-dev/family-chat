@@ -9,7 +9,12 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   
   <style>
-    :root { --font-size-multiplier: 1; }
+    :root {
+      --font-scale: 1;
+      --bg-light: #f5f5f5;
+      --bg-dark: #16213e;
+    }
+    
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
@@ -20,7 +25,11 @@
       justify-content: center;
       align-items: center;
       padding: 10px;
-      font-size: calc(1rem * var(--font-size-multiplier));
+      transition: background 0.3s;
+    }
+    
+    body.dark-theme {
+      background: #0f0f1a;
     }
     
     .secret-overlay {
@@ -35,7 +44,14 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
     
-    .secret-dialog h2 { color: #333; margin-bottom: 10px; }
+    body.dark-theme .secret-dialog {
+      background: #1e2a44; color: #e8e8e8;
+    }
+    
+    body.dark-theme .secret-dialog h2 { color: #e8e8e8; }
+    body.dark-theme .secret-dialog p { color: #aaa; }
+    
+    .secret-dialog h2 { color: #333; margin-bottom: 10px; font-size: 1.5rem; }
     .secret-dialog .icon { font-size: 50px; margin-bottom: 15px; }
     .secret-dialog p { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
     
@@ -43,6 +59,11 @@
       width: 100%; padding: 12px; border: 2px solid #e0e0e0;
       border-radius: 12px; font-size: 1.1rem; text-align: center;
       margin-bottom: 15px; outline: none; letter-spacing: 3px;
+      background: white; color: #333;
+    }
+    
+    body.dark-theme .secret-input {
+      background: #16213e; color: white; border-color: #2a3a5c;
     }
     
     .secret-input:focus { border-color: #667eea; }
@@ -59,9 +80,15 @@
     .error-msg.show { display: block; }
     
     .app {
-      width: 100%; max-width: 450px; height: 95vh; background: white;
-      border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      width: 100%; max-width: 450px; height: 95vh;
+      background: white; border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       display: flex; flex-direction: column; overflow: hidden;
+      transition: background 0.3s;
+    }
+    
+    body.dark-theme .app {
+      background: #1a1a2e;
     }
     
     .header {
@@ -70,8 +97,8 @@
       align-items: center; gap: 10px;
     }
     
-    .header-logo { font-size: 28px; }
-    .header-title { font-size: 1.3rem; font-weight: 700; flex: 1; }
+    .header-logo { font-size: calc(28px * var(--font-scale)); }
+    .header-title { font-size: calc(1.3rem * var(--font-scale)); font-weight: 700; flex: 1; }
     
     .header-actions { display: flex; gap: 8px; }
     
@@ -79,7 +106,7 @@
       background: rgba(255,255,255,0.2); border: none; color: white;
       width: 35px; height: 35px; border-radius: 50%; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
-      font-size: 18px; transition: 0.2s;
+      font-size: calc(18px * var(--font-scale)); transition: 0.2s;
     }
     
     .header-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
@@ -87,48 +114,96 @@
     .users-avatars {
       display: flex; justify-content: center; gap: 15px; padding: 15px;
       background: #f8f9fa; border-bottom: 1px solid #eee; overflow-x: auto;
+      transition: background 0.3s;
+    }
+    
+    body.dark-theme .users-avatars {
+      background: #1a1a2e; border-color: #2a3a5c;
     }
     
     .user-avatar {
       display: flex; flex-direction: column; align-items: center; gap: 5px;
-      cursor: pointer; transition: 0.2s; min-width: 60px;
+      cursor: pointer; transition: 0.2s; min-width: 65px; position: relative;
     }
     
     .user-avatar:hover { transform: translateY(-3px); }
     
     .avatar-circle {
-      width: 50px; height: 50px; border-radius: 50%; display: flex;
-      align-items: center; justify-content: center; font-size: 24px;
+      width: 55px; height: 55px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: calc(26px * var(--font-scale));
       border: 3px solid transparent; background: #e0e0e0;
-      overflow: hidden; transition: 0.2s;
+      overflow: hidden; transition: 0.2s; position: relative;
     }
     
     .avatar-circle img {
-      width: 100%; height: 100%; object-fit: cover; position: absolute;
+      width: 100%; height: 100%; object-fit: cover;
+      position: absolute; top: 0; left: 0;
+    }
+    
+    .avatar-circle .default-emoji {
+      position: relative; z-index: 1;
     }
     
     .user-avatar.active .avatar-circle {
       border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
     }
     
-    .avatar-name { font-size: 0.75rem; font-weight: 600; color: #666; }
+    .avatar-name {
+      font-size: calc(0.75rem * var(--font-scale));
+      font-weight: 600; color: #666;
+      transition: color 0.3s;
+    }
+    
+    body.dark-theme .avatar-name { color: #c0c0c0; }
+    
     .user-avatar.active .avatar-name { color: #667eea; }
+    
+    .avatar-reset {
+      position: absolute; top: -5px; right: -5px;
+      width: 20px; height: 20px; border-radius: 50%;
+      background: #ff4444; color: white; border: none;
+      font-size: 10px; cursor: pointer; display: none;
+      align-items: center; justify-content: center;
+    }
+    
+    .user-avatar.active .avatar-reset { display: flex; }
     
     .settings-panel {
       display: none; background: white; border-bottom: 1px solid #eee;
       padding: 12px 15px; color: #333; max-height: 60vh; overflow-y: auto;
+      transition: all 0.3s;
+    }
+    
+    body.dark-theme .settings-panel {
+      background: #1a1a2e; border-color: #2a3a5c; color: #e8e8e8;
     }
     
     .settings-panel.show { display: block; }
-    .settings-panel h3 { font-size: 1rem; margin-bottom: 10px; color: #667eea; }
+    
+    .settings-panel h3 {
+      font-size: calc(1rem * var(--font-scale));
+      margin-bottom: 10px; color: #667eea;
+    }
+    
+    body.dark-theme .settings-panel h3 { color: #a78bfa; }
     
     .setting-item {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 0; border-bottom: 1px solid #f0f0f0;
+      transition: border-color 0.3s;
     }
     
+    body.dark-theme .setting-item { border-color: #2a3a5c; }
+    
     .setting-item:last-child { border-bottom: none; }
-    .setting-label { font-size: 0.9rem; }
+    
+    .setting-label {
+      font-size: calc(0.9rem * var(--font-scale));
+      transition: color 0.3s;
+    }
+    
+    body.dark-theme .setting-label { color: #e8e8e8; }
     
     .toggle-switch { position: relative; width: 50px; height: 26px; }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
@@ -148,28 +223,60 @@
     input:checked + .toggle-slider { background-color: #667eea; }
     input:checked + .toggle-slider:before { transform: translateX(24px); }
     
-    .tabs { display: flex; padding: 8px 15px; gap: 8px; background: white; border-bottom: 1px solid #eee; }
+    .tabs {
+      display: flex; padding: 8px 15px; gap: 8px;
+      background: white; border-bottom: 1px solid #eee;
+      transition: background 0.3s;
+    }
+    
+    body.dark-theme .tabs {
+      background: #1a1a2e; border-color: #2a3a5c;
+    }
     
     .tab {
       flex: 1; padding: 8px; border: none; background: #f0f0f0;
-      border-radius: 12px; cursor: pointer; font-weight: 600; font-size: 0.9rem;
+      border-radius: 12px; cursor: pointer; font-weight: 600;
+      font-size: calc(0.9rem * var(--font-scale)); transition: 0.2s;
+    }
+    
+    body.dark-theme .tab {
+      background: #1e2a44; color: #e8e8e8;
     }
     
     .tab.active { background: #667eea; color: white; }
     
     .private-selector {
-      display: none; padding: 8px 15px; background: white; border-bottom: 1px solid #eee;
+      display: none; padding: 8px 15px; background: white;
+      border-bottom: 1px solid #eee; transition: background 0.3s;
     }
     
-    .private-selector select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ddd; }
+    body.dark-theme .private-selector {
+      background: #1a1a2e; border-color: #2a3a5c;
+    }
+    
+    .private-selector select {
+      width: 100%; padding: 6px; border-radius: 6px;
+      border: 1px solid #ddd; font-size: calc(0.9rem * var(--font-scale));
+      background: white; color: #333;
+    }
+    
+    body.dark-theme .private-selector select {
+      background: #1e2a44; color: #e8e8e8; border-color: #2a3a5c;
+    }
     
     .chat-window {
-      flex: 1; overflow-y: auto; padding: 15px; background: #f5f5f5;
-      display: flex; flex-direction: column; gap: 8px;
+      flex: 1; overflow-y: auto; padding: 15px;
+      background: #f5f5f5; display: flex; flex-direction: column; gap: 8px;
+      transition: background 0.3s;
     }
     
+    body.dark-theme .chat-window { background: #16213e; }
+    
     .empty-chat { text-align: center; color: #999; margin-top: 40px; }
-    .empty-icon { font-size: 50px; margin-bottom: 10px; }
+    
+    body.dark-theme .empty-chat { color: #6b7280; }
+    
+    .empty-icon { font-size: calc(50px * var(--font-scale)); margin-bottom: 10px; }
     
     .message { max-width: 80%; animation: slideIn 0.3s; }
     
@@ -183,7 +290,7 @@
     
     .bubble {
       padding: 10px 14px; border-radius: 18px; line-height: 1.4;
-      word-wrap: break-word; font-size: 0.95rem;
+      word-wrap: break-word; font-size: calc(0.95rem * var(--font-scale));
     }
     
     .sent .bubble {
@@ -196,21 +303,32 @@
       border-bottom-left-radius: 4px; color: #333;
     }
     
+    body.dark-theme .received .bubble {
+      background: #1e2a44; border-color: #2a3a5c; color: #e8e8e8;
+    }
+    
     .msg-sender {
-      font-size: 0.75rem; font-weight: 600; color: #764ba2;
+      font-size: calc(0.75rem * var(--font-scale));
+      font-weight: 600; color: #764ba2;
       margin-bottom: 2px; display: flex; align-items: center; gap: 5px;
     }
     
+    body.dark-theme .msg-sender { color: #a78bfa; }
+    
     .sender-avatar {
-      width: 20px; height: 20px; border-radius: 50%; overflow: hidden;
+      width: 22px; height: 22px; border-radius: 50%; overflow: hidden;
       display: inline-flex; align-items: center; justify-content: center;
-      font-size: 12px; background: #e0e0e0;
+      font-size: calc(12px * var(--font-scale)); background: #e0e0e0;
+      flex-shrink: 0;
     }
     
-    .sender-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .sender-avatar img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
     
     .msg-time {
-      font-size: 0.7rem; color: #999; margin-top: 4px; text-align: right;
+      font-size: calc(0.7rem * var(--font-scale));
+      color: #999; margin-top: 4px; text-align: right;
       display: flex; justify-content: space-between; align-items: center;
     }
     
@@ -231,32 +349,58 @@
     
     .emoji-picker-wrapper {
       display: none; margin-bottom: 10px; border: 1px solid #ddd;
-      border-radius: 10px; background: white; max-height: 300px;
-      overflow-y: auto; padding: 10px;
+      border-radius: 10px; background: white; padding: 10px;
+      transition: background 0.3s;
+    }
+    
+    body.dark-theme .emoji-picker-wrapper {
+      background: #1e2a44; border-color: #2a3a5c;
     }
     
     .emoji-picker-wrapper.show { display: block; }
     
-    .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; }
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+      gap: 2px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
     
     .emoji-item {
-      font-size: 1.5rem; padding: 5px; cursor: pointer; text-align: center;
+      font-size: calc(1.3rem * var(--font-scale));
+      padding: 4px; cursor: pointer; text-align: center;
       border-radius: 8px; border: none; background: none; transition: 0.2s;
     }
     
-    .emoji-item:hover { background: #f0f0f0; transform: scale(1.2); }
+    .emoji-item:hover { background: #f0f0f0; transform: scale(1.3); }
     
-    .input-panel { padding: 12px 15px; background: white; border-top: 1px solid #eee; }
+    body.dark-theme .emoji-item:hover { background: #2a3a5c; }
+    
+    .input-panel {
+      padding: 12px 15px; background: white;
+      border-top: 1px solid #eee; transition: background 0.3s;
+    }
+    
+    body.dark-theme .input-panel {
+      background: #1a1a2e; border-color: #2a3a5c;
+    }
     
     .input-row { display: flex; gap: 8px; align-items: flex-end; }
     
     .icon-btn {
       width: 38px; height: 38px; border: none; background: #f0f0f0;
-      border-radius: 50%; font-size: 1.2rem; cursor: pointer; display: flex;
-      align-items: center; justify-content: center; transition: 0.2s;
+      border-radius: 50%; font-size: calc(1.2rem * var(--font-scale));
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; transition: 0.2s; flex-shrink: 0;
+    }
+    
+    body.dark-theme .icon-btn {
+      background: #1e2a44; color: #e8e8e8;
     }
     
     .icon-btn:hover { background: #e0e0e0; }
+    body.dark-theme .icon-btn:hover { background: #2a3a5c; }
     
     .icon-btn.recording { background: #ff4444; color: white; animation: pulse 1.5s infinite; }
     
@@ -266,16 +410,22 @@
     }
     
     .msg-input {
-      flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 10px 15px;
-      font-size: 0.95rem; resize: none; max-height: 100px; font-family: inherit;
-      outline: none; color: #333;
+      flex: 1; border: 1px solid #ddd; border-radius: 20px;
+      padding: 10px 15px; font-size: calc(0.95rem * var(--font-scale));
+      resize: none; max-height: 100px; font-family: inherit;
+      outline: none; color: #333; background: white; transition: all 0.3s;
+    }
+    
+    body.dark-theme .msg-input {
+      background: #1e2a44; color: #e8e8e8; border-color: #2a3a5c;
     }
     
     .msg-input:focus { border-color: #667eea; }
     
     .send-btn {
       width: 38px; height: 38px; border: none; background: #667eea;
-      color: white; border-radius: 50%; font-size: 1.2rem; cursor: pointer;
+      color: white; border-radius: 50%; font-size: calc(1.2rem * var(--font-scale));
+      cursor: pointer; flex-shrink: 0; transition: 0.2s;
     }
     
     .send-btn:hover { background: #764ba2; }
@@ -286,6 +436,10 @@
       overflow: hidden; animation: fadeIn 0.2s;
     }
     
+    body.dark-theme .context-menu {
+      background: #1e2a44; box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+    }
+    
     @keyframes fadeIn {
       from { opacity: 0; transform: scale(0.9); }
       to { opacity: 1; transform: scale(1); }
@@ -293,36 +447,57 @@
     
     .context-menu button {
       display: block; width: 100%; padding: 10px 15px; border: none;
-      background: none; text-align: left; cursor: pointer; font-size: 0.9rem;
+      background: none; text-align: left; cursor: pointer;
+      font-size: calc(0.9rem * var(--font-scale)); transition: background 0.2s;
+      color: #333;
     }
     
+    body.dark-theme .context-menu button { color: #e8e8e8; }
     .context-menu button:hover { background: #f5f5f5; }
+    body.dark-theme .context-menu button:hover { background: #2a3a5c; }
     .danger-btn { color: #ff4444; }
     
     .font-size-controls { display: flex; gap: 8px; align-items: center; }
     
     .font-size-btn {
-      width: 30px; height: 30px; border: 2px solid #667eea;
+      width: 32px; height: 32px; border: 2px solid #667eea;
       background: white; color: #667eea; border-radius: 50%;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; font-weight: bold; font-size: calc(0.9rem * var(--font-scale));
+      transition: 0.2s;
+    }
+    
+    body.dark-theme .font-size-btn {
+      background: #1e2a44; color: #a78bfa; border-color: #a78bfa;
     }
     
     .font-size-btn:hover { background: #667eea; color: white; }
-    .font-size-value { font-weight: 600; min-width: 40px; text-align: center; }
+    body.dark-theme .font-size-btn:hover { background: #a78bfa; }
+    
+    .font-size-value {
+      font-weight: 600; min-width: 45px; text-align: center;
+      font-size: calc(0.9rem * var(--font-scale));
+    }
+    
+    body.dark-theme .font-size-value { color: #e8e8e8; }
     
     .action-btn {
       padding: 6px 14px; border: none; border-radius: 8px; cursor: pointer;
-      font-size: 0.85rem; font-weight: 500; transition: 0.2s;
+      font-size: calc(0.85rem * var(--font-scale)); font-weight: 500;
+      transition: 0.2s;
     }
     
     .action-btn.primary { background: #667eea; color: white; }
     .action-btn.danger { background: #ff4444; color: white; }
     .action-btn.warning { background: #ff9800; color: white; }
-    .action-btn:hover { transform: scale(1.05); }
+    .action-btn:hover { transform: scale(1.05); opacity: 0.9; }
     
     @media (max-width: 480px) {
       .app { height: 100vh; border-radius: 0; }
       body { padding: 0; }
+      .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+      }
     }
   </style>
 </head>
@@ -337,13 +512,13 @@
              placeholder="••••" maxlength="10" autocomplete="off">
       <button class="secret-btn" id="secretBtn">Войти</button>
       <div class="error-msg" id="errorMsg">Неверный код</div>
-      <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+      <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">
         По умолчанию: family2024
       </p>
     </div>
   </div>
 
-  <!-- Приложение (изначально скрыто) -->
+  <!-- Приложение -->
   <div class="app" id="mainApp" style="display:none;">
     <div class="header">
       <span class="header-logo">👨‍👩‍👧‍👦</span>
@@ -359,8 +534,11 @@
     <div class="settings-panel" id="settingsPanel">
       <h3>⚙️ Настройки</h3>
       <div class="setting-item">
-        <span class="setting-label">🖼️ Сменить аватар</span>
-        <button class="action-btn primary" id="avatarBtn">Загрузить</button>
+        <span class="setting-label">🖼️ Аватар</span>
+        <div style="display:flex;gap:8px;">
+          <button class="action-btn primary" id="avatarBtn">Загрузить</button>
+          <button class="action-btn warning" id="avatarResetBtn">По умолчанию</button>
+        </div>
       </div>
       <div class="setting-item">
         <span class="setting-label">🔔 Уведомления</span>
@@ -379,14 +557,14 @@
       <div class="setting-item">
         <span class="setting-label">📝 Шрифт</span>
         <div class="font-size-controls">
-          <button class="font-size-btn" id="fontDown">A-</button>
+          <button class="font-size-btn" id="fontDown">A−</button>
           <span class="font-size-value" id="fontValue">100%</span>
           <button class="font-size-btn" id="fontUp">A+</button>
         </div>
       </div>
       <div class="setting-item">
         <span class="setting-label">🗑️ Автоудаление</span>
-        <select id="autoDelete" style="padding:4px 8px;border-radius:6px;border:1px solid #ddd;">
+        <select id="autoDelete" style="padding:4px 8px;border-radius:6px;border:1px solid #ddd;background:white;">
           <option value="0">Выключено</option>
           <option value="1">1 час</option>
           <option value="6">6 часов</option>
@@ -446,9 +624,7 @@
   <input type="file" id="avatarInput" accept="image/*" style="display:none">
 
   <script>
-    // Ждём загрузки DOM
-    document.addEventListener('DOMContentLoaded', function() {
-      
+    (function() {
       // ============ FIREBASE ============
       const firebaseConfig = {
         apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
@@ -472,7 +648,7 @@
         katya: { id: 'katya', name: 'Катя', emoji: '👧', color: '#9C27B0' }
       };
       
-      const EMOJIS = '😀😂🤣😃😄😅😆😉😊😋😎😍🥰😘😗😙😚🙂🤗🤩🤔🤨😐😑😶🙄😏😣😥😮🤐😯😪😫😴😌😛😜😝🤤😒😓😔😕🙃🤑😲☹️🙁😖😞😟😤😢😭😦😧😨😩🤯😬😰😱🥵🥶😳🤪😵😡😠🤬😷🤒🤕🤢🤮😇🤠🤡🥳🥴🥺🤥🤫🤭🧐🤓😈👿👹👺💀👻👽🤖💩❤️🧡💛💚💙💜🖤🤍🤎💔❣️💕💞💓💗💖👍👎👏🙌🤝💪✌️🤞👌🤏✋👋🤚🖐️✍️🙏👨‍👩‍👧‍👦🏠🎉🎂🍕🍔🌮🍩☕🍰🎄🎁🎈⭐🌟🔥';
+      const EMOJI_LIST = ['😀','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯','😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️','🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵','🥶','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','😇','🤠','🤡','🥳','🥴','🥺','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','👍','👎','👏','🙌','🤝','💪','✌️','🤞','👌','🤏','✋','👋','🤚','🖐️','✍️','🙏','👨‍👩‍👧‍👦','🏠','🎉','🎂','🍕','🍔','🌮','🍩','☕','🍰','🎄','🎁','🎈','⭐','🌟','🔥'];
       
       // ============ СОСТОЯНИЕ ============
       let currentUser = localStorage.getItem('fc_user') || 'dad';
@@ -483,82 +659,102 @@
       let soundEnabled = localStorage.getItem('fc_sound') !== 'false';
       let secretCode = localStorage.getItem('fc_code') || 'family2024';
       let fontSize = parseInt(localStorage.getItem('fc_font') || '100');
+      let isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
       let messageListener = null;
       let mediaRecorder = null;
       let audioChunks = [];
       let processedIds = new Set();
       
-      // Сохраняем код по умолчанию
       if (!localStorage.getItem('fc_code')) {
         localStorage.setItem('fc_code', 'family2024');
       }
       
-      // ============ СЕКРЕТНЫЙ КОД ============
-      function checkCode() {
-        const input = document.getElementById('secretInput').value;
-        const error = document.getElementById('errorMsg');
+      // ============ ПРИМЕНЕНИЕ ТЕМЫ И ШРИФТА ПРИ ЗАГРУЗКЕ ============
+      function applyStoredSettings() {
+        // Тема
+        if (isDarkTheme) {
+          document.body.classList.add('dark-theme');
+          document.getElementById('themeBtn').textContent = '☀️';
+        }
         
+        // Шрифт
+        document.documentElement.style.setProperty('--font-scale', fontSize / 100);
+        const fontValueEl = document.getElementById('fontValue');
+        if (fontValueEl) fontValueEl.textContent = fontSize + '%';
+        
+        // Настройки в панели
+        const notifToggle = document.getElementById('notifToggle');
+        const soundToggle = document.getElementById('soundToggle');
+        const autoDelete = document.getElementById('autoDelete');
+        const notifBtn = document.getElementById('notifBtn');
+        const soundBtn = document.getElementById('soundBtn');
+        
+        if (notifToggle) notifToggle.checked = notifEnabled;
+        if (soundToggle) soundToggle.checked = soundEnabled;
+        if (autoDelete) autoDelete.value = autoDeleteHours;
+        if (notifBtn) notifBtn.textContent = notifEnabled ? '🔔' : '🔕';
+        if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      }
+      
+      // ============ СЕКРЕТНЫЙ КОД ============
+      document.getElementById('secretBtn').addEventListener('click', function() {
+        const input = document.getElementById('secretInput').value;
         if (input === secretCode) {
           document.getElementById('secretOverlay').style.display = 'none';
           document.getElementById('mainApp').style.display = 'flex';
           initApp();
         } else {
-          error.classList.add('show');
+          document.getElementById('errorMsg').classList.add('show');
           document.getElementById('secretInput').value = '';
           document.getElementById('secretInput').focus();
         }
-      }
-      
-      document.getElementById('secretBtn').addEventListener('click', checkCode);
-      document.getElementById('secretInput').addEventListener('keydown', function(e) {
-        if (e.key === 'Enter') checkCode();
       });
+      
+      document.getElementById('secretInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('secretBtn').click();
+      });
+      
       document.getElementById('secretInput').focus();
       
-      // ============ ПОМОЩНИКИ ============
+      // ============ АВАТАРКИ (исправлено) ============
       function getAvatar(userId) {
         return localStorage.getItem('fc_av_' + userId) || null;
       }
       
-      function saveAvatar(userId, url) {
+      function saveAvatar(userId, dataUrl) {
+        // Создаём квадратную миниатюру 200x200
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          const size = Math.min(img.width, img.height, 200);
+          const size = 200; // фиксированный размер для аватарки
           canvas.width = size;
           canvas.height = size;
           const ctx = canvas.getContext('2d');
-          const sx = (img.width - size) / 2;
-          const sy = (img.height - size) / 2;
-          ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size);
-          localStorage.setItem('fc_av_' + userId, canvas.toDataURL('image/jpeg', 0.6));
+          
+          // Обрезаем по центру
+          const minSide = Math.min(img.width, img.height);
+          const sx = (img.width - minSide) / 2;
+          const sy = (img.height - minSide) / 2;
+          
+          ctx.fillStyle = '#e0e0e0';
+          ctx.fillRect(0, 0, size, size);
+          ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
+          
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          localStorage.setItem('fc_av_' + userId, compressed);
           renderUsers();
+          alert('✅ Аватар обновлён!');
         };
-        img.src = url;
+        img.onerror = function() {
+          alert('❌ Не удалось загрузить изображение. Аватар остался прежним.');
+        };
+        img.src = dataUrl;
       }
       
-      function getChatPath() {
-        if (activeTab === 'private' && privateWith) {
-          const users = [currentUser, privateWith].sort();
-          return 'private/' + users[0] + '_' + users[1];
-        }
-        return 'general';
-      }
-      
-      function compressImage(dataUrl, maxW) {
-        return new Promise(function(resolve) {
-          const img = new Image();
-          img.onload = function() {
-            const canvas = document.createElement('canvas');
-            let w = img.width, h = img.height;
-            if (w > maxW) { h = (h * maxW) / w; w = maxW; }
-            canvas.width = w;
-            canvas.height = h;
-            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-            resolve(canvas.toDataURL('image/jpeg', 0.7));
-          };
-          img.src = dataUrl;
-        });
+      function resetAvatar(userId) {
+        localStorage.removeItem('fc_av_' + userId);
+        renderUsers();
+        alert('✅ Аватар сброшен на стандартный');
       }
       
       // ============ РЕНДЕРИНГ ============
@@ -569,8 +765,10 @@
           const isActive = m.id === currentUser;
           return `
             <div class="user-avatar ${isActive ? 'active' : ''}" data-user="${m.id}">
-              <div class="avatar-circle" style="background:${av ? 'transparent' : m.color + '20'};">
-                ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span>' + m.emoji + '</span>'}
+              <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
+                ${av ? '<img src="' + av + '" alt="' + m.name + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+                       '<span class="default-emoji" style="display:none;position:relative;z-index:1;">' + m.emoji + '</span>' : 
+                       '<span class="default-emoji" style="position:relative;z-index:1;">' + m.emoji + '</span>'}
               </div>
               <span class="avatar-name">${m.name}</span>
             </div>
@@ -586,8 +784,7 @@
       
       function renderEmoji() {
         const grid = document.getElementById('emojiGrid');
-        const emojis = [...EMOJIS];
-        grid.innerHTML = emojis.map(function(e) {
+        grid.innerHTML = EMOJI_LIST.map(function(e) {
           return '<button class="emoji-item">' + e + '</button>';
         }).join('');
         
@@ -617,7 +814,7 @@
         
         let content = '';
         if (msg.type === 'image') {
-          content = '<img src="' + msg.data + '" class="media-img" alt="Фото">';
+          content = '<img src="' + msg.data + '" class="media-img" alt="Фото" loading="lazy">';
         } else if (msg.type === 'voice') {
           content = '<audio controls class="media-audio" src="' + msg.data + '"></audio>';
         } else {
@@ -628,7 +825,9 @@
         
         div.innerHTML = 
           (!isSent ? '<div class="msg-sender"><span class="sender-avatar">' + 
-            (senderAv ? '<img src="' + senderAv + '">' : sender.emoji) + 
+            (senderAv ? '<img src="' + senderAv + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
+                       '<span style="display:none;">' + sender.emoji + '</span>' : 
+                       '<span>' + sender.emoji + '</span>') + 
             '</span>' + sender.name + '</div>' : '') +
           '<div class="bubble">' + content + 
             '<div class="msg-time"><span>' + time + '</span>' + 
@@ -668,7 +867,7 @@
         
         menu.querySelectorAll('button')[1].addEventListener('click', function() {
           menu.remove();
-          if (confirm('Удалить?')) {
+          if (confirm('Удалить сообщение?')) {
             db.ref(getChatPath() + '/' + msg.id).remove();
             processedIds.delete(msg.id);
           }
@@ -683,6 +882,14 @@
       }
       
       // ============ СООБЩЕНИЯ ============
+      function getChatPath() {
+        if (activeTab === 'private' && privateWith) {
+          const users = [currentUser, privateWith].sort();
+          return 'private/' + users[0] + '_' + users[1];
+        }
+        return 'general';
+      }
+      
       function loadMessages() {
         if (messageListener) {
           db.ref(getChatPath()).off('child_added', messageListener);
@@ -714,7 +921,7 @@
             showMessage(msg);
             if (msg.from !== currentUser) {
               const sender = FAMILY[msg.from] || {name: 'Кто-то'};
-              notify(sender.emoji + ' ' + sender.name, msg.text || 'Новое сообщение');
+              notify(sender.emoji + ' ' + sender.name, msg.text || msg.type === 'image' ? '📷 Фото' : 'Новое сообщение');
             }
           }
         });
@@ -783,18 +990,28 @@
         document.getElementById('msgInput').value = '';
       }
       
-      async function sendMedia(type, dataUrl) {
-        let final = dataUrl;
-        if (type === 'image') final = await compressImage(dataUrl, 1200);
-        const msg = {
-          from: currentUser,
-          type: type,
-          data: final,
-          timestamp: firebase.database.ServerValue.TIMESTAMP,
-          text: type === 'image' ? '📷 Фото' : '🎤 Голосовое'
+      function sendMedia(type, dataUrl) {
+        const img = new Image();
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          let w = img.width, h = img.height;
+          if (w > 1200) { h = (h * 1200) / w; w = 1200; }
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL('image/jpeg', 0.7);
+          
+          const msg = {
+            from: currentUser,
+            type: type,
+            data: compressed,
+            timestamp: firebase.database.ServerValue.TIMESTAMP,
+            text: type === 'image' ? '📷 Фото' : '🎤 Голосовое'
+          };
+          if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
+          db.ref(getChatPath()).push(msg);
         };
-        if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
-        db.ref(getChatPath()).push(msg);
+        img.src = dataUrl;
       }
       
       // ============ ПОЛЬЗОВАТЕЛИ ============
@@ -824,22 +1041,21 @@
       }
       
       // ============ НАСТРОЙКИ ============
-      function applyFont() {
-        document.documentElement.style.setProperty('--font-size-multiplier', fontSize / 100);
+      function applyFontSize() {
+        document.documentElement.style.setProperty('--font-scale', fontSize / 100);
         document.getElementById('fontValue').textContent = fontSize + '%';
+        localStorage.setItem('fc_font', fontSize);
       }
       
-      function loadSettings() {
-        if (localStorage.getItem('fc_theme') === 'dark') {
+      function toggleTheme() {
+        isDarkTheme = !isDarkTheme;
+        if (isDarkTheme) {
           document.body.classList.add('dark-theme');
-          document.getElementById('themeBtn').textContent = '☀️';
+        } else {
+          document.body.classList.remove('dark-theme');
         }
-        document.getElementById('notifToggle').checked = notifEnabled;
-        document.getElementById('notifBtn').textContent = notifEnabled ? '🔔' : '🔕';
-        document.getElementById('soundToggle').checked = soundEnabled;
-        document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
-        document.getElementById('autoDelete').value = autoDeleteHours;
-        applyFont();
+        document.getElementById('themeBtn').textContent = isDarkTheme ? '☀️' : '🌙';
+        localStorage.setItem('fc_theme', isDarkTheme ? 'dark' : 'light');
       }
       
       // ============ ОБРАБОТЧИКИ ============
@@ -883,6 +1099,12 @@
         
         document.getElementById('avatarBtn').addEventListener('click', function() {
           document.getElementById('avatarInput').click();
+        });
+        
+        document.getElementById('avatarResetBtn').addEventListener('click', function() {
+          if (confirm('Сбросить аватар на стандартный?')) {
+            resetAvatar(currentUser);
+          }
         });
         
         document.getElementById('avatarInput').addEventListener('change', function(e) {
@@ -947,12 +1169,7 @@
           document.getElementById('settingsPanel').classList.toggle('show');
         });
         
-        document.getElementById('themeBtn').addEventListener('click', function() {
-          document.body.classList.toggle('dark-theme');
-          const dark = document.body.classList.contains('dark-theme');
-          this.textContent = dark ? '☀️' : '🌙';
-          localStorage.setItem('fc_theme', dark ? 'dark' : 'light');
-        });
+        document.getElementById('themeBtn').addEventListener('click', toggleTheme);
         
         document.getElementById('notifToggle').addEventListener('change', function() {
           notifEnabled = this.checked;
@@ -973,11 +1190,11 @@
         });
         
         document.getElementById('fontUp').addEventListener('click', function() {
-          if (fontSize < 150) { fontSize += 10; localStorage.setItem('fc_font', fontSize); applyFont(); }
+          if (fontSize < 150) { fontSize += 10; applyFontSize(); }
         });
         
         document.getElementById('fontDown').addEventListener('click', function() {
-          if (fontSize > 80) { fontSize -= 10; localStorage.setItem('fc_font', fontSize); applyFont(); }
+          if (fontSize > 80) { fontSize -= 10; applyFontSize(); }
         });
         
         document.getElementById('changeCodeBtn').addEventListener('click', function() {
@@ -987,60 +1204,56 @@
           if (newCode && newCode.length >= 4) {
             secretCode = newCode;
             localStorage.setItem('fc_code', secretCode);
-            alert('✅ Готово!');
+            alert('✅ Код изменён!');
           }
         });
         
         document.getElementById('cacheBtn').addEventListener('click', function() {
-          if (confirm('Перезагрузить страницу?')) location.reload();
+          if (confirm('Перезагрузить страницу? Настройки сохранятся.')) location.reload();
         });
         
         document.getElementById('clearBtn').addEventListener('click', function() {
-          if (confirm('Удалить все сообщения?')) {
+          if (confirm('Удалить все сообщения в этом чате?')) {
             db.ref(getChatPath()).remove();
             processedIds.clear();
           }
-        });
-        
-        document.addEventListener('visibilitychange', function() {
-          // chatVisible = !document.hidden
         });
       }
       
       // ============ АВТОУДАЛЕНИЕ ============
       function startAutoDelete() {
-        setInterval(async function() {
+        setInterval(function() {
           if (autoDeleteHours === 0) return;
-          const snap = await db.ref(getChatPath()).once('value');
-          const msgs = snap.val();
-          if (!msgs) return;
-          const now = Date.now();
-          const updates = {};
-          for (const [id, msg] of Object.entries(msgs)) {
-            if (msg.deleteAt && msg.deleteAt <= now) {
-              updates[id] = null;
-              processedIds.delete(id);
+          db.ref(getChatPath()).once('value').then(function(snap) {
+            const msgs = snap.val();
+            if (!msgs) return;
+            const now = Date.now();
+            const updates = {};
+            for (const [id, msg] of Object.entries(msgs)) {
+              if (msg.deleteAt && msg.deleteAt <= now) {
+                updates[id] = null;
+                processedIds.delete(id);
+              }
             }
-          }
-          if (Object.keys(updates).length > 0) {
-            await db.ref(getChatPath()).update(updates);
-          }
+            if (Object.keys(updates).length > 0) {
+              db.ref(getChatPath()).update(updates);
+            }
+          });
         }, 30000);
       }
       
       // ============ ЗАПУСК ============
       function initApp() {
+        applyStoredSettings(); // Применяем сохранённые тему и шрифт
         renderEmoji();
         renderUsers();
         setupListeners();
-        loadSettings();
         loadMessages();
         startAutoDelete();
         requestNotif();
+        console.log('✅ FChat запущен. Тема: ' + (isDarkTheme ? 'тёмная' : 'светлая') + ', шрифт: ' + fontSize + '%');
       }
-      
-      console.log('✅ FChat готов к работе');
-    });
+    })();
   </script>
 </body>
 </html>
