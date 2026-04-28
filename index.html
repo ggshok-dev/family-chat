@@ -9,12 +9,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   
   <style>
-    :root {
-      --font-scale: 1;
-      --bg-light: #f5f5f5;
-      --bg-dark: #16213e;
-    }
-    
+    :root { --font-scale: 1; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
@@ -28,10 +23,9 @@
       transition: background 0.3s;
     }
     
-    body.dark-theme {
-      background: #0f0f1a;
-    }
+    body.dark-theme { background: #0f0f1a; }
     
+    /* Секретный код */
     .secret-overlay {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85); display: flex; justify-content: center;
@@ -44,10 +38,7 @@
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
     
-    body.dark-theme .secret-dialog {
-      background: #1e2a44; color: #e8e8e8;
-    }
-    
+    body.dark-theme .secret-dialog { background: #1e2a44; }
     body.dark-theme .secret-dialog h2 { color: #e8e8e8; }
     body.dark-theme .secret-dialog p { color: #aaa; }
     
@@ -75,9 +66,51 @@
     }
     
     .secret-btn:hover { transform: scale(1.02); }
-    
     .error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
     .error-msg.show { display: block; }
+    
+    /* ПИН-код */
+    .pin-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); display: flex; justify-content: center;
+      align-items: center; z-index: 9998; backdrop-filter: blur(10px);
+    }
+    
+    .pin-dialog {
+      background: white; padding: 30px; border-radius: 20px;
+      text-align: center; max-width: 350px; width: 90%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    body.dark-theme .pin-dialog { background: #1e2a44; }
+    body.dark-theme .pin-dialog h2 { color: #e8e8e8; }
+    body.dark-theme .pin-dialog p { color: #aaa; }
+    
+    .pin-dialog h2 { color: #333; margin-bottom: 10px; font-size: 1.3rem; }
+    .pin-dialog .user-icon { font-size: 60px; margin-bottom: 15px; }
+    .pin-dialog p { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
+    
+    .pin-input {
+      width: 100%; padding: 12px; border: 2px solid #e0e0e0;
+      border-radius: 12px; font-size: 1.3rem; text-align: center;
+      margin-bottom: 15px; outline: none; letter-spacing: 6px;
+      background: white; color: #333;
+      -webkit-text-security: disc;
+    }
+    
+    body.dark-theme .pin-input {
+      background: #16213e; color: white; border-color: #2a3a5c;
+    }
+    
+    .pin-input:focus { border-color: #667eea; }
+    
+    .pin-btn {
+      width: 100%; padding: 12px; border: none; border-radius: 12px;
+      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+    }
+    
+    .pin-btn:hover { transform: scale(1.02); }
     
     .app {
       width: 100%; max-width: 450px; height: 95vh;
@@ -87,9 +120,7 @@
       transition: background 0.3s;
     }
     
-    body.dark-theme .app {
-      background: #1a1a2e;
-    }
+    body.dark-theme .app { background: #1a1a2e; }
     
     .header {
       background: linear-gradient(135deg, #667eea, #764ba2);
@@ -117,16 +148,21 @@
       transition: background 0.3s;
     }
     
-    body.dark-theme .users-avatars {
-      background: #1a1a2e; border-color: #2a3a5c;
-    }
+    body.dark-theme .users-avatars { background: #1a1a2e; border-color: #2a3a5c; }
     
     .user-avatar {
       display: flex; flex-direction: column; align-items: center; gap: 5px;
       cursor: pointer; transition: 0.2s; min-width: 65px; position: relative;
+      opacity: 0.6;
+    }
+    
+    .user-avatar.active {
+      opacity: 1;
+      transform: scale(1.05);
     }
     
     .user-avatar:hover { transform: translateY(-3px); }
+    .user-avatar.active:hover { transform: scale(1.05) translateY(-3px); }
     
     .avatar-circle {
       width: 55px; height: 55px; border-radius: 50%;
@@ -141,12 +177,25 @@
       position: absolute; top: 0; left: 0;
     }
     
-    .avatar-circle .default-emoji {
-      position: relative; z-index: 1;
+    .user-avatar.active .avatar-circle {
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
     }
     
-    .user-avatar.active .avatar-circle {
-      border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+    .user-avatar.locked .avatar-circle::after {
+      content: '🔒';
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      font-size: 14px;
+      background: white;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #667eea;
     }
     
     .avatar-name {
@@ -156,18 +205,7 @@
     }
     
     body.dark-theme .avatar-name { color: #c0c0c0; }
-    
     .user-avatar.active .avatar-name { color: #667eea; }
-    
-    .avatar-reset {
-      position: absolute; top: -5px; right: -5px;
-      width: 20px; height: 20px; border-radius: 50%;
-      background: #ff4444; color: white; border: none;
-      font-size: 10px; cursor: pointer; display: none;
-      align-items: center; justify-content: center;
-    }
-    
-    .user-avatar.active .avatar-reset { display: flex; }
     
     .settings-panel {
       display: none; background: white; border-bottom: 1px solid #eee;
@@ -195,7 +233,6 @@
     }
     
     body.dark-theme .setting-item { border-color: #2a3a5c; }
-    
     .setting-item:last-child { border-bottom: none; }
     
     .setting-label {
@@ -229,9 +266,7 @@
       transition: background 0.3s;
     }
     
-    body.dark-theme .tabs {
-      background: #1a1a2e; border-color: #2a3a5c;
-    }
+    body.dark-theme .tabs { background: #1a1a2e; border-color: #2a3a5c; }
     
     .tab {
       flex: 1; padding: 8px; border: none; background: #f0f0f0;
@@ -239,10 +274,7 @@
       font-size: calc(0.9rem * var(--font-scale)); transition: 0.2s;
     }
     
-    body.dark-theme .tab {
-      background: #1e2a44; color: #e8e8e8;
-    }
-    
+    body.dark-theme .tab { background: #1e2a44; color: #e8e8e8; }
     .tab.active { background: #667eea; color: white; }
     
     .private-selector {
@@ -250,9 +282,7 @@
       border-bottom: 1px solid #eee; transition: background 0.3s;
     }
     
-    body.dark-theme .private-selector {
-      background: #1a1a2e; border-color: #2a3a5c;
-    }
+    body.dark-theme .private-selector { background: #1a1a2e; border-color: #2a3a5c; }
     
     .private-selector select {
       width: 100%; padding: 6px; border-radius: 6px;
@@ -273,7 +303,6 @@
     body.dark-theme .chat-window { background: #16213e; }
     
     .empty-chat { text-align: center; color: #999; margin-top: 40px; }
-    
     body.dark-theme .empty-chat { color: #6b7280; }
     
     .empty-icon { font-size: calc(50px * var(--font-scale)); margin-bottom: 10px; }
@@ -374,7 +403,6 @@
     }
     
     .emoji-item:hover { background: #f0f0f0; transform: scale(1.3); }
-    
     body.dark-theme .emoji-item:hover { background: #2a3a5c; }
     
     .input-panel {
@@ -382,9 +410,7 @@
       border-top: 1px solid #eee; transition: background 0.3s;
     }
     
-    body.dark-theme .input-panel {
-      background: #1a1a2e; border-color: #2a3a5c;
-    }
+    body.dark-theme .input-panel { background: #1a1a2e; border-color: #2a3a5c; }
     
     .input-row { display: flex; gap: 8px; align-items: flex-end; }
     
@@ -395,10 +421,7 @@
       justify-content: center; transition: 0.2s; flex-shrink: 0;
     }
     
-    body.dark-theme .icon-btn {
-      background: #1e2a44; color: #e8e8e8;
-    }
-    
+    body.dark-theme .icon-btn { background: #1e2a44; color: #e8e8e8; }
     .icon-btn:hover { background: #e0e0e0; }
     body.dark-theme .icon-btn:hover { background: #2a3a5c; }
     
@@ -463,7 +486,8 @@
       width: 32px; height: 32px; border: 2px solid #667eea;
       background: white; color: #667eea; border-radius: 50%;
       cursor: pointer; display: flex; align-items: center;
-      justify-content: center; font-weight: bold; font-size: calc(0.9rem * var(--font-scale));
+      justify-content: center; font-weight: bold;
+      font-size: calc(0.9rem * var(--font-scale));
       transition: 0.2s;
     }
     
@@ -495,9 +519,7 @@
     @media (max-width: 480px) {
       .app { height: 100vh; border-radius: 0; }
       body { padding: 0; }
-      .emoji-grid {
-        grid-template-columns: repeat(6, 1fr);
-      }
+      .emoji-grid { grid-template-columns: repeat(6, 1fr); }
     }
   </style>
 </head>
@@ -514,6 +536,22 @@
       <div class="error-msg" id="errorMsg">Неверный код</div>
       <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">
         По умолчанию: family2024
+      </p>
+    </div>
+  </div>
+
+  <!-- ПИН-код -->
+  <div class="pin-overlay" id="pinOverlay" style="display:none;">
+    <div class="pin-dialog">
+      <div class="user-icon" id="pinUserIcon">👤</div>
+      <h2 id="pinTitle">Введите ПИН-код</h2>
+      <p id="pinDescription">Для входа как <strong id="pinUserName"></strong></p>
+      <input type="password" class="pin-input" id="pinInput" 
+             placeholder="••••" maxlength="4" autocomplete="off" inputmode="numeric" pattern="[0-9]*">
+      <button class="pin-btn" id="pinBtn">Подтвердить</button>
+      <div class="error-msg" id="pinError">Неверный ПИН-код</div>
+      <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">
+        <span id="pinHint"></span>
       </p>
     </div>
   </div>
@@ -539,6 +577,10 @@
           <button class="action-btn primary" id="avatarBtn">Загрузить</button>
           <button class="action-btn warning" id="avatarResetBtn">По умолчанию</button>
         </div>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔑 Сменить ПИН-код</span>
+        <button class="action-btn primary" id="changePinBtn">Изменить</button>
       </div>
       <div class="setting-item">
         <span class="setting-label">🔔 Уведомления</span>
@@ -651,7 +693,7 @@
       const EMOJI_LIST = ['😀','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯','😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️','🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵','🥶','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','😇','🤠','🤡','🥳','🥴','🥺','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','👍','👎','👏','🙌','🤝','💪','✌️','🤞','👌','🤏','✋','👋','🤚','🖐️','✍️','🙏','👨‍👩‍👧‍👦','🏠','🎉','🎂','🍕','🍔','🌮','🍩','☕','🍰','🎄','🎁','🎈','⭐','🌟','🔥'];
       
       // ============ СОСТОЯНИЕ ============
-      let currentUser = localStorage.getItem('fc_user') || 'dad';
+      let currentUser = null; // Не выбран, пока не введён ПИН
       let activeTab = 'general';
       let privateWith = null;
       let autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
@@ -664,25 +706,126 @@
       let mediaRecorder = null;
       let audioChunks = [];
       let processedIds = new Set();
+      let pendingPinUser = null; // Пользователь, который пытается войти
       
       if (!localStorage.getItem('fc_code')) {
         localStorage.setItem('fc_code', 'family2024');
       }
       
-      // ============ ПРИМЕНЕНИЕ ТЕМЫ И ШРИФТА ПРИ ЗАГРУЗКЕ ============
+      // ============ ПИН-КОДЫ ============
+      function getPin(userId) {
+        return localStorage.getItem('fc_pin_' + userId) || null;
+      }
+      
+      function setPin(userId, pin) {
+        localStorage.setItem('fc_pin_' + userId, pin);
+      }
+      
+      function hasPin(userId) {
+        return !!getPin(userId);
+      }
+      
+      function verifyPin(userId, pin) {
+        return getPin(userId) === pin;
+      }
+      
+      // ============ ПИН-ОКНО ============
+      function showPinDialog(userId) {
+        pendingPinUser = userId;
+        const user = FAMILY[userId];
+        
+        document.getElementById('pinUserIcon').textContent = user.emoji;
+        document.getElementById('pinUserName').textContent = user.name;
+        
+        if (hasPin(userId)) {
+          document.getElementById('pinTitle').textContent = 'Введите ПИН-код';
+          document.getElementById('pinDescription').innerHTML = 'Для входа как <strong>' + user.name + '</strong>';
+          document.getElementById('pinHint').textContent = 'Введите ваш 4-значный ПИН';
+        } else {
+          document.getElementById('pinTitle').textContent = 'Создайте ПИН-код';
+          document.getElementById('pinDescription').innerHTML = 'Придумайте ПИН для <strong>' + user.name + '</strong>';
+          document.getElementById('pinHint').textContent = 'Придумайте 4 цифры и запомните их';
+        }
+        
+        document.getElementById('pinInput').value = '';
+        document.getElementById('pinError').classList.remove('show');
+        document.getElementById('pinOverlay').style.display = 'flex';
+        document.getElementById('pinInput').focus();
+      }
+      
+      function hidePinDialog() {
+        document.getElementById('pinOverlay').style.display = 'none';
+        pendingPinUser = null;
+      }
+      
+      function processPin() {
+        const pin = document.getElementById('pinInput').value.trim();
+        
+        if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+          document.getElementById('pinError').textContent = 'ПИН должен состоять из 4 цифр';
+          document.getElementById('pinError').classList.add('show');
+          return;
+        }
+        
+        if (hasPin(pendingPinUser)) {
+          // Проверяем существующий ПИН
+          if (verifyPin(pendingPinUser, pin)) {
+            // ПИН верный — входим
+            loginAsUser(pendingPinUser);
+            hidePinDialog();
+          } else {
+            document.getElementById('pinError').textContent = 'Неверный ПИН-код';
+            document.getElementById('pinError').classList.add('show');
+            document.getElementById('pinInput').value = '';
+          }
+        } else {
+          // Создаём новый ПИН
+          setPin(pendingPinUser, pin);
+          loginAsUser(pendingPinUser);
+          hidePinDialog();
+          alert('✅ ПИН-код создан! Теперь только вы можете писать от имени ' + FAMILY[pendingPinUser].name);
+        }
+      }
+      
+      function loginAsUser(userId) {
+        currentUser = userId;
+        localStorage.setItem('fc_user', userId);
+        renderUsers();
+        updatePrivate();
+        loadMessages();
+        
+        // Показываем приветствие
+        const user = FAMILY[userId];
+        console.log('✅ Вошёл как ' + user.name + ' (' + user.id + ')');
+      }
+      
+      function logoutUser() {
+        currentUser = null;
+        localStorage.removeItem('fc_user');
+        renderUsers();
+        document.getElementById('chatWindow').innerHTML = `
+          <div class="empty-chat">
+            <div class="empty-icon">🔒</div>
+            <p>Выберите пользователя и введите ПИН</p>
+          </div>
+        `;
+        if (messageListener) {
+          db.ref(getChatPath()).off('child_added', messageListener);
+          messageListener = null;
+        }
+      }
+      
+      // ============ ПРИМЕНЕНИЕ НАСТРОЕК ============
       function applyStoredSettings() {
-        // Тема
         if (isDarkTheme) {
           document.body.classList.add('dark-theme');
           document.getElementById('themeBtn').textContent = '☀️';
         }
         
-        // Шрифт
         document.documentElement.style.setProperty('--font-scale', fontSize / 100);
         const fontValueEl = document.getElementById('fontValue');
         if (fontValueEl) fontValueEl.textContent = fontSize + '%';
         
-        // Настройки в панели
         const notifToggle = document.getElementById('notifToggle');
         const soundToggle = document.getElementById('soundToggle');
         const autoDelete = document.getElementById('autoDelete');
@@ -714,24 +857,32 @@
         if (e.key === 'Enter') document.getElementById('secretBtn').click();
       });
       
-      document.getElementById('secretInput').focus();
+      // ============ ПИН-ОБРАБОТЧИКИ ============
+      document.getElementById('pinBtn').addEventListener('click', processPin);
       
-      // ============ АВАТАРКИ (исправлено) ============
+      document.getElementById('pinInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') processPin();
+      });
+      
+      // Закрытие ПИН-окна по клику вне диалога
+      document.getElementById('pinOverlay').addEventListener('click', function(e) {
+        if (e.target === this) hidePinDialog();
+      });
+      
+      // ============ АВАТАРКИ ============
       function getAvatar(userId) {
         return localStorage.getItem('fc_av_' + userId) || null;
       }
       
       function saveAvatar(userId, dataUrl) {
-        // Создаём квадратную миниатюру 200x200
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
-          const size = 200; // фиксированный размер для аватарки
+          const size = 200;
           canvas.width = size;
           canvas.height = size;
           const ctx = canvas.getContext('2d');
           
-          // Обрезаем по центру
           const minSide = Math.min(img.width, img.height);
           const sx = (img.width - minSide) / 2;
           const sy = (img.height - minSide) / 2;
@@ -746,7 +897,7 @@
           alert('✅ Аватар обновлён!');
         };
         img.onerror = function() {
-          alert('❌ Не удалось загрузить изображение. Аватар остался прежним.');
+          alert('❌ Не удалось загрузить изображение');
         };
         img.src = dataUrl;
       }
@@ -754,7 +905,7 @@
       function resetAvatar(userId) {
         localStorage.removeItem('fc_av_' + userId);
         renderUsers();
-        alert('✅ Аватар сброшен на стандартный');
+        alert('✅ Аватар сброшен');
       }
       
       // ============ РЕНДЕРИНГ ============
@@ -763,8 +914,11 @@
         container.innerHTML = Object.values(FAMILY).map(function(m) {
           const av = getAvatar(m.id);
           const isActive = m.id === currentUser;
+          const isLocked = !isActive && hasPin(m.id);
+          
           return `
-            <div class="user-avatar ${isActive ? 'active' : ''}" data-user="${m.id}">
+            <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
+                 data-user="${m.id}">
               <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
                 ${av ? '<img src="' + av + '" alt="' + m.name + '" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
                        '<span class="default-emoji" style="display:none;position:relative;z-index:1;">' + m.emoji + '</span>' : 
@@ -777,7 +931,11 @@
         
         container.querySelectorAll('.user-avatar').forEach(function(av) {
           av.addEventListener('click', function() {
-            switchUser(av.dataset.user);
+            const userId = av.dataset.user;
+            if (userId === currentUser) return; // Уже выбраны
+            
+            // Показываем ПИН-диалог
+            showPinDialog(userId);
           });
         });
       }
@@ -883,6 +1041,7 @@
       
       // ============ СООБЩЕНИЯ ============
       function getChatPath() {
+        if (!currentUser) return 'general';
         if (activeTab === 'private' && privateWith) {
           const users = [currentUser, privateWith].sort();
           return 'private/' + users[0] + '_' + users[1];
@@ -891,6 +1050,8 @@
       }
       
       function loadMessages() {
+        if (!currentUser) return;
+        
         if (messageListener) {
           db.ref(getChatPath()).off('child_added', messageListener);
         }
@@ -921,7 +1082,7 @@
             showMessage(msg);
             if (msg.from !== currentUser) {
               const sender = FAMILY[msg.from] || {name: 'Кто-то'};
-              notify(sender.emoji + ' ' + sender.name, msg.text || msg.type === 'image' ? '📷 Фото' : 'Новое сообщение');
+              notify(sender.emoji + ' ' + sender.name, msg.text || 'Новое сообщение');
             }
           }
         });
@@ -976,9 +1137,15 @@
         }
       }
       
-      // ============ ОТПРАВКА ============
+      // ============ ОТПРАВКА (с проверкой авторизации) ============
       function sendText(text) {
+        if (!currentUser) {
+          alert('Сначала выберите пользователя и введите ПИН-код');
+          return;
+        }
+        
         if (!text.trim()) return;
+        
         const msg = {
           from: currentUser,
           text: text.trim(),
@@ -991,6 +1158,11 @@
       }
       
       function sendMedia(type, dataUrl) {
+        if (!currentUser) {
+          alert('Сначала выберите пользователя и введите ПИН-код');
+          return;
+        }
+        
         const img = new Image();
         img.onload = function() {
           const canvas = document.createElement('canvas');
@@ -1012,50 +1184,6 @@
           db.ref(getChatPath()).push(msg);
         };
         img.src = dataUrl;
-      }
-      
-      // ============ ПОЛЬЗОВАТЕЛИ ============
-      function switchUser(userId) {
-        if (userId === currentUser) return;
-        const pin = localStorage.getItem('fc_pin_' + userId);
-        if (pin) {
-          const entered = prompt('ПИН для ' + FAMILY[userId].name + ':');
-          if (entered !== pin) { alert('Неверно'); return; }
-        } else {
-          const p = prompt('Придумайте 4-значный ПИН для ' + FAMILY[userId].name + ':');
-          if (!p || p.length !== 4) return;
-          localStorage.setItem('fc_pin_' + userId, p);
-        }
-        currentUser = userId;
-        localStorage.setItem('fc_user', userId);
-        renderUsers();
-        updatePrivate();
-        loadMessages();
-      }
-      
-      function updatePrivate() {
-        const sel = document.getElementById('privateRecipient');
-        const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
-        sel.innerHTML = '<option value="">Выберите...</option>' +
-          others.map(function(m) { return '<option value="' + m.id + '">' + m.emoji + ' ' + m.name + '</option>'; }).join('');
-      }
-      
-      // ============ НАСТРОЙКИ ============
-      function applyFontSize() {
-        document.documentElement.style.setProperty('--font-scale', fontSize / 100);
-        document.getElementById('fontValue').textContent = fontSize + '%';
-        localStorage.setItem('fc_font', fontSize);
-      }
-      
-      function toggleTheme() {
-        isDarkTheme = !isDarkTheme;
-        if (isDarkTheme) {
-          document.body.classList.add('dark-theme');
-        } else {
-          document.body.classList.remove('dark-theme');
-        }
-        document.getElementById('themeBtn').textContent = isDarkTheme ? '☀️' : '🌙';
-        localStorage.setItem('fc_theme', isDarkTheme ? 'dark' : 'light');
       }
       
       // ============ ОБРАБОТЧИКИ ============
@@ -1084,6 +1212,10 @@
         });
         
         document.getElementById('attachBtn').addEventListener('click', function() {
+          if (!currentUser) {
+            alert('Сначала войдите под своей ролью');
+            return;
+          }
           document.getElementById('fileInput').click();
         });
         
@@ -1098,10 +1230,18 @@
         });
         
         document.getElementById('avatarBtn').addEventListener('click', function() {
+          if (!currentUser) {
+            alert('Сначала войдите под своей ролью');
+            return;
+          }
           document.getElementById('avatarInput').click();
         });
         
         document.getElementById('avatarResetBtn').addEventListener('click', function() {
+          if (!currentUser) {
+            alert('Сначала войдите под своей ролью');
+            return;
+          }
           if (confirm('Сбросить аватар на стандартный?')) {
             resetAvatar(currentUser);
           }
@@ -1118,6 +1258,11 @@
         });
         
         document.getElementById('micBtn').addEventListener('click', function() {
+          if (!currentUser) {
+            alert('Сначала войдите под своей ролью');
+            return;
+          }
+          
           const btn = document.getElementById('micBtn');
           if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
@@ -1169,7 +1314,16 @@
           document.getElementById('settingsPanel').classList.toggle('show');
         });
         
-        document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+        document.getElementById('themeBtn').addEventListener('click', function() {
+          isDarkTheme = !isDarkTheme;
+          if (isDarkTheme) {
+            document.body.classList.add('dark-theme');
+          } else {
+            document.body.classList.remove('dark-theme');
+          }
+          this.textContent = isDarkTheme ? '☀️' : '🌙';
+          localStorage.setItem('fc_theme', isDarkTheme ? 'dark' : 'light');
+        });
         
         document.getElementById('notifToggle').addEventListener('change', function() {
           notifEnabled = this.checked;
@@ -1197,22 +1351,51 @@
           if (fontSize > 80) { fontSize -= 10; applyFontSize(); }
         });
         
+        function applyFontSize() {
+          document.documentElement.style.setProperty('--font-scale', fontSize / 100);
+          document.getElementById('fontValue').textContent = fontSize + '%';
+          localStorage.setItem('fc_font', fontSize);
+        }
+        
+        document.getElementById('changePinBtn').addEventListener('click', function() {
+          if (!currentUser) {
+            alert('Сначала войдите под своей ролью');
+            return;
+          }
+          
+          const oldPin = prompt('Введите текущий ПИН:');
+          if (!oldPin || !verifyPin(currentUser, oldPin)) {
+            alert('Неверный ПИН');
+            return;
+          }
+          
+          const newPin = prompt('Введите новый 4-значный ПИН:');
+          if (!newPin || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) {
+            alert('ПИН должен состоять из 4 цифр');
+            return;
+          }
+          
+          setPin(currentUser, newPin);
+          alert('✅ ПИН-код изменён!');
+        });
+        
         document.getElementById('changeCodeBtn').addEventListener('click', function() {
-          const old = prompt('Текущий код:');
+          const old = prompt('Текущий код семьи:');
           if (old !== secretCode) { alert('Неверно'); return; }
-          const newCode = prompt('Новый код:');
+          const newCode = prompt('Новый код семьи:');
           if (newCode && newCode.length >= 4) {
             secretCode = newCode;
             localStorage.setItem('fc_code', secretCode);
-            alert('✅ Код изменён!');
+            alert('✅ Код семьи изменён!');
           }
         });
         
         document.getElementById('cacheBtn').addEventListener('click', function() {
-          if (confirm('Перезагрузить страницу? Настройки сохранятся.')) location.reload();
+          if (confirm('Перезагрузить страницу? Все настройки сохранятся.')) location.reload();
         });
         
         document.getElementById('clearBtn').addEventListener('click', function() {
+          if (!currentUser) return;
           if (confirm('Удалить все сообщения в этом чате?')) {
             db.ref(getChatPath()).remove();
             processedIds.clear();
@@ -1223,7 +1406,7 @@
       // ============ АВТОУДАЛЕНИЕ ============
       function startAutoDelete() {
         setInterval(function() {
-          if (autoDeleteHours === 0) return;
+          if (autoDeleteHours === 0 || !currentUser) return;
           db.ref(getChatPath()).once('value').then(function(snap) {
             const msgs = snap.val();
             if (!msgs) return;
@@ -1242,17 +1425,42 @@
         }, 30000);
       }
       
+      function updatePrivate() {
+        const sel = document.getElementById('privateRecipient');
+        const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
+        sel.innerHTML = '<option value="">Выберите...</option>' +
+          others.map(function(m) { return '<option value="' + m.id + '">' + m.emoji + ' ' + m.name + '</option>'; }).join('');
+      }
+      
       // ============ ЗАПУСК ============
       function initApp() {
-        applyStoredSettings(); // Применяем сохранённые тему и шрифт
+        applyStoredSettings();
         renderEmoji();
         renderUsers();
         setupListeners();
-        loadMessages();
         startAutoDelete();
         requestNotif();
+        
+        // Если пользователь уже был сохранён, пытаемся восстановить сессию
+        const savedUser = localStorage.getItem('fc_user');
+        if (savedUser && FAMILY[savedUser]) {
+          // Показываем ПИН-диалог для сохранённого пользователя
+          showPinDialog(savedUser);
+        } else {
+          // Показываем подсказку
+          document.getElementById('chatWindow').innerHTML = `
+            <div class="empty-chat">
+              <div class="empty-icon">🔒</div>
+              <p>Выберите пользователя и введите ПИН-код</p>
+            </div>
+          `;
+        }
+        
         console.log('✅ FChat запущен. Тема: ' + (isDarkTheme ? 'тёмная' : 'светлая') + ', шрифт: ' + fontSize + '%');
       }
+      
+      // Автофокус на секретный код
+      document.getElementById('secretInput').focus();
     })();
   </script>
 </body>
