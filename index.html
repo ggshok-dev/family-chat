@@ -8,368 +8,236 @@
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-  
-  <!-- Emoji Picker -->
-  <script type="module" src="https://cdn.jsdelivr.net/npm/emoji-picker-element@1.20.2/index.js"></script>
   
   <style>
-    :root {
-      --primary: #6C5CE7;
-      --primary-dark: #5A4BD1;
-      --secondary: #A8E6CF;
-      --bg: #F8F9FA;
-      --surface: #FFFFFF;
-      --text: #2D3436;
-      --text-secondary: #636E72;
-      --border: #DFE6E9;
-      --sent-bg: linear-gradient(135deg, #6C5CE7, #A8E6CF);
-      --received-bg: #FFFFFF;
-      --shadow: 0 4px 20px rgba(0,0,0,0.08);
-      --radius: 20px;
-    }
-
-    .dark-theme {
-      --primary: #A8E6CF;
-      --primary-dark: #88D8B0;
-      --bg: #1A1A2E;
-      --surface: #16213E;
-      --text: #EEEEEE;
-      --text-secondary: #AAAAAA;
-      --border: #2A2A4A;
-      --sent-bg: linear-gradient(135deg, #0F3460, #16213E);
-      --received-bg: #1A1A2E;
-    }
-
     * { margin: 0; padding: 0; box-sizing: border-box; }
-
+    
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 16px;
-      color: var(--text);
-      transition: all 0.3s ease;
+      padding: 10px;
     }
-
-    .app-container {
+    
+    .app {
       width: 100%;
-      max-width: 480px;
-      height: 92vh;
-      background: var(--surface);
-      border-radius: 28px;
-      box-shadow: var(--shadow);
+      max-width: 450px;
+      height: 95vh;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      backdrop-filter: blur(10px);
     }
-
-    /* Header */
+    
+    /* Заголовок */
     .header {
-      background: var(--primary);
-      padding: 16px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
+      background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
-    }
-    
-    .header-left {
+      padding: 15px 20px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
     
-    .logo {
+    .header-logo {
       font-size: 28px;
-      animation: bounce 2s infinite;
     }
     
-    @keyframes bounce {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-5px); }
-    }
-    
-    .title {
+    .header-title {
       font-size: 1.3rem;
       font-weight: 700;
-      letter-spacing: -0.5px;
+      flex: 1;
     }
     
-    .header-actions {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .theme-toggle {
+    .theme-btn {
       background: rgba(255,255,255,0.2);
       border: none;
+      color: white;
+      font-size: 20px;
+      width: 35px;
+      height: 35px;
       border-radius: 50%;
-      width: 36px;
-      height: 36px;
-      font-size: 18px;
       cursor: pointer;
-      transition: all 0.3s;
-    }
-    
-    .theme-toggle:hover {
-      background: rgba(255,255,255,0.3);
-      transform: scale(1.1);
-    }
-
-    /* User Selector */
-    .users-bar {
-      display: flex;
-      gap: 8px;
-      padding: 12px 16px;
-      overflow-x: auto;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-    }
-    
-    .user-chip {
       display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: center;
+    }
+    
+    /* Выбор пользователя */
+    .users-row {
+      display: flex;
+      gap: 8px;
+      padding: 12px 15px;
+      overflow-x: auto;
+      border-bottom: 1px solid #eee;
+      background: #f8f9fa;
+    }
+    
+    .user-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
       padding: 8px 14px;
-      background: var(--bg);
-      border: 2px solid var(--border);
-      border-radius: 24px;
+      border: 2px solid #e0e0e0;
+      border-radius: 20px;
+      background: white;
       cursor: pointer;
       white-space: nowrap;
-      transition: all 0.3s;
       font-size: 0.9rem;
+      transition: all 0.2s;
     }
     
-    .user-chip.active {
-      background: var(--primary);
+    .user-btn.active {
+      background: #667eea;
       color: white;
-      border-color: var(--primary);
-      box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
+      border-color: #667eea;
     }
     
-    .user-chip:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-
-    /* Chat Tabs */
-    .chat-tabs {
+    /* Вкладки чатов */
+    .tabs {
       display: flex;
-      padding: 8px 16px;
+      padding: 8px 15px;
       gap: 8px;
-      background: var(--surface);
+      background: white;
+      border-bottom: 1px solid #eee;
     }
     
-    .tab-btn {
+    .tab {
       flex: 1;
-      padding: 10px;
+      padding: 8px;
       border: none;
-      background: var(--bg);
+      background: #f0f0f0;
       border-radius: 12px;
+      cursor: pointer;
       font-weight: 600;
-      cursor: pointer;
-      color: var(--text-secondary);
-      transition: all 0.3s;
+      font-size: 0.9rem;
+      transition: all 0.2s;
     }
     
-    .tab-btn.active {
-      background: var(--primary);
+    .tab.active {
+      background: #667eea;
       color: white;
-      box-shadow: 0 4px 12px rgba(108, 92, 231, 0.3);
-    }
-
-    /* Settings Bar */
-    .settings-bar {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 8px 16px;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border);
-      font-size: 0.85rem;
     }
     
-    .auto-delete-select {
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text);
-      font-size: 0.85rem;
-    }
-    
-    .clear-btn {
-      padding: 6px 12px;
-      background: #FF6B6B;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.85rem;
-      transition: all 0.3s;
-    }
-    
-    .clear-btn:hover {
-      background: #FF5252;
-      transform: scale(1.05);
-    }
-
-    /* Chat Window */
+    /* Окно чата */
     .chat-window {
       flex: 1;
       overflow-y: auto;
-      padding: 16px;
+      padding: 15px;
+      background: #f5f5f5;
       display: flex;
       flex-direction: column;
-      gap: 12px;
-      background: var(--bg);
+      gap: 8px;
     }
-
+    
+    .empty-chat {
+      text-align: center;
+      color: #999;
+      margin-top: 40px;
+    }
+    
+    .empty-icon {
+      font-size: 50px;
+      margin-bottom: 10px;
+    }
+    
+    /* Сообщения */
     .message {
       max-width: 80%;
-      animation: slideIn 0.3s ease;
-      position: relative;
+      animation: slideIn 0.3s;
     }
     
     @keyframes slideIn {
-      from { opacity: 0; transform: translateY(20px); }
+      from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-    .message.sent { align-self: flex-end; }
-    .message.received { align-self: flex-start; }
+    .message.sent {
+      align-self: flex-end;
+    }
     
-    .message-bubble {
-      padding: 12px 16px;
+    .message.received {
+      align-self: flex-start;
+    }
+    
+    .bubble {
+      padding: 10px 14px;
       border-radius: 18px;
-      line-height: 1.5;
-      position: relative;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      line-height: 1.4;
+      word-wrap: break-word;
     }
     
-    .sent .message-bubble {
-      background: var(--sent-bg);
+    .sent .bubble {
+      background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
-      border-bottom-right-radius: 6px;
+      border-bottom-right-radius: 4px;
     }
     
-    .received .message-bubble {
-      background: var(--received-bg);
-      border: 1px solid var(--border);
-      border-bottom-left-radius: 6px;
+    .received .bubble {
+      background: white;
+      border: 1px solid #e0e0e0;
+      border-bottom-left-radius: 4px;
     }
     
-    .message-sender {
-      font-size: 0.8rem;
+    .msg-sender {
+      font-size: 0.75rem;
       font-weight: 600;
-      margin-bottom: 4px;
-      opacity: 0.8;
+      color: #764ba2;
+      margin-bottom: 2px;
     }
     
-    .message-time {
+    .msg-time {
       font-size: 0.7rem;
+      color: #999;
       margin-top: 4px;
-      opacity: 0.7;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      text-align: right;
     }
     
-    .message-menu-btn {
+    .sent .msg-time {
+      color: rgba(255,255,255,0.8);
+    }
+    
+    .msg-actions {
       cursor: pointer;
-      opacity: 0;
-      transition: opacity 0.2s;
-      font-weight: bold;
-      padding: 2px 6px;
-      border-radius: 4px;
+      opacity: 0.5;
+      margin-left: 8px;
     }
     
-    .message:hover .message-menu-btn {
-      opacity: 0.7;
-    }
-    
-    .message-menu-btn:hover {
+    .msg-actions:hover {
       opacity: 1;
-      background: rgba(0,0,0,0.1);
     }
     
-    .media-content img {
-      max-width: 250px;
-      max-height: 250px;
-      border-radius: 12px;
-      margin: 8px 0;
+    /* Медиа */
+    .media-img {
+      max-width: 200px;
+      max-height: 200px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: transform 0.3s;
+      margin: 5px 0;
     }
     
-    .media-content img:hover {
-      transform: scale(1.05);
+    .media-audio {
+      margin: 5px 0;
     }
     
-    .media-content audio {
-      margin: 8px 0;
-      max-width: 250px;
-    }
-
-    /* Context Menu */
-    .context-menu {
-      position: fixed;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-      z-index: 1000;
-      min-width: 160px;
-      overflow: hidden;
-      animation: fadeIn 0.2s ease;
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    
-    .context-menu-item {
-      padding: 10px 16px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: background 0.2s;
-      border: none;
-      background: none;
-      width: 100%;
-      text-align: left;
-      color: var(--text);
-      font-size: 0.9rem;
-    }
-    
-    .context-menu-item:hover {
-      background: var(--bg);
-    }
-    
-    .context-menu-item.danger {
-      color: #FF6B6B;
-    }
-
-    /* Input Area */
-    .input-area {
-      padding: 12px 16px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
+    /* Панель ввода */
+    .input-panel {
+      padding: 12px 15px;
+      background: white;
+      border-top: 1px solid #eee;
     }
     
     .emoji-picker-container {
       display: none;
-      margin-bottom: 12px;
-      border-radius: 12px;
+      margin-bottom: 10px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
     }
     
     .emoji-picker-container.show {
@@ -382,176 +250,238 @@
       align-items: flex-end;
     }
     
-    .action-btn {
-      width: 42px;
-      height: 42px;
+    .icon-btn {
+      width: 38px;
+      height: 38px;
       border: none;
+      background: #f0f0f0;
       border-radius: 50%;
-      background: var(--bg);
-      font-size: 1.3rem;
+      font-size: 1.2rem;
       cursor: pointer;
-      transition: all 0.3s;
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: all 0.2s;
     }
     
-    .action-btn:hover {
-      background: var(--border);
-      transform: scale(1.1);
+    .icon-btn:hover {
+      background: #e0e0e0;
+      transform: scale(1.05);
     }
     
-    .action-btn.recording {
-      background: #FF6B6B;
+    .icon-btn.recording {
+      background: #ff4444;
       color: white;
       animation: pulse 1.5s infinite;
     }
     
     @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
-      50% { box-shadow: 0 0 0 12px rgba(255, 107, 107, 0); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.4); }
+      50% { box-shadow: 0 0 0 10px rgba(255,68,68,0); }
     }
     
-    .message-input {
+    .msg-input {
       flex: 1;
-      border: 2px solid var(--border);
-      border-radius: 24px;
-      padding: 10px 16px;
+      border: 1px solid #ddd;
+      border-radius: 20px;
+      padding: 10px 15px;
       font-size: 0.95rem;
       resize: none;
-      max-height: 120px;
-      background: var(--bg);
-      color: var(--text);
-      outline: none;
-      transition: border-color 0.3s;
+      max-height: 100px;
       font-family: inherit;
+      outline: none;
     }
     
-    .message-input:focus {
-      border-color: var(--primary);
+    .msg-input:focus {
+      border-color: #667eea;
     }
     
     .send-btn {
-      width: 42px;
-      height: 42px;
+      width: 38px;
+      height: 38px;
       border: none;
-      border-radius: 50%;
-      background: var(--primary);
+      background: #667eea;
       color: white;
-      font-size: 1.3rem;
+      border-radius: 50%;
+      font-size: 1.2rem;
       cursor: pointer;
-      transition: all 0.3s;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      transition: all 0.2s;
     }
     
     .send-btn:hover {
-      background: var(--primary-dark);
-      transform: scale(1.1);
-    }
-
-    /* Empty state */
-    .empty-chat {
-      text-align: center;
-      padding: 40px 20px;
-      opacity: 0.6;
+      background: #764ba2;
+      transform: scale(1.05);
     }
     
-    .empty-chat-icon {
-      font-size: 3rem;
-      margin-bottom: 12px;
+    /* Контекстное меню */
+    .context-menu {
+      position: fixed;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.2);
+      z-index: 1000;
+      overflow: hidden;
+      animation: fadeIn 0.2s;
     }
     
-    .empty-chat-text {
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .context-menu button {
+      display: block;
+      width: 100%;
+      padding: 10px 15px;
+      border: none;
+      background: none;
+      text-align: left;
+      cursor: pointer;
       font-size: 0.9rem;
-      color: var(--text-secondary);
+      transition: background 0.2s;
     }
-
-    /* System message */
-    .system-message {
-      text-align: center;
-      padding: 8px;
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      opacity: 0.7;
+    
+    .context-menu button:hover {
+      background: #f5f5f5;
     }
-
-    /* Delete timer badge */
-    .delete-timer {
-      display: inline-block;
-      padding: 2px 8px;
-      background: rgba(255, 107, 107, 0.2);
-      border-radius: 12px;
-      font-size: 0.7rem;
-      color: #FF6B6B;
-      margin-left: 8px;
+    
+    .danger-btn {
+      color: #ff4444;
+    }
+    
+    /* Настройки */
+    .settings-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 15px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      font-size: 0.85rem;
+    }
+    
+    .settings-bar select {
+      padding: 4px 8px;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+    }
+    
+    .clear-chat-btn {
+      padding: 4px 12px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+    
+    /* Тёмная тема */
+    body.dark-theme .app {
+      background: #1a1a2e;
+    }
+    
+    body.dark-theme .chat-window {
+      background: #16213e;
+    }
+    
+    body.dark-theme .bubble.received .bubble {
+      background: #1a1a2e;
+      border-color: #2a2a4a;
+      color: #eee;
+    }
+    
+    body.dark-theme .msg-input {
+      background: #1a1a2e;
+      color: white;
+      border-color: #2a2a4a;
+    }
+    
+    body.dark-theme .input-panel,
+    body.dark-theme .tabs,
+    body.dark-theme .users-row,
+    body.dark-theme .settings-bar {
+      background: #16213e;
+      border-color: #2a2a4a;
+    }
+    
+    body.dark-theme .user-btn {
+      background: #1a1a2e;
+      border-color: #2a2a4a;
+      color: #eee;
+    }
+    
+    body.dark-theme .tab {
+      background: #1a1a2e;
+      color: #eee;
+    }
+    
+    body.dark-theme .icon-btn {
+      background: #1a1a2e;
+      color: #eee;
+    }
+    
+    body.dark-theme .empty-chat {
+      color: #888;
     }
   </style>
 </head>
 <body>
-  <div class="app-container">
+  <div class="app">
     <!-- Header -->
     <div class="header">
-      <div class="header-left">
-        <span class="logo">👨‍👩‍👧‍👦</span>
-        <span class="title">FChat</span>
-      </div>
-      <div class="header-actions">
-        <button class="theme-toggle" id="themeToggle">🌙</button>
-      </div>
+      <span class="header-logo">👨‍👩‍👧‍👦</span>
+      <span class="header-title">FChat</span>
+      <button class="theme-btn" id="themeBtn">🌙</button>
     </div>
 
-    <!-- User Selector -->
-    <div class="users-bar" id="usersBar"></div>
-
-    <!-- Chat Tabs -->
-    <div class="chat-tabs">
-      <button class="tab-btn active" data-tab="general">💬 Общий чат</button>
-      <button class="tab-btn" data-tab="private">🔒 Личные сообщения</button>
-    </div>
-
-    <!-- Private Chat Selector -->
-    <div id="privateSelector" style="display:none; padding: 8px 16px; background: var(--bg); border-bottom: 1px solid var(--border);">
-      <select id="privateRecipient" class="auto-delete-select" style="width: 100%;">
-        <option value="">Выберите собеседника...</option>
-      </select>
-    </div>
+    <!-- User Selection -->
+    <div class="users-row" id="usersRow"></div>
 
     <!-- Settings -->
     <div class="settings-bar">
       <span>🗑️ Автоудаление:</span>
-      <select id="autoDeleteSelect" class="auto-delete-select">
+      <select id="autoDeleteSelect">
         <option value="0">Выключено</option>
         <option value="1">1 час</option>
         <option value="6">6 часов</option>
-        <option value="12">12 часов</option>
         <option value="24" selected>24 часа</option>
-        <option value="72">3 дня</option>
         <option value="168">7 дней</option>
-        <option value="720">30 дней</option>
       </select>
-      <button class="clear-btn" id="clearChatBtn">🗑️ Очистить чат</button>
+      <button class="clear-chat-btn" id="clearChatBtn">Очистить</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="general">💬 Общий</button>
+      <button class="tab" data-tab="private">🔒 Личный</button>
+    </div>
+
+    <!-- Private Recipient Selector -->
+    <div id="privateSelector" style="display:none; padding: 8px 15px; background: white; border-bottom: 1px solid #eee;">
+      <select id="privateRecipient" style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ddd;">
+        <option value="">Выберите собеседника...</option>
+      </select>
     </div>
 
     <!-- Chat Window -->
     <div class="chat-window" id="chatWindow">
       <div class="empty-chat">
-        <div class="empty-chat-icon">💬</div>
-        <div class="empty-chat-text">Выберите чат и начните общение</div>
+        <div class="empty-icon">💬</div>
+        <p>Выберите чат и начните общение</p>
       </div>
     </div>
 
-    <!-- Input Area -->
-    <div class="input-area">
-      <div class="emoji-picker-container" id="emojiPickerContainer">
+    <!-- Input -->
+    <div class="input-panel">
+      <div class="emoji-picker-container" id="emojiContainer">
         <emoji-picker id="emojiPicker"></emoji-picker>
       </div>
       <div class="input-row">
-        <button class="action-btn" id="emojiBtn">😊</button>
-        <button class="action-btn" id="micBtn">🎤</button>
-        <button class="action-btn" id="attachBtn">📎</button>
-        <textarea class="message-input" id="messageInput" rows="1" placeholder="Введите сообщение..."></textarea>
+        <button class="icon-btn" id="emojiBtn">😊</button>
+        <button class="icon-btn" id="micBtn">🎤</button>
+        <button class="icon-btn" id="attachBtn">📎</button>
+        <textarea class="msg-input" id="msgInput" rows="1" placeholder="Сообщение..."></textarea>
         <button class="send-btn" id="sendBtn">➤</button>
       </div>
     </div>
@@ -559,8 +489,13 @@
 
   <input type="file" id="fileInput" accept="image/*" style="display:none">
 
+  <!-- Emoji Picker -->
+  <script type="module">
+    import 'https://cdn.jsdelivr.net/npm/emoji-picker-element@1.20.2/index.js';
+  </script>
+
   <script>
-    // ============ FIREBASE CONFIG ============
+    // ============ FIREBASE ============
     const firebaseConfig = {
       apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
       authDomain: "fchat-d6879.firebaseapp.com",
@@ -573,178 +508,154 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
-    const storage = firebase.storage();
 
-    // ============ FAMILY MEMBERS ============
+    // ============ FAMILY ============
     const FAMILY = {
-      dad: { id: 'dad', name: 'Папа', emoji: '👨', color: '#4A90E2' },
-      mom: { id: 'mom', name: 'Мама', emoji: '👩', color: '#E91E63' },
-      sergey: { id: 'sergey', name: 'Сергей', emoji: '👦', color: '#4CAF50' },
-      sveta: { id: 'sveta', name: 'Света', emoji: '👧', color: '#FF9800' },
-      katya: { id: 'katya', name: 'Катя', emoji: '👧', color: '#9C27B0' }
+      dad: { id: 'dad', name: 'Папа', emoji: '👨' },
+      mom: { id: 'mom', name: 'Мама', emoji: '👩' },
+      sergey: { id: 'sergey', name: 'Сергей', emoji: '👦' },
+      sveta: { id: 'sveta', name: 'Света', emoji: '👧' },
+      katya: { id: 'katya', name: 'Катя', emoji: '👧' }
     };
 
     // ============ STATE ============
-    let currentUser = null;
-    let activeTab = 'general'; // 'general' or 'private'
-    let privateChatWith = null;
+    let currentUser = localStorage.getItem('fc_user') || 'dad';
+    let activeTab = 'general';
+    let privateWith = null;
     let autoDeleteHours = 24;
     let messageListener = null;
+    let mediaRecorder = null;
+    let audioChunks = [];
 
-    // ============ INITIALIZATION ============
+    // ============ INDEXEDDB ============
+    let dbLocal;
+    const request = indexedDB.open('FChatMedia', 1);
+    
+    request.onupgradeneeded = (e) => {
+      dbLocal = e.target.result;
+      if (!dbLocal.objectStoreNames.contains('media')) {
+        dbLocal.createObjectStore('media', { keyPath: 'id' });
+      }
+    };
+    
+    request.onsuccess = (e) => {
+      dbLocal = e.target.result;
+    };
+
+    function saveMedia(id, data) {
+      return new Promise((resolve) => {
+        const tx = dbLocal.transaction('media', 'readwrite');
+        tx.objectStore('media').put({ id, data, time: Date.now() });
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    function getMedia(id) {
+      return new Promise((resolve) => {
+        const tx = dbLocal.transaction('media', 'readonly');
+        const req = tx.objectStore('media').get(id);
+        req.onsuccess = () => resolve(req.result?.data || null);
+      });
+    }
+
+    // ============ INIT ============
     function init() {
-      // Get or create user
-      const savedUser = localStorage.getItem('fc_currentUser');
-      if (savedUser && FAMILY[savedUser]) {
-        currentUser = savedUser;
-      } else {
-        // First time - show user selection
-        currentUser = 'dad'; // default
-        localStorage.setItem('fc_currentUser', currentUser);
-      }
-
-      // Load settings
-      autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
-      document.getElementById('autoDeleteSelect').value = autoDeleteHours;
-      
-      activeTab = localStorage.getItem('fc_activeTab') || 'general';
-      privateChatWith = localStorage.getItem('fc_privateWith') || null;
-
-      // Theme
-      const theme = localStorage.getItem('fc_theme') || 'light';
-      applyTheme(theme);
-
-      // Render UI
-      renderUserBar();
-      renderTabs();
-      updatePrivateSelector();
-      
-      // Subscribe to messages
+      renderUsers();
+      setupTabs();
+      setupListeners();
+      loadSettings();
       subscribeToMessages();
-
-      // Start auto-delete timer
-      startAutoDeleteTimer();
+      startAutoDelete();
     }
 
-    // ============ THEME ============
-    function applyTheme(theme) {
-      if (theme === 'dark') {
-        document.body.classList.add('dark-theme');
-        document.getElementById('themeToggle').textContent = '☀️';
-      } else {
-        document.body.classList.remove('dark-theme');
-        document.getElementById('themeToggle').textContent = '🌙';
-      }
-      localStorage.setItem('fc_theme', theme);
-    }
-
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      const current = localStorage.getItem('fc_theme') || 'light';
-      applyTheme(current === 'light' ? 'dark' : 'light');
-    });
-
-    // ============ USER BAR ============
-    function renderUserBar() {
-      const bar = document.getElementById('usersBar');
-      bar.innerHTML = Object.values(FAMILY).map(member => `
-        <div class="user-chip ${member.id === currentUser ? 'active' : ''}" 
-             data-user="${member.id}"
-             style="${member.id === currentUser ? 'border-color: ' + member.color : ''}">
-          ${member.emoji} ${member.name}
+    // ============ USERS ============
+    function renderUsers() {
+      const row = document.getElementById('usersRow');
+      row.innerHTML = Object.values(FAMILY).map(m => `
+        <div class="user-btn ${m.id === currentUser ? 'active' : ''}" data-user="${m.id}">
+          ${m.emoji} ${m.name}
         </div>
       `).join('');
 
-      // Click handlers
-      bar.querySelectorAll('.user-chip').forEach(chip => {
-        chip.addEventListener('click', () => {
-          const userId = chip.dataset.user;
-          if (userId !== currentUser) {
-            switchUser(userId);
-          }
-        });
+      row.querySelectorAll('.user-btn').forEach(btn => {
+        btn.addEventListener('click', () => switchUser(btn.dataset.user));
       });
     }
 
     function switchUser(userId) {
-      // Simple PIN protection (in production, use proper auth)
-      const pin = localStorage.getItem(`fc_pin_${userId}`);
-      if (pin) {
-        const entered = prompt(`Введите ПИН для ${FAMILY[userId].name}:`);
-        if (entered !== pin) {
-          alert('Неверный ПИН-код');
+      if (userId === currentUser) return;
+      
+      // Simple PIN
+      const savedPin = localStorage.getItem(`fc_pin_${userId}`);
+      if (savedPin) {
+        const pin = prompt(`Введите ПИН для ${FAMILY[userId].name}:`);
+        if (pin !== savedPin) {
+          alert('Неверный ПИН');
           return;
         }
       } else {
-        const newPin = prompt(`Придумайте 4-значный ПИН для ${FAMILY[userId].name}:`);
-        if (newPin && newPin.length === 4) {
-          localStorage.setItem(`fc_pin_${userId}`, newPin);
-        } else {
-          return;
-        }
+        const pin = prompt(`Придумайте 4-значный ПИН для ${FAMILY[userId].name}:`);
+        if (!pin || pin.length !== 4) return;
+        localStorage.setItem(`fc_pin_${userId}`, pin);
       }
 
       currentUser = userId;
-      localStorage.setItem('fc_currentUser', currentUser);
-      renderUserBar();
+      localStorage.setItem('fc_user', userId);
+      renderUsers();
       resetChat();
     }
 
     // ============ TABS ============
-    function renderTabs() {
-      document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.classList.remove('active');
-        if (btn.dataset.tab === activeTab) btn.classList.add('active');
+    function setupTabs() {
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          activeTab = tab.dataset.tab;
+          
+          const privateSel = document.getElementById('privateSelector');
+          if (activeTab === 'private') {
+            privateSel.style.display = 'block';
+            updatePrivateList();
+          } else {
+            privateSel.style.display = 'none';
+            privateWith = null;
+          }
+          
+          resetChat();
+        });
       });
     }
 
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        activeTab = btn.dataset.tab;
-        localStorage.setItem('fc_activeTab', activeTab);
-        renderTabs();
-        updatePrivateSelector();
-        resetChat();
-      });
-    });
-
-    function updatePrivateSelector() {
-      const container = document.getElementById('privateSelector');
+    function updatePrivateList() {
       const select = document.getElementById('privateRecipient');
+      const others = Object.values(FAMILY).filter(m => m.id !== currentUser);
       
-      if (activeTab === 'private') {
-        container.style.display = 'block';
-        const others = Object.values(FAMILY).filter(m => m.id !== currentUser);
-        select.innerHTML = '<option value="">Выберите собеседника...</option>' +
-          others.map(m => `<option value="${m.id}" ${m.id === privateChatWith ? 'selected' : ''}>${m.emoji} ${m.name}</option>`).join('');
-        
-        if (!privateChatWith && others.length > 0) {
-          privateChatWith = others[0].id;
-          select.value = privateChatWith;
-          localStorage.setItem('fc_privateWith', privateChatWith);
-        }
-      } else {
-        container.style.display = 'none';
-        privateChatWith = null;
-        localStorage.removeItem('fc_privateWith');
+      select.innerHTML = '<option value="">Выберите...</option>' +
+        others.map(m => `<option value="${m.id}" ${m.id === privateWith ? 'selected' : ''}>${m.emoji} ${m.name}</option>`).join('');
+      
+      if (!privateWith && others.length > 0) {
+        privateWith = others[0].id;
+        select.value = privateWith;
       }
     }
 
     document.getElementById('privateRecipient').addEventListener('change', (e) => {
-      privateChatWith = e.target.value;
-      localStorage.setItem('fc_privateWith', privateChatWith);
-      resetChat();
+      privateWith = e.target.value;
+      if (privateWith) resetChat();
     });
 
     // ============ MESSAGES ============
     function getChatPath() {
-      if (activeTab === 'private' && privateChatWith) {
-        const users = [currentUser, privateChatWith].sort();
+      if (activeTab === 'private' && privateWith) {
+        const users = [currentUser, privateWith].sort();
         return `private/${users[0]}_${users[1]}`;
       }
       return 'general';
     }
 
     function subscribeToMessages() {
+      // Unsubscribe previous
       if (messageListener) {
         db.ref(getChatPath()).off('child_added', messageListener);
       }
@@ -752,102 +663,120 @@
       const chatRef = db.ref(getChatPath());
       
       // Clear window
-      document.getElementById('chatWindow').innerHTML = '';
+      document.getElementById('chatWindow').innerHTML = `
+        <div class="empty-chat">
+          <div class="empty-icon">💬</div>
+          <p>Нет сообщений</p>
+        </div>
+      `;
 
-      messageListener = chatRef.on('child_added', (snapshot) => {
-        const msg = snapshot.val();
-        msg.id = snapshot.key;
-        renderMessage(msg);
+      messageListener = chatRef.on('child_added', (snap) => {
+        const msg = snap.val();
+        msg.id = snap.key;
+        displayMessage(msg);
       });
 
-      // Listen for removals
-      chatRef.on('child_removed', (snapshot) => {
-        const el = document.querySelector(`[data-msg-id="${snapshot.key}"]`);
+      // Listen for edits
+      chatRef.on('child_changed', (snap) => {
+        const msg = snap.val();
+        msg.id = snap.key;
+        updateMessageDisplay(msg);
+      });
+
+      // Listen for deletes
+      chatRef.on('child_removed', (snap) => {
+        const el = document.querySelector(`[data-id="${snap.key}"]`);
         if (el) el.remove();
-      });
-
-      // Listen for updates (edits)
-      chatRef.on('child_changed', (snapshot) => {
-        const msg = snapshot.val();
-        msg.id = snapshot.key;
-        updateMessage(msg);
       });
     }
 
     function resetChat() {
-      if (messageListener) {
-        db.ref(getChatPath()).off('child_added', messageListener);
-        messageListener = null;
-      }
-      document.getElementById('chatWindow').innerHTML = `
-        <div class="empty-chat">
-          <div class="empty-chat-icon">💬</div>
-          <div class="empty-chat-text">Начните общение</div>
-        </div>
-      `;
       subscribeToMessages();
     }
 
-    function renderMessage(msg) {
+    function displayMessage(msg) {
       const chatWindow = document.getElementById('chatWindow');
       
-      // Remove empty state if present
-      const emptyState = chatWindow.querySelector('.empty-chat');
-      if (emptyState) emptyState.remove();
+      // Remove empty state
+      const emptyEl = chatWindow.querySelector('.empty-chat');
+      if (emptyEl) emptyEl.remove();
 
       const isSent = msg.from === currentUser;
       const sender = FAMILY[msg.from] || { name: 'Неизвестный', emoji: '👤' };
       
-      const messageDiv = document.createElement('div');
-      messageDiv.className = `message ${isSent ? 'sent' : 'received'}`;
-      messageDiv.dataset.msgId = msg.id;
+      const div = document.createElement('div');
+      div.className = `message ${isSent ? 'sent' : 'received'}`;
+      div.dataset.id = msg.id;
       
       let content = '';
-      if (msg.type === 'image') {
-        content = `<div class="media-content"><img src="${msg.content}" alt="Фото" loading="lazy"></div>`;
-      } else if (msg.type === 'voice') {
-        content = `<div class="media-content"><audio controls src="${msg.content}"></audio></div>`;
+      
+      if (msg.type === 'image' && msg.mediaId) {
+        // Image from IndexedDB
+        content = `<div class="media-placeholder" data-media-id="${msg.mediaId}">
+          <em>Загрузка изображения...</em>
+        </div>`;
+        
+        // Load image
+        getMedia(msg.mediaId).then(data => {
+          if (data) {
+            const placeholder = div.querySelector('.media-placeholder');
+            if (placeholder) {
+              placeholder.innerHTML = `<img src="${data}" class="media-img" alt="Фото">`;
+            }
+          }
+        });
+      } else if (msg.type === 'voice' && msg.mediaId) {
+        content = `<div class="media-placeholder" data-media-id="${msg.mediaId}">
+          <em>Загрузка аудио...</em>
+        </div>`;
+        
+        getMedia(msg.mediaId).then(data => {
+          if (data) {
+            const placeholder = div.querySelector('.media-placeholder');
+            if (placeholder) {
+              placeholder.innerHTML = `<audio controls class="media-audio" src="${data}"></audio>`;
+            }
+          }
+        });
       } else {
-        content = msg.text || msg.content || '';
+        content = msg.text || '';
       }
 
       const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
+        hour: '2-digit', minute: '2-digit' 
       });
 
-      const deleteTime = msg.deleteAt ? 
-        `<span class="delete-timer">⏳ ${formatTimeLeft(msg.deleteAt)}</span>` : '';
-
-      messageDiv.innerHTML = `
-        ${!isSent ? `<div class="message-sender">${sender.emoji} ${sender.name}</div>` : ''}
-        <div class="message-bubble">
+      div.innerHTML = `
+        ${!isSent ? `<div class="msg-sender">${sender.emoji} ${sender.name}</div>` : ''}
+        <div class="bubble">
           ${content}
-          <div class="message-time">
-            <span>${time}${deleteTime}</span>
-            ${isSent ? '<span class="message-menu-btn">⋮</span>' : ''}
+          <div class="msg-time">
+            ${time}
+            ${isSent ? '<span class="msg-actions">⋮</span>' : ''}
           </div>
         </div>
       `;
 
-      // Add context menu for own messages
+      // Context menu
       if (isSent) {
-        const menuBtn = messageDiv.querySelector('.message-menu-btn');
-        menuBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          showContextMenu(e, msg);
-        });
+        const actionsBtn = div.querySelector('.msg-actions');
+        if (actionsBtn) {
+          actionsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            showContextMenu(e, msg);
+          });
+        }
       }
 
-      chatWindow.appendChild(messageDiv);
+      chatWindow.appendChild(div);
       chatWindow.scrollTop = chatWindow.scrollHeight;
     }
 
-    function updateMessage(msg) {
-      const existing = document.querySelector(`[data-msg-id="${msg.id}"]`);
-      if (existing) {
-        existing.remove();
-        renderMessage(msg);
+    function updateMessageDisplay(msg) {
+      const old = document.querySelector(`[data-id="${msg.id}"]`);
+      if (old) {
+        old.remove();
+        displayMessage(msg);
       }
     }
 
@@ -858,225 +787,242 @@
       const menu = document.createElement('div');
       menu.className = 'context-menu';
       menu.innerHTML = `
-        <button class="context-menu-item" data-action="edit">
-          ✏️ Редактировать
-        </button>
-        <button class="context-menu-item danger" data-action="delete">
-          🗑️ Удалить
-        </button>
+        <button>✏️ Редактировать</button>
+        <button class="danger-btn">🗑️ Удалить</button>
       `;
-
-      menu.style.left = Math.min(event.clientX, window.innerWidth - 180) + 'px';
-      menu.style.top = Math.min(event.clientY, window.innerHeight - 100) + 'px';
+      
+      menu.style.left = Math.min(event.clientX, window.innerWidth - 150) + 'px';
+      menu.style.top = event.clientY + 'px';
       
       document.body.appendChild(menu);
 
-      menu.querySelector('[data-action="edit"]').addEventListener('click', () => {
+      menu.querySelectorAll('button')[0].addEventListener('click', () => {
         menu.remove();
-        const newText = prompt('Редактировать сообщение:', msg.text || '');
+        const newText = prompt('Новый текст:', msg.text || '');
         if (newText && newText !== msg.text) {
-          db.ref(`${getChatPath()}/${msg.id}`).update({ 
-            text: newText,
-            edited: true 
-          });
+          db.ref(`${getChatPath()}/${msg.id}`).update({ text: newText, edited: true });
         }
       });
 
-      menu.querySelector('[data-action="delete"]').addEventListener('click', () => {
+      menu.querySelectorAll('button')[1].addEventListener('click', () => {
         menu.remove();
-        if (confirm('Удалить это сообщение?')) {
+        if (confirm('Удалить сообщение?')) {
           db.ref(`${getChatPath()}/${msg.id}`).remove();
+          if (msg.mediaId) {
+            // Remove from IndexedDB
+            const tx = dbLocal.transaction('media', 'readwrite');
+            tx.objectStore('media').delete(msg.mediaId);
+          }
         }
       });
 
-      // Close menu on outside click
+      // Close on outside click
       setTimeout(() => {
-        document.addEventListener('click', function closeMenu() {
+        const handler = () => {
           menu.remove();
-          document.removeEventListener('click', closeMenu);
-        });
+          document.removeEventListener('click', handler);
+        };
+        document.addEventListener('click', handler);
       }, 0);
     }
 
-    // ============ SEND MESSAGE ============
+    // ============ SEND ============
     async function sendMessage(text) {
       if (!text.trim()) return;
-
-      const messageData = {
+      
+      const msg = {
         from: currentUser,
         text: text.trim(),
         timestamp: firebase.database.ServerValue.TIMESTAMP,
         type: 'text'
       };
-
-      // Set auto-delete time
+      
       if (autoDeleteHours > 0) {
-        messageData.deleteAt = Date.now() + (autoDeleteHours * 3600 * 1000);
+        msg.deleteAt = Date.now() + (autoDeleteHours * 3600000);
       }
-
-      await db.ref(getChatPath()).push(messageData);
-      document.getElementById('messageInput').value = '';
+      
+      await db.ref(getChatPath()).push(msg);
+      document.getElementById('msgInput').value = '';
     }
 
-    // ============ MEDIA UPLOAD ============
-    async function uploadMedia(file, type) {
-      const storageRef = storage.ref(`media/${Date.now()}_${file.name}`);
-      const uploadTask = storageRef.put(file);
+    async function sendMedia(type, dataUrl) {
+      const mediaId = type + '_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
       
-      uploadTask.on('state_changed', null, null, async () => {
-        const url = await uploadTask.snapshot.ref.getDownloadURL();
-        
-        const messageData = {
-          from: currentUser,
-          content: url,
-          timestamp: firebase.database.ServerValue.TIMESTAMP,
-          type: type,
-          fileName: file.name
-        };
+      // Save to IndexedDB
+      await saveMedia(mediaId, dataUrl);
+      
+      // Save reference to Firebase
+      const msg = {
+        from: currentUser,
+        type: type,
+        mediaId: mediaId,
+        timestamp: firebase.database.ServerValue.TIMESTAMP,
+        text: type === 'image' ? '📷 Фото' : '🎤 Голосовое сообщение'
+      };
+      
+      if (autoDeleteHours > 0) {
+        msg.deleteAt = Date.now() + (autoDeleteHours * 3600000);
+      }
+      
+      await db.ref(getChatPath()).push(msg);
+    }
 
-        if (autoDeleteHours > 0) {
-          messageData.deleteAt = Date.now() + (autoDeleteHours * 3600 * 1000);
+    // ============ LISTENERS ============
+    function setupListeners() {
+      // Send button
+      document.getElementById('sendBtn').addEventListener('click', () => {
+        sendMessage(document.getElementById('msgInput').value);
+      });
+
+      // Enter to send
+      document.getElementById('msgInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          sendMessage(e.target.value);
+        }
+      });
+
+      // Emoji
+      document.getElementById('emojiBtn').addEventListener('click', () => {
+        const container = document.getElementById('emojiContainer');
+        container.classList.toggle('show');
+      });
+
+      // Wait for emoji-picker to be defined
+      customElements.whenDefined('emoji-picker').then(() => {
+        const picker = document.getElementById('emojiPicker');
+        if (picker) {
+          picker.addEventListener('emoji-click', (e) => {
+            document.getElementById('msgInput').value += e.detail.unicode;
+            document.getElementById('msgInput').focus();
+          });
+        }
+      });
+
+      // File upload
+      document.getElementById('attachBtn').addEventListener('click', () => {
+        document.getElementById('fileInput').click();
+      });
+
+      document.getElementById('fileInput').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            sendMedia('image', ev.target.result);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+
+      // Voice recording
+      document.getElementById('micBtn').addEventListener('click', async () => {
+        const micBtn = document.getElementById('micBtn');
+        
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+          mediaRecorder.stop();
+          micBtn.classList.remove('recording');
+          return;
         }
 
-        await db.ref(getChatPath()).push(messageData);
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              sendMedia('voice', ev.target.result);
+            };
+            reader.readAsDataURL(blob);
+            stream.getTracks().forEach(t => t.stop());
+          };
+
+          mediaRecorder.start();
+          micBtn.classList.add('recording');
+
+          // Auto-stop after 10 seconds
+          setTimeout(() => {
+            if (mediaRecorder && mediaRecorder.state === 'recording') {
+              mediaRecorder.stop();
+              micBtn.classList.remove('recording');
+            }
+          }, 10000);
+        } catch (err) {
+          alert('Микрофон недоступен: ' + err.message);
+        }
+      });
+
+      // Auto delete setting
+      document.getElementById('autoDeleteSelect').addEventListener('change', (e) => {
+        autoDeleteHours = parseInt(e.target.value);
+        localStorage.setItem('fc_autoDelete', autoDeleteHours);
+      });
+
+      // Clear chat
+      document.getElementById('clearChatBtn').addEventListener('click', () => {
+        if (confirm('Очистить все сообщения в этом чате?')) {
+          db.ref(getChatPath()).remove();
+        }
+      });
+
+      // Theme toggle
+      document.getElementById('themeBtn').addEventListener('click', () => {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        document.getElementById('themeBtn').textContent = isDark ? '☀️' : '🌙';
+        localStorage.setItem('fc_theme', isDark ? 'dark' : 'light');
       });
     }
 
+    function loadSettings() {
+      // Auto delete
+      autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
+      document.getElementById('autoDeleteSelect').value = autoDeleteHours;
+
+      // Theme
+      const theme = localStorage.getItem('fc_theme') || 'light';
+      if (theme === 'dark') {
+        document.body.classList.add('dark-theme');
+        document.getElementById('themeBtn').textContent = '☀️';
+      }
+    }
+
     // ============ AUTO DELETE ============
-    function startAutoDeleteTimer() {
+    function startAutoDelete() {
       setInterval(async () => {
+        if (autoDeleteHours === 0) return;
+        
         const chatRef = db.ref(getChatPath());
-        const snapshot = await chatRef.once('value');
-        const messages = snapshot.val();
+        const snap = await chatRef.once('value');
+        const msgs = snap.val();
         
-        if (messages) {
-          const now = Date.now();
-          const updates = {};
-          
-          Object.entries(messages).forEach(([id, msg]) => {
-            if (msg.deleteAt && msg.deleteAt <= now) {
-              updates[id] = null; // Will delete
-            }
-          });
-          
-          if (Object.keys(updates).length > 0) {
-            await chatRef.update(updates);
+        if (!msgs) return;
+        
+        const now = Date.now();
+        const updates = {};
+        
+        for (const [id, msg] of Object.entries(msgs)) {
+          if (msg.deleteAt && msg.deleteAt <= now) {
+            updates[id] = null;
           }
         }
-      }, 30000); // Check every 30 seconds
-    }
-
-    function formatTimeLeft(deleteAt) {
-      const remaining = deleteAt - Date.now();
-      if (remaining <= 0) return 'удаляется';
-      
-      const hours = Math.floor(remaining / 3600000);
-      const minutes = Math.floor((remaining % 3600000) / 60000);
-      
-      if (hours > 24) return `${Math.floor(hours / 24)}д`;
-      if (hours > 0) return `${hours}ч ${minutes}м`;
-      return `${minutes}м`;
-    }
-
-    // ============ EVENT LISTENERS ============
-    document.getElementById('sendBtn').addEventListener('click', () => {
-      sendMessage(document.getElementById('messageInput').value);
-    });
-
-    document.getElementById('messageInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage(e.target.value);
-      }
-    });
-
-    // Emoji
-    document.getElementById('emojiBtn').addEventListener('click', () => {
-      const picker = document.getElementById('emojiPickerContainer');
-      picker.classList.toggle('show');
-    });
-
-    document.getElementById('emojiPicker').addEventListener('emoji-click', (e) => {
-      document.getElementById('messageInput').value += e.detail.unicode;
-      document.getElementById('messageInput').focus();
-    });
-
-    // File upload
-    document.getElementById('attachBtn').addEventListener('click', () => {
-      document.getElementById('fileInput').click();
-    });
-
-    document.getElementById('fileInput').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        if (file.type.startsWith('image/')) {
-          uploadMedia(file, 'image');
+        
+        if (Object.keys(updates).length > 0) {
+          await chatRef.update(updates);
         }
-      }
-    });
+      }, 30000);
+    }
 
-    // Voice recording
-    let mediaRecorder = null;
-    let audioChunks = [];
-    
-    document.getElementById('micBtn').addEventListener('click', async () => {
-      if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-        document.getElementById('micBtn').classList.remove('recording');
-        return;
-      }
-
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        mediaRecorder = new MediaRecorder(stream);
-        
-        mediaRecorder.ondataavailable = (e) => {
-          audioChunks.push(e.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          const file = new File([audioBlob], `voice_${Date.now()}.webm`);
-          await uploadMedia(file, 'voice');
-          audioChunks = [];
-        };
-
-        mediaRecorder.start();
-        document.getElementById('micBtn').classList.add('recording');
-        
-        // Auto-stop after 15 seconds
-        setTimeout(() => {
-          if (mediaRecorder && mediaRecorder.state === 'recording') {
-            mediaRecorder.stop();
-            document.getElementById('micBtn').classList.remove('recording');
-          }
-        }, 15000);
-      } catch (err) {
-        alert('Микрофон недоступен: ' + err.message);
-      }
-    });
-
-    // Auto delete settings
-    document.getElementById('autoDeleteSelect').addEventListener('change', (e) => {
-      autoDeleteHours = parseInt(e.target.value);
-      localStorage.setItem('fc_autoDelete', autoDeleteHours);
-    });
-
-    // Clear chat
-    document.getElementById('clearChatBtn').addEventListener('click', async () => {
-      if (confirm('Очистить все сообщения в этом чате? Это действие нельзя отменить.')) {
-        await db.ref(getChatPath()).remove();
-        document.getElementById('chatWindow').innerHTML = `
-          <div class="empty-chat">
-            <div class="empty-chat-icon">🗑️</div>
-            <div class="empty-chat-text">Чат очищен</div>
-          </div>
-        `;
-      }
-    });
-
-    // Start the application
+    // Start app
     init();
+    console.log('✅ FChat запущен');
   </script>
 </body>
 </html>
