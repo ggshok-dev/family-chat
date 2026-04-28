@@ -18,7 +18,9 @@ function setupListeners() {
     if (e.key === 'Enter') document.getElementById('secretBtn').click();
   });
   
-  document.getElementById('secretInput').focus();
+  // Автофокус на поле ввода секретного кода
+  const secretInput = document.getElementById('secretInput');
+  if (secretInput) secretInput.focus();
   
   // ПИН
   document.getElementById('pinBtn').addEventListener('click', processPin);
@@ -50,7 +52,7 @@ function setupListeners() {
   document.addEventListener('click', function(e) {
     const pk = document.getElementById('emojiPicker');
     const eb = document.getElementById('emojiBtn');
-    if (!pk.contains(e.target) && e.target !== eb) pk.classList.remove('show');
+    if (pk && eb && !pk.contains(e.target) && e.target !== eb) pk.classList.remove('show');
   });
   
   // Файлы
