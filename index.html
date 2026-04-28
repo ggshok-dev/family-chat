@@ -22,6 +22,98 @@
       padding: 10px;
     }
     
+    /* ===== СЕКРЕТНЫЙ КОД ===== */
+    .secret-code-overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      backdrop-filter: blur(10px);
+    }
+    
+    .secret-code-dialog {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 350px;
+      width: 90%;
+      animation: slideUp 0.5s ease;
+    }
+    
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .secret-code-dialog h2 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 1.5rem;
+    }
+    
+    .secret-code-dialog .family-icon {
+      font-size: 50px;
+      margin-bottom: 15px;
+    }
+    
+    .secret-code-dialog p {
+      color: #666;
+      margin-bottom: 20px;
+      font-size: 0.9rem;
+    }
+    
+    .secret-code-input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 12px;
+      font-size: 1.1rem;
+      text-align: center;
+      margin-bottom: 15px;
+      outline: none;
+      transition: border-color 0.3s;
+      letter-spacing: 3px;
+    }
+    
+    .secret-code-input:focus {
+      border-color: #667eea;
+    }
+    
+    .secret-code-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    
+    .secret-code-btn:hover {
+      transform: scale(1.02);
+    }
+    
+    .error-message {
+      color: #ff4444;
+      font-size: 0.85rem;
+      margin-top: 10px;
+      display: none;
+    }
+    
+    .error-message.show {
+      display: block;
+    }
+    
+    /* ===== ОСНОВНОЕ ПРИЛОЖЕНИЕ ===== */
     .app {
       width: 100%;
       max-width: 450px;
@@ -32,6 +124,7 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      position: relative;
     }
     
     /* Header */
@@ -54,11 +147,16 @@
       flex: 1;
     }
     
-    .theme-btn {
+    .header-actions {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .header-btn {
       background: rgba(255,255,255,0.2);
       border: none;
       color: white;
-      font-size: 20px;
+      font-size: 18px;
       width: 35px;
       height: 35px;
       border-radius: 50%;
@@ -67,11 +165,16 @@
       align-items: center;
       justify-content: center;
       transition: all 0.2s;
+      position: relative;
     }
     
-    .theme-btn:hover {
+    .header-btn:hover {
       background: rgba(255,255,255,0.3);
       transform: scale(1.1);
+    }
+    
+    .header-btn.disabled {
+      opacity: 0.5;
     }
     
     /* User avatars */
@@ -93,6 +196,7 @@
       cursor: pointer;
       transition: all 0.2s;
       position: relative;
+      min-width: 60px;
     }
     
     .user-avatar:hover {
@@ -128,15 +232,76 @@
       color: #667eea;
     }
     
-    .online-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #4CAF50;
+    /* Settings panel */
+    .settings-panel {
+      display: none;
+      background: white;
+      border-bottom: 1px solid #eee;
+      padding: 12px 15px;
+    }
+    
+    .settings-panel.show {
+      display: block;
+    }
+    
+    .setting-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .setting-item:last-child {
+      border-bottom: none;
+    }
+    
+    .setting-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+    
+    /* Toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 26px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
       position: absolute;
-      top: 0;
-      right: 0;
-      border: 2px solid white;
+      cursor: pointer;
+      top: 0; left: 0;
+      right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    input:checked + .toggle-slider {
+      background-color: #667eea;
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(24px);
     }
     
     /* Tabs */
@@ -165,7 +330,7 @@
       color: white;
     }
     
-    /* Settings */
+    /* Settings bar */
     .settings-bar {
       display: flex;
       align-items: center;
@@ -316,6 +481,17 @@
     .msg-menu-btn:hover {
       opacity: 1;
       background: rgba(0,0,0,0.1);
+    }
+    
+    .new-message-indicator {
+      text-align: center;
+      padding: 8px;
+      background: rgba(102, 126, 234, 0.1);
+      border-radius: 20px;
+      color: #667eea;
+      font-size: 0.8rem;
+      margin: 5px 0;
+      cursor: pointer;
     }
     
     /* Media */
@@ -509,7 +685,8 @@
     body.dark-theme .tabs,
     body.dark-theme .users-avatars,
     body.dark-theme .settings-bar,
-    body.dark-theme .private-selector {
+    body.dark-theme .private-selector,
+    body.dark-theme .settings-panel {
       background: #16213e;
       border-color: #2a2a4a;
     }
@@ -545,32 +722,94 @@
     body.dark-theme .context-menu button:hover {
       background: #2a2a4a;
     }
+    
+    body.dark-theme .secret-code-dialog {
+      background: #1a1a2e;
+      color: #eee;
+    }
+    
+    body.dark-theme .secret-code-dialog h2 {
+      color: #eee;
+    }
+    
+    body.dark-theme .secret-code-dialog p {
+      color: #aaa;
+    }
+    
+    body.dark-theme .secret-code-input {
+      background: #16213e;
+      color: white;
+      border-color: #2a2a4a;
+    }
   </style>
 </head>
 <body>
-  <div class="app">
+  <!-- Секретный код семьи -->
+  <div class="secret-code-overlay" id="secretCodeOverlay">
+    <div class="secret-code-dialog">
+      <div class="family-icon">👨‍👩‍👧‍👦</div>
+      <h2>Семейный чат</h2>
+      <p>Введите секретный код семьи для входа</p>
+      <input type="password" class="secret-code-input" id="secretCodeInput" 
+             placeholder="••••" maxlength="10" autocomplete="off">
+      <button class="secret-code-btn" id="secretCodeBtn">Войти</button>
+      <div class="error-message" id="errorMessage">Неверный код</div>
+      <p style="margin-top: 15px; font-size: 0.8rem; color: #999;">
+        Подсказка: код по умолчанию "family2024"
+      </p>
+    </div>
+  </div>
+
+  <!-- Основное приложение -->
+  <div class="app" id="mainApp" style="display: none;">
     <!-- Header -->
     <div class="header">
       <span class="header-logo">👨‍👩‍👧‍👦</span>
       <span class="header-title">FChat</span>
-      <button class="theme-btn" id="themeBtn" title="Переключить тему">🌙</button>
+      <div class="header-actions">
+        <button class="header-btn" id="notificationBtn" title="Уведомления">🔔</button>
+        <button class="header-btn" id="soundBtn" title="Звук">🔊</button>
+        <button class="header-btn" id="themeBtn" title="Тема">🌙</button>
+        <button class="header-btn" id="settingsBtn" title="Настройки">⚙️</button>
+      </div>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="settings-panel" id="settingsPanel">
+      <div class="setting-item">
+        <span class="setting-label">🔔 Push-уведомления</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="notificationsToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔊 Звуковые уведомления</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="soundToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🗑️ Автоудаление</span>
+        <select id="autoDeleteSelect" style="padding: 4px 8px; border-radius: 6px; border: 1px solid #ddd;">
+          <option value="0">Выключено</option>
+          <option value="1">1 час</option>
+          <option value="6">6 часов</option>
+          <option value="24" selected>24 часа</option>
+          <option value="168">7 дней</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔑 Сменить код семьи</span>
+        <button id="changeCodeBtn" style="padding: 4px 12px; border: none; background: #667eea; color: white; border-radius: 6px; cursor: pointer;">
+          Изменить
+        </button>
+      </div>
     </div>
 
     <!-- Users with avatars -->
     <div class="users-avatars" id="usersAvatars"></div>
-
-    <!-- Settings -->
-    <div class="settings-bar">
-      <span>🗑️ Автоудаление:</span>
-      <select id="autoDeleteSelect">
-        <option value="0">Выключено</option>
-        <option value="1">1 час</option>
-        <option value="6">6 часов</option>
-        <option value="24" selected>24 часа</option>
-        <option value="168">7 дней</option>
-      </select>
-      <button class="clear-btn" id="clearChatBtn">🗑️ Очистить</button>
-    </div>
 
     <!-- Tabs -->
     <div class="tabs">
@@ -595,7 +834,6 @@
 
     <!-- Input panel -->
     <div class="input-panel">
-      <!-- Emoji picker -->
       <div class="emoji-picker-wrapper" id="emojiPicker">
         <div class="emoji-grid" id="emojiGrid"></div>
       </div>
@@ -627,17 +865,135 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ============ EMOJI LIST ============
-    const EMOJIS = [
-      '😀','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','😙',
-      '😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯',
-      '😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️',
-      '🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵',
-      '🥶','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','😇','🤠','🤡','🥳',
-      '🥴','🥺','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩',
-      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖',
-      '👍','👎','👏','🙌','🤝','💪','✌️','🤞','👌','🤏','✋','👋','🤚','🖐️','✍️','🙏'
-    ];
+    // ============ SECRET CODE ============
+    const DEFAULT_CODE = 'family2024';
+    let secretCode = localStorage.getItem('fc_secret_code') || DEFAULT_CODE;
+    
+    // Save default code if not set
+    if (!localStorage.getItem('fc_secret_code')) {
+      localStorage.setItem('fc_secret_code', DEFAULT_CODE);
+    }
+
+    function checkSecretCode() {
+      const input = document.getElementById('secretCodeInput');
+      const error = document.getElementById('errorMessage');
+      
+      if (input.value === secretCode) {
+        document.getElementById('secretCodeOverlay').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'flex';
+        initApp();
+      } else {
+        error.classList.add('show');
+        input.value = '';
+        input.focus();
+      }
+    }
+
+    document.getElementById('secretCodeBtn').addEventListener('click', checkSecretCode);
+    document.getElementById('secretCodeInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkSecretCode();
+    });
+
+    // Auto-focus on code input
+    document.getElementById('secretCodeInput').focus();
+
+    // Change code
+    document.getElementById('changeCodeBtn').addEventListener('click', () => {
+      const oldCode = prompt('Введите текущий код семьи:');
+      if (oldCode !== secretCode) {
+        alert('Неверный текущий код');
+        return;
+      }
+      
+      const newCode = prompt('Введите новый код семьи:');
+      if (!newCode || newCode.length < 4) {
+        alert('Код должен быть не менее 4 символов');
+        return;
+      }
+      
+      secretCode = newCode;
+      localStorage.setItem('fc_secret_code', secretCode);
+      alert('✅ Код семьи изменён!');
+    });
+
+    // ============ NOTIFICATIONS ============
+    let notificationsEnabled = localStorage.getItem('fc_notifications') !== 'false';
+    let soundEnabled = localStorage.getItem('fc_sound') !== 'false';
+    let chatVisible = true;
+    let lastMessageTime = 0;
+
+    // Request notification permission
+    async function requestNotificationPermission() {
+      if (!('Notification' in window)) return false;
+      
+      if (Notification.permission === 'granted') return true;
+      
+      if (Notification.permission !== 'denied') {
+        const permission = await Notification.requestPermission();
+        return permission === 'granted';
+      }
+      
+      return false;
+    }
+
+    // Play notification sound
+    function playNotificationSound() {
+      if (!soundEnabled) return;
+      
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+        gainNode.gain.value = 0.1;
+        
+        oscillator.start();
+        
+        // Fade out
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+        oscillator.stop(audioCtx.currentTime + 0.3);
+      } catch (e) {
+        // Audio not supported
+      }
+    }
+
+    // Show notification only if chat is not visible
+    function showNotification(title, body) {
+      const now = Date.now();
+      
+      // Don't spam notifications (minimum 2 seconds between)
+      if (now - lastMessageTime < 2000) return;
+      lastMessageTime = now;
+      
+      // Check if chat is visible
+      if (document.visibilityState === 'visible' && chatVisible) {
+        // Chat is open, just play sound
+        playNotificationSound();
+        return;
+      }
+      
+      // Show push notification
+      if (notificationsEnabled && Notification.permission === 'granted') {
+        new Notification(title, {
+          body: body,
+          icon: '👨‍👩‍👧‍👦',
+          tag: 'fchat-message'
+        });
+      }
+      
+      // Play sound
+      playNotificationSound();
+    }
+
+    // Track visibility
+    document.addEventListener('visibilitychange', () => {
+      chatVisible = !document.hidden;
+    });
 
     // ============ FAMILY ============
     const FAMILY = {
@@ -658,7 +1014,7 @@
     let audioChunks = [];
 
     // ============ INIT ============
-    function init() {
+    function initApp() {
       renderEmojiPicker();
       renderUserAvatars();
       setupTabs();
@@ -666,6 +1022,7 @@
       loadSettings();
       subscribeToMessages();
       startAutoDelete();
+      requestNotificationPermission();
     }
 
     // ============ EMOJI PICKER ============
@@ -675,7 +1032,6 @@
         `<button class="emoji-item" data-emoji="${emoji}">${emoji}</button>`
       ).join('');
 
-      // Add click handlers
       grid.querySelectorAll('.emoji-item').forEach(btn => {
         btn.addEventListener('click', () => {
           const textarea = document.getElementById('msgInput');
@@ -692,15 +1048,13 @@
         <div class="user-avatar ${member.id === currentUser ? 'active' : ''}" 
              data-user="${member.id}" 
              title="${member.name}">
-          <div class="avatar-circle" style="background: ${member.color}20; position: relative;">
+          <div class="avatar-circle" style="background: ${member.color}20;">
             ${member.emoji}
-            ${member.id === currentUser ? '<div class="online-dot"></div>' : ''}
           </div>
           <span class="avatar-name">${member.name}</span>
         </div>
       `).join('');
 
-      // Click handlers
       container.querySelectorAll('.user-avatar').forEach(avatar => {
         avatar.addEventListener('click', () => switchUser(avatar.dataset.user));
       });
@@ -709,7 +1063,6 @@
     function switchUser(userId) {
       if (userId === currentUser) return;
       
-      // PIN protection
       const savedPin = localStorage.getItem(`fc_pin_${userId}`);
       if (savedPin) {
         const pin = prompt(`Введите ПИН для ${FAMILY[userId].name}:`);
@@ -791,6 +1144,17 @@
         const msg = snap.val();
         msg.id = snap.key;
         displayMessage(msg);
+        
+        // Notify for new messages from others
+        if (msg.from !== currentUser) {
+          const sender = FAMILY[msg.from] || { name: 'Кто-то' };
+          showNotification(
+            `${sender.emoji} ${sender.name}`,
+            msg.type === 'image' ? '📷 Отправил(а) фото' : 
+            msg.type === 'voice' ? '🎤 Отправил(а) голосовое' : 
+            msg.text || 'Новое сообщение'
+          );
+        }
       });
 
       chatRef.on('child_changed', (snap) => {
@@ -932,9 +1296,8 @@
     }
 
     async function sendMedia(type, dataUrl) {
-      // Compress image if needed
       let finalData = dataUrl;
-      if (type === 'image' && dataUrl.length > 500000) { // > 500KB
+      if (type === 'image' && dataUrl.length > 500000) {
         finalData = await compressImage(dataUrl);
       }
       
@@ -953,7 +1316,6 @@
       await db.ref(getChatPath()).push(msg);
     }
 
-    // Compress image before sending
     function compressImage(dataUrl, maxWidth = 800) {
       return new Promise((resolve) => {
         const img = new Image();
@@ -976,6 +1338,19 @@
         img.src = dataUrl;
       });
     }
+
+    // ============ EMOJI LIST ============
+    const EMOJIS = [
+      '😀','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','😙',
+      '😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯',
+      '😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️',
+      '🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵',
+      '🥶','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','😇','🤠','🤡','🥳',
+      '🥴','🥺','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩',
+      '❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖',
+      '👍','👎','👏','🙌','🤝','💪','✌️','🤞','👌','🤏','✋','👋','🤚','🖐️','✍️','🙏',
+      '👨‍👩‍👧‍👦','🏠','🎉','🎂','🍕','🍔','🌮','🍩','☕','🍰','🎄','🎁','🎈','⭐','🌟','🔥'
+    ];
 
     // ============ LISTENERS ============
     function setupListeners() {
@@ -1056,7 +1431,6 @@
           micBtn.classList.add('recording');
           micBtn.textContent = '⏹️';
 
-          // Auto-stop after 10 seconds
           setTimeout(() => {
             if (mediaRecorder && mediaRecorder.state === 'recording') {
               mediaRecorder.stop();
@@ -1069,16 +1443,9 @@
         }
       });
 
-      // Settings
-      document.getElementById('autoDeleteSelect').addEventListener('change', (e) => {
-        autoDeleteHours = parseInt(e.target.value);
-        localStorage.setItem('fc_autoDelete', autoDeleteHours);
-      });
-
-      document.getElementById('clearChatBtn').addEventListener('click', () => {
-        if (confirm('Удалить все сообщения в этом чате?')) {
-          db.ref(getChatPath()).remove();
-        }
+      // Settings panel toggle
+      document.getElementById('settingsBtn').addEventListener('click', () => {
+        document.getElementById('settingsPanel').classList.toggle('show');
       });
 
       // Theme
@@ -1088,17 +1455,54 @@
         document.getElementById('themeBtn').textContent = isDark ? '☀️' : '🌙';
         localStorage.setItem('fc_theme', isDark ? 'dark' : 'light');
       });
+
+      // Notification toggles
+      document.getElementById('notificationsToggle').addEventListener('change', (e) => {
+        notificationsEnabled = e.target.checked;
+        localStorage.setItem('fc_notifications', notificationsEnabled);
+        document.getElementById('notificationBtn').textContent = notificationsEnabled ? '🔔' : '🔕';
+        
+        if (notificationsEnabled) {
+          requestNotificationPermission();
+        }
+      });
+
+      document.getElementById('soundToggle').addEventListener('change', (e) => {
+        soundEnabled = e.target.checked;
+        localStorage.setItem('fc_sound', soundEnabled);
+        document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+      });
+
+      // Auto delete
+      document.getElementById('autoDeleteSelect').addEventListener('change', (e) => {
+        autoDeleteHours = parseInt(e.target.value);
+        localStorage.setItem('fc_autoDelete', autoDeleteHours);
+      });
+
+      // Clear chat button removed from settings bar (now in settings panel)
     }
 
     function loadSettings() {
-      autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
-      document.getElementById('autoDeleteSelect').value = autoDeleteHours;
-
+      // Theme
       const theme = localStorage.getItem('fc_theme') || 'light';
       if (theme === 'dark') {
         document.body.classList.add('dark-theme');
         document.getElementById('themeBtn').textContent = '☀️';
       }
+
+      // Notifications
+      notificationsEnabled = localStorage.getItem('fc_notifications') !== 'false';
+      document.getElementById('notificationsToggle').checked = notificationsEnabled;
+      document.getElementById('notificationBtn').textContent = notificationsEnabled ? '🔔' : '🔕';
+
+      // Sound
+      soundEnabled = localStorage.getItem('fc_sound') !== 'false';
+      document.getElementById('soundToggle').checked = soundEnabled;
+      document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+
+      // Auto delete
+      autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
+      document.getElementById('autoDeleteSelect').value = autoDeleteHours;
     }
 
     // ============ AUTO DELETE ============
@@ -1126,10 +1530,6 @@
         }
       }, 30000);
     }
-
-    // Start
-    init();
-    console.log('✅ FChat запущен! Эмодзи: ' + EMOJIS.length + ' шт.');
   </script>
 </body>
 </html>
