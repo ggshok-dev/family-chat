@@ -1044,4 +1044,39 @@
         mediaRecorder.start();
         document.getElementById('micBtn').classList.add('recording');
         
-        // Auto-stop after 
+        // Auto-stop after 15 seconds
+        setTimeout(() => {
+          if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            document.getElementById('micBtn').classList.remove('recording');
+          }
+        }, 15000);
+      } catch (err) {
+        alert('Микрофон недоступен: ' + err.message);
+      }
+    });
+
+    // Auto delete settings
+    document.getElementById('autoDeleteSelect').addEventListener('change', (e) => {
+      autoDeleteHours = parseInt(e.target.value);
+      localStorage.setItem('fc_autoDelete', autoDeleteHours);
+    });
+
+    // Clear chat
+    document.getElementById('clearChatBtn').addEventListener('click', async () => {
+      if (confirm('Очистить все сообщения в этом чате? Это действие нельзя отменить.')) {
+        await db.ref(getChatPath()).remove();
+        document.getElementById('chatWindow').innerHTML = `
+          <div class="empty-chat">
+            <div class="empty-chat-icon">🗑️</div>
+            <div class="empty-chat-text">Чат очищен</div>
+          </div>
+        `;
+      }
+    });
+
+    // Start the application
+    init();
+  </script>
+</body>
+</html>
