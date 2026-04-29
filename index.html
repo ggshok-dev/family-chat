@@ -4,17 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FChat — Семейный мессенджер</title>
-    <!-- PWA -->
+  
+  <!-- PWA -->
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#667eea">
-    <!-- Стили -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FChat">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <!-- Стили -->
   <link rel="stylesheet" href="style.css">
-    <!-- Firebase -->
+  
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
-<!-- Секретный код -->
+  <!-- Секретный код -->
   <div class="secret-overlay" id="secretOverlay">
     <div class="secret-dialog">
       <div class="icon">👨‍👩‍👧‍👦</div>
@@ -29,6 +37,7 @@
       </p>
     </div>
   </div>
+
   <!-- ПИН-код -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-dialog">
@@ -44,6 +53,7 @@
       </p>
     </div>
   </div>
+
   <!-- Приложение -->
   <div class="app" id="mainApp" style="display:none;">
     <div class="header">
@@ -122,7 +132,7 @@
       <button class="tab active" data-tab="general">💬 Общий</button>
       <button class="tab" data-tab="private">🔒 Личный</button>
     </div>
-    <!-- Заголовок личного чата -->
+
     <div class="private-chat-header" id="privateChatHeader">
       <span>🔒 Личный чат с</span>
       <span class="partner-emoji"></span>
@@ -158,26 +168,28 @@
 
   <input type="file" id="fileInput" accept="image/*" style="display:none">
   <input type="file" id="avatarInput" accept="image/*" style="display:none">
-   <!-- Основная логика -->
+  
+  <!-- Основная логика -->
   <script src="script.js"></script>
-<!-- Service Worker для PWA и push-уведомлений -->
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/sw.js')
-        .then(function(registration) {
-          console.log('✅ Service Worker зарегистрирован:', registration.scope);
-          
-          // Запрашиваем разрешение на уведомления
-          if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-          }
-        })
-        .catch(function(err) {
-          console.log('❌ Ошибка Service Worker:', err);
-        });
-    });
-  }
-</script>
+  
+  <!-- Service Worker для PWA и push-уведомлений -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js')
+          .then(function(registration) {
+            console.log('✅ Service Worker зарегистрирован');
+            
+            // Запрашиваем разрешение на уведомления
+            if ('Notification' in window && Notification.permission === 'default') {
+              Notification.requestPermission();
+            }
+          })
+          .catch(function(err) {
+            console.log('❌ Ошибка Service Worker:', err);
+          });
+      });
+    }
+  </script>
 </body>
 </html>
