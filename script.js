@@ -386,6 +386,7 @@
       }
       
       function loadMessages() {
+        let messageListener = state.messageListener;
         if (!currentUser) return;
         if (messageListener) {
           db.ref(getChatPath()).off('child_added', messageListener);
