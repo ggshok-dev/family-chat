@@ -42,6 +42,7 @@
   let pendingPinUser = null;
   let listenersInitialized = false;
   let lockedUser = localStorage.getItem('fc_locked_user') || null;
+  let unreadCount = 0;
   
   if (!localStorage.getItem('fc_theme')) {
     localStorage.setItem('fc_theme', 'light');
@@ -87,7 +88,15 @@
     
     setTimeout(function() { if (pinInput) pinInput.focus(); }, 100);
   }
-  
+
+  function updateUnreadBadge() {
+  if (unreadCount > 0) {
+    document.title = '(' + unreadCount + ') FChat';
+  } else {
+    document.title = 'FChat';
+  }
+}
+
   function hidePinDialog() {
     const pinOverlay = document.getElementById('pinOverlay');
     if (pinOverlay) pinOverlay.style.display = 'none';
@@ -244,6 +253,19 @@
   function showMessage(msg) {
     if (processedIds.has(msg.id)) return;
     processedIds.add(msg.id);
+
+    if (msg.from !== currentUser && document.visibilityState !== 'visible') {
+  unreadCount++;
+  updateUnreadBadge();
+}
+
+// При возвращении в чат — сбрасываем
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    unreadCount = 0;
+    updateUnreadBadge();
+  }
+});
     
     const chat = document.getElementById('chatWindow');
     if (!chat) return;
@@ -298,22 +320,31 @@
     if (old) old.remove();
     
     const menu = document.createElement('div');
-    menu.className = 'context-menu';
-    menu.innerHTML = '<button>✏️ Редактировать</button><button class="danger-btn">🗑️ Удалить</button>';
-    menu.style.left = Math.min(event.clientX, window.innerWidth - 150) + 'px';
-    menu.style.top = event.clientY + 'px';
-    document.body.appendChild(menu);
-    
-    menu.querySelectorAll('button')[0].addEventListener('click', function() {
-      menu.remove();
-      const text = prompt('Новый текст:', msg.text || '');
-      if (text && text !== msg.text) {
-        db.ref(getChatPath() + '/' + msg.id).update({text: text, edited: true});
-      }
-    });
-    
-    menu.querySelectorAll('button')[1].addEventListener('click', function() {
-      menu.remove();
+  menu.className = 'context-menu';
+  menu.innerHTML = `
+  <button>💬 Ответить</button>
+  <button>📋 Копировать</button>
+  <button>✏️ Редактировать</button>
+  <button class="danger-btn">🗑️ Удалить</button>
+`;
+  menu.querySelectorAll('button')[1].addEventListener('click', function() {
+  menu.remove();
+  navigator.clipboard.writeText(msg.text || '');
+  alert('✅ Скопировано!');
+});
+  menu.style.left = Math.min(event.clientX, window.innerWidth - 150) + 'px';
+  menu.style.top = event.clientY + 'px';
+  document.body.appendChild(menu);
+  
+  menu.querySelectorAll('button')[0].addEventListener('click', function() {
+    menu.remove();
+    const sender = FAMILY[msg.from] || { name: 'Кто-то' };
+    document.getElementById('msgInput').value = '@' + sender.name + ' ';
+    document.getElementById('msgInput').focus();
+  });
+  
+  menu.querySelectorAll('button')[1].addEventListener('click', function() {
+    menu.remove();
       if (confirm('Удалить сообщение?')) {
         db.ref(getChatPath() + '/' + msg.id).remove();
         processedIds.delete(msg.id);
