@@ -102,10 +102,12 @@
       
       function hidePinDialog() {
         document.getElementById('pinOverlay').style.display = 'none';
-        pendingPinUser = null;
+        state.pendingPinUser = null;
       }
       
       function processPin() {
+        const pendingPinUser = state.pendingPinUser;
+        
         const pin = document.getElementById('pinInput').value.trim();
         const errorEl = document.getElementById('pinError');
   
