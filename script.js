@@ -282,13 +282,25 @@ document.addEventListener('visibilitychange', function() {
     div.dataset.id = msg.id;
     
     let content = '';
-    if (msg.type === 'image') {
-      content = '<img src="' + msg.data + '" class="media-img" alt="Фото" loading="lazy">';
-    } else if (msg.type === 'voice') {
-      content = '<audio controls class="media-audio" src="' + msg.data + '"></audio>';
-    } else {
-      content = msg.text || '';
-    }
+if (msg.type === 'image') {
+  content = `
+    <img src="${msg.data}" 
+         class="media-img" 
+         alt="Фото" 
+         loading="lazy" 
+         onclick="
+           const modal = document.createElement('div');
+           modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer;';
+           modal.innerHTML = '<img src=\\'${msg.data}\\' style=\\'max-width:95%;max-height:95%;object-fit:contain;\\'>';
+           modal.onclick = function() { this.remove(); };
+           document.body.appendChild(modal);
+         ">
+  `;
+} else if (msg.type === 'voice') {
+  content = `<audio controls class="media-audio" src="${msg.data}"></audio>`;
+} else {
+  content = msg.text || '';
+}
     
     const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
     
@@ -316,48 +328,86 @@ document.addEventListener('visibilitychange', function() {
   }
   
   function showMenu(event, msg) {
-    const old = document.querySelector('.context-menu');
-    if (old) old.remove();
-    
-    const menu = document.createElement('div');
+  // Удаляем старое меню
+  const old = document.querySelector('.context-menu');
+  if (old) old.remove();
+  
+  const menu = document.createElement('div');
   menu.className = 'context-menu';
   menu.innerHTML = `
-  <button>💬 Ответить</button>
-  <button>📋 Копировать</button>
-  <button>✏️ Редактировать</button>
-  <button class="danger-btn">🗑️ Удалить</button>
-`;
-  menu.querySelectorAll('button')[1].addEventListener('click', function() {
-  menu.remove();
-  navigator.clipboard.writeText(msg.text || '');
-  alert('✅ Скопировано!');
-});
-  menu.style.left = Math.min(event.clientX, window.innerWidth - 150) + 'px';
-  menu.style.top = event.clientY + 'px';
+    <button>📋 Копировать</button>
+    <button>✏️ Редактировать</button>
+    <button class="danger-btn">🗑️ Удалить</button>
+  `;
+  
+  // Позиционируем меню
+  const x = event.clientX || (event.touches && event.touches[0].clientX) || 100;
+  const y = event.clientY || (event.touches && event.touches[0].clientY) || 100;
+  
+  menu.style.position = 'fixed';
+  menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
+  menu.style.top = Math.min(y, window.innerHeight - 120) + 'px';
+  menu.style.zIndex = '9999';
+  
   document.body.appendChild(menu);
   
+  // Копировать
   menu.querySelectorAll('button')[0].addEventListener('click', function() {
     menu.remove();
-    const sender = FAMILY[msg.from] || { name: 'Кто-то' };
-    document.getElementById('msgInput').value = '@' + sender.name + ' ';
-    document.getElementById('msgInput').focus();
+    const text = msg.text || '';
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(() => {
+        // Показываем краткое уведомление
+        const toast = document.createElement('div');
+        toast.textContent = '✅ Скопировано!';
+        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 20px;border-radius:20px;z-index:9999;font-size:0.9rem;';
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 1500);
+      });
+    }
   });
   
+  // Редактировать
   menu.querySelectorAll('button')[1].addEventListener('click', function() {
     menu.remove();
-      if (confirm('Удалить сообщение?')) {
-        db.ref(getChatPath() + '/' + msg.id).remove();
-        processedIds.delete(msg.id);
-      }
-    });
-    
-    setTimeout(function() {
-      document.addEventListener('click', function close() { 
-        menu.remove(); 
-        document.removeEventListener('click', close); 
+    const newText = prompt('Редактировать сообщение:', msg.text || '');
+    if (newText && newText !== msg.text) {
+      db.ref(getChatPath() + '/' + msg.id).update({
+        text: newText,
+        edited: true
       });
-    }, 0);
-  }
+    }
+  });
+  
+  // Удалить
+  menu.querySelectorAll('button')[2].addEventListener('click', function() {
+    menu.remove();
+    if (confirm('Удалить сообщение?')) {
+      // Удаляем из Firebase
+      db.ref(getChatPath() + '/' + msg.id).remove();
+      
+      // Удаляем из DOM
+      const el = document.querySelector('[data-id="' + msg.id + '"]');
+      if (el) el.remove();
+      
+      // Удаляем из кэша
+      processedIds.delete(msg.id);
+    }
+  });
+  
+  // Закрываем меню при клике вне его
+  setTimeout(() => {
+    const closeMenu = function(e) {
+      if (!menu.contains(e.target)) {
+        menu.remove();
+        document.removeEventListener('click', closeMenu);
+        document.removeEventListener('touchend', closeMenu);
+      }
+    };
+    document.addEventListener('click', closeMenu);
+    document.addEventListener('touchend', closeMenu);
+  }, 10);
+}
   
   // ============ ЧАТ ============
   function getChatPath() {
@@ -683,12 +733,26 @@ document.addEventListener('visibilitychange', function() {
     });
     
     document.getElementById('clearBtn').addEventListener('click', function() {
-      if (!currentUser) return;
-      if (confirm('Удалить все сообщения?')) {
-        db.ref(getChatPath()).remove();
-        processedIds.clear();
-      }
-    });
+  if (!currentUser) return;
+  if (confirm('Удалить все сообщения в этом чате?')) {
+    // Удаляем сообщения из Firebase
+    db.ref(getChatPath()).remove();
+    
+    // Очищаем локальный кэш сообщений
+    processedIds.clear();
+    
+    // Очищаем окно чата
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) {
+      chatWindow.innerHTML = `
+        <div class="empty-chat">
+          <div class="empty-icon">💬</div>
+          <p>Нет сообщений</p>
+        </div>
+      `;
+    }
+  }
+});
   }
   
   function applyStoredSettings() {
