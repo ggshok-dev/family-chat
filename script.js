@@ -26,7 +26,7 @@
       
             // ============ СОСТОЯНИЕ ============
       // Мы создаем объект state и дублируем в него переменные для совместимости
-      let currentUser = localStorage.getItem('fc_user') || null;
+      let currentUser = null;
       let activeTab = 'general';
       let privateWith = null;
       let autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
@@ -35,7 +35,11 @@
       let secretCode = localStorage.getItem('fc_code') || 'family2024';
       let fontSize = parseInt(localStorage.getItem('fc_font') || '100');
       let isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
-
+      let messageListener = null;
+      let mediaRecorder = null;
+      let audioChunks = [];
+      let processedIds = new Set();
+      let pendingPinUser = null;
       // Создаем тот самый объект state, который просит ошибка
       const state = {
         get currentUser() { return currentUser; },
@@ -51,7 +55,6 @@
         set isDarkTheme(v) { isDarkTheme = v; },
         get fontSize() { return fontSize; },
         set fontSize(v) { fontSize = v; },
-        pendingPinUser: null
       };
       
       // ============ ФУНКЦИИ ============
