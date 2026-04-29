@@ -751,8 +751,7 @@
         }
         console.log('✅ FChat запущен');
       }
-      window.addEventListener('DOMContentLoaded', () => {
-      initApp();
-  });
-
-})();
+      // Запуск после полной загрузки страницы
+window.addEventListener('load', () => {
+    initApp();
+});
