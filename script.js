@@ -635,11 +635,6 @@
   });
 });
     
-    document.getElementById('privateRecipient').addEventListener('change', function() {
-      privateWith = this.value;
-      if (privateWith) { loadMessages(); updatePrivateHeader(); }
-    });
-    
     document.getElementById('settingsBtn').addEventListener('click', function() {
       document.getElementById('settingsPanel').classList.toggle('show');
     });
