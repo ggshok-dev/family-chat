@@ -705,7 +705,5 @@
         }
         console.log('✅ FChat запущен');
       }
-    initApp();
+      initApp();
     })();
-  </body>
-</html>
