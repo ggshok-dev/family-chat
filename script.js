@@ -697,13 +697,7 @@
         processedIds.clear();
       }
     });
-    
-    // Обработчик для сброса закреплённой роли
-    document.getElementById('resetLockBtn').addEventListener('click', function() {
-      resetApp();
-    });
-  }
-  
+         
   function applyStoredSettings() {
     isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
     if (isDarkTheme) {
