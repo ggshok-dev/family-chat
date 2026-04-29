@@ -707,6 +707,5 @@
       }
     initApp();
     })();
-  </script>
-</body>
+  </body>
 </html>
