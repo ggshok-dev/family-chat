@@ -788,7 +788,7 @@
     if (e.target === this) hidePinDialog();
   });
   
-  // ============ ЗАПУСК ============
+    // ============ ЗАПУСК ============
   function initApp() {
     applyStoredSettings();
     renderEmoji();
@@ -811,6 +811,9 @@
           </div>
         `;
       }
+    }
     console.log('✅ FChat запущен');
-    console.log('📱 FChat готов к работе');
+  }
+  
+  console.log('📱 FChat готов к работе');
 })();
