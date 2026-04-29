@@ -13,7 +13,6 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // ============ ДАННЫЕ ============
   const FAMILY = {
     dad: { id: 'dad', name: 'Папа', emoji: '👨', color: '#4A90E2' },
     mom: { id: 'mom', name: 'Мама', emoji: '👩', color: '#E91E63' },
@@ -40,8 +39,8 @@
   let processedIds = new Set();
   let pendingPinUser = null;
   let listenersInitialized = false;
+  let lockedUser = localStorage.getItem('fc_locked_user') || null;
   
-  // Код по умолчанию — family2026
   if (!localStorage.getItem('fc_code')) {
     localStorage.setItem('fc_code', 'family2026');
   }
@@ -49,9 +48,6 @@
   if (!localStorage.getItem('fc_theme')) {
     localStorage.setItem('fc_theme', 'light');
   }
-  
-  // Проверяем, закреплена ли уже роль
-  let lockedUser = localStorage.getItem('fc_locked_user') || null;
   
   // ============ ПИН-КОДЫ ============
   function getPin(userId) { return localStorage.getItem('fc_pin_' + userId) || null; }
@@ -80,7 +76,7 @@
     } else {
       if (pinTitle) pinTitle.textContent = 'Создайте ПИН-код';
       if (pinDescription) pinDescription.innerHTML = 'Придумайте ПИН для <strong>' + user.name + '</strong>';
-      if (pinHint) pinHint.textContent = '⚠️ После создания ПИН эта роль будет закреплена за вами навсегда';
+      if (pinHint) pinHint.textContent = '⚠️ После создания ПИН эта роль будет закреплена за вами';
     }
     
     const pinInput = document.getElementById('pinInput');
@@ -118,7 +114,6 @@
     
     if (hasPin(pendingPinUser)) {
       if (verifyPin(pendingPinUser, pin)) {
-        // Закрепляем роль за этим устройством
         if (!lockedUser) {
           lockedUser = pendingPinUser;
           localStorage.setItem('fc_locked_user', lockedUser);
@@ -133,13 +128,12 @@
         if (pinInput) pinInput.value = '';
       }
     } else {
-      // Первый раз задаём ПИН и закрепляем роль
       setPin(pendingPinUser, pin);
       lockedUser = pendingPinUser;
       localStorage.setItem('fc_locked_user', lockedUser);
       loginAsUser(pendingPinUser);
       hidePinDialog();
-      alert('✅ ПИН-код создан! Эта роль теперь закреплена за вами. Чтобы сменить роль, нужно сбросить настройки приложения.');
+      alert('✅ ПИН-код создан! Эта роль закреплена за вами.');
     }
   }
   
@@ -150,18 +144,6 @@
     updatePrivate();
     loadMessages();
     updatePrivateHeader();
-    console.log('✅ Вошёл как ' + FAMILY[userId].name);
-  }
-  
-  function resetApp() {
-    if (confirm('⚠️ Это сбросит все ПИН-коды и закреплённую роль. Продолжить?')) {
-      localStorage.removeItem('fc_locked_user');
-      localStorage.removeItem('fc_user');
-      Object.keys(FAMILY).forEach(function(key) {
-        localStorage.removeItem('fc_pin_' + FAMILY[key].id);
-      });
-      location.reload();
-    }
   }
   
   // ============ АВАТАРКИ ============
@@ -196,64 +178,70 @@
   
   // ============ РЕНДЕРИНГ ============
   function renderUsers() {
-  const container = document.getElementById('usersAvatars');
-  if (!container) return;
-  
-  container.innerHTML = Object.values(FAMILY).map(function(m) {
-    const av = getAvatar(m.id);
-    const isActive = m.id === currentUser;
-    const isLocked = lockedUser && m.id !== lockedUser;
-    const hasPinSet = hasPin(m.id);
+    const container = document.getElementById('usersAvatars');
+    if (!container) return;
     
-    let title = '';
-    if (isActive) title = 'Это вы';
-    else if (!isActive && currentUser) title = 'Нажмите для личного чата';
-    else if (isLocked && hasPinSet) title = 'Занято другим членом семьи';
-    else if (!lockedUser && !hasPinSet) title = 'Нажмите, чтобы выбрать эту роль';
-    
-    return `
-      <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
-           data-user="${m.id}" title="${title}">
-        <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
-          ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span class="default-emoji">' + m.emoji + '</span>'}
+    container.innerHTML = Object.values(FAMILY).map(function(m) {
+      const av = getAvatar(m.id);
+      const isActive = m.id === currentUser;
+      const isLocked = lockedUser && m.id !== lockedUser;
+      const hasPinSet = hasPin(m.id);
+      
+      let title = '';
+      if (isActive) title = 'Это вы';
+      else if (!isActive && currentUser) title = 'Нажмите для личного чата';
+      else if (isLocked && hasPinSet) title = 'Занято другим членом семьи';
+      else if (!lockedUser && !hasPinSet) title = 'Нажмите, чтобы выбрать эту роль';
+      
+      return `
+        <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
+             data-user="${m.id}" title="${title}">
+          <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
+            ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span class="default-emoji">' + m.emoji + '</span>'}
+          </div>
+          <span class="avatar-name">${m.name}</span>
         </div>
-        <span class="avatar-name">${m.name}</span>
-      </div>
-    `;
-  }).join('');
-  
-  container.querySelectorAll('.user-avatar').forEach(function(av) {
-    av.addEventListener('click', function() {
-      const userId = av.dataset.user;
-      
-      // Если нажали на другого пользователя и мы авторизованы — переходим в личный чат
-      if (userId !== currentUser && currentUser) {
-        switchToPrivateChat(userId);
-        return;
-      }
-      
-      // Если нажали на себя — ничего не делаем
-      if (userId === currentUser) {
-        return;
-      }
-      
-      // Если роль закреплена за другим — нельзя
-      if (lockedUser && userId !== lockedUser && hasPin(userId)) {
-        alert('Эта роль занята другим членом семьи.');
-        return;
-      }
-      
-      // Если нет авторизации — показываем ПИН
-      if (!currentUser && !lockedUser) {
+      `;
+    }).join('');
+    
+    container.querySelectorAll('.user-avatar').forEach(function(av) {
+      av.addEventListener('click', function() {
+        const userId = av.dataset.user;
+        
+        if (userId !== currentUser && currentUser) {
+          switchToPrivateChat(userId);
+          return;
+        }
+        
+        if (userId === currentUser) return;
+        
+        if (lockedUser && userId !== lockedUser && hasPin(userId)) {
+          alert('Эта роль занята другим членом семьи.');
+          return;
+        }
+        
+        if (!currentUser && !lockedUser) {
+          showPinDialog(userId);
+          return;
+        }
+        
         showPinDialog(userId);
-        return;
-      }
-      
-      // Иначе показываем ПИН-диалог
-      showPinDialog(userId);
+      });
     });
-  });
-}
+  }
+  
+  function switchToPrivateChat(userId) {
+    activeTab = 'private';
+    privateWith = userId;
+    
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    const privateTab = document.querySelector('.tab[data-tab="private"]');
+    if (privateTab) privateTab.classList.add('active');
+    
+    updatePrivate();
+    loadMessages();
+    updatePrivateHeader();
+  }
   
   function renderEmoji() {
     const grid = document.getElementById('emojiGrid');
@@ -443,24 +431,7 @@
       header.style.display = 'none';
     }
   }
-
-  function switchToPrivateChat(userId) {
-  activeTab = 'private';
-  privateWith = userId;
   
-  // Переключаем вкладку на "Личный"
-  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-  const privateTab = document.querySelector('.tab[data-tab="private"]');
-  if (privateTab) privateTab.classList.add('active');
-  
-  // Обновляем выпадающий список
-  updatePrivate();
-  
-  // Загружаем сообщения
-  loadMessages();
-  updatePrivateHeader();
-}
- 
   // ============ УВЕДОМЛЕНИЯ ============
   function notify(title, body) {
     if (!notifEnabled) return;
@@ -490,7 +461,7 @@
   
   // ============ ОТПРАВКА ============
   function sendText(text) {
-    if (!currentUser) { alert('Сначала выберите пользователя и введите ПИН-код'); return; }
+    if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
     if (!text.trim()) return;
     
     const msg = {
@@ -506,12 +477,12 @@
   }
   
   function sendMedia(type, dataUrl) {
-    if (!currentUser) { alert('Сначала выберите пользователя и введите ПИН-код'); return; }
+    if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
     
     if (type === 'voice') {
       const msg = {
         from: currentUser, type: 'voice', data: dataUrl,
-        timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое (' + Math.round(audioChunks.length / 1000) + 'с)'
+        timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое'
       };
       if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
       db.ref(getChatPath()).push(msg);
@@ -617,23 +588,21 @@
           if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop(); btn.classList.remove('recording'); btn.textContent = '🎤';
           }
-        }, 30000); // Увеличено до 30 секунд
+        }, 30000);
       }).catch(function() { alert('Нет доступа к микрофону'); });
     });
     
     document.querySelectorAll('.tab').forEach(function(tab) {
       tab.addEventListener('click', function() {
-      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-      tab.classList.add('active');
-      activeTab = tab.dataset.tab;
-          if (activeTab !== 'private') {
-      privateWith = null;
-      updatePrivateHeader();
-    }
-    updatePrivate();
-    loadMessages();
-  });
-});
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        activeTab = tab.dataset.tab;
+        if (activeTab !== 'private') privateWith = null;
+        updatePrivate();
+        loadMessages();
+        updatePrivateHeader();
+      });
+    });
     
     document.getElementById('settingsBtn').addEventListener('click', function() {
       document.getElementById('settingsPanel').classList.toggle('show');
@@ -710,7 +679,8 @@
         processedIds.clear();
       }
     });
-         
+  }
+  
   function applyStoredSettings() {
     isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
     if (isDarkTheme) {
@@ -788,7 +758,18 @@
     if (e.target === this) hidePinDialog();
   });
   
-    // ============ ЗАПУСК ============
+  function updatePrivate() {
+    const sel = document.getElementById('privateRecipient');
+    if (!sel || !currentUser) return;
+    
+    const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
+    sel.innerHTML = '<option value="">Выберите...</option>' +
+      others.map(function(m) { 
+        return '<option value="' + m.id + '" ' + (m.id === privateWith ? 'selected' : '') + '>' + m.emoji + ' ' + m.name + '</option>'; 
+      }).join('');
+  }
+  
+  // ============ ЗАПУСК ============
   function initApp() {
     applyStoredSettings();
     renderEmoji();
@@ -798,7 +779,6 @@
     requestNotif();
     updatePrivateHeader();
     
-    // Если роль закреплена — автоматически входим
     if (lockedUser && hasPin(lockedUser)) {
       showPinDialog(lockedUser);
     } else {
