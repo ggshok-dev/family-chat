@@ -705,5 +705,8 @@
         }
         console.log('✅ FChat запущен');
       }
+      window.addEventListener('DOMContentLoaded', () => {
       initApp();
-    })();
+  });
+
+})();
