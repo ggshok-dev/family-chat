@@ -20,3 +20,7 @@ async function askPushPermission(reg) {
 
 // VAPID helper (добавить в config.js)
 function urlBase64ToUint8Array(base64String) { /* ... */ }
+// Делаем функции ввода пин-кода видимыми для кнопок
+window.enterDigit = enterDigit;
+window.clearPin = clearPin;
+window.checkPin = checkPin;
