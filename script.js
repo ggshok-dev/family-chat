@@ -408,7 +408,7 @@
           sorted.forEach(function(msg) { showMessage(msg); });
         });
         
-        messageListener = ref.on('child_added', function(snap) {
+        state.messageListener = ref.on('child_added', function(snap) {
           const msg = Object.assign({id: snap.key}, snap.val());
           if (!processedIds.has(msg.id)) {
             showMessage(msg);
