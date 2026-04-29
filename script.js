@@ -734,10 +734,13 @@
   }
   
   function applyStoredSettings() {
-    if (isDarkTheme) {
-      document.body.classList.add('dark-theme');
-      const themeBtn = document.getElementById('themeBtn');
-      if (themeBtn) themeBtn.textContent = '☀️';
+  // Загружаем тему
+  const savedTheme = localStorage.getItem('fc_theme');
+  if (savedTheme === 'dark') {
+    isDarkTheme = true;
+    document.body.classList.add('dark-theme');
+    const themeBtn = document.getElementById('themeBtn');
+    if (themeBtn) themeBtn.textContent = '☀️';
     }
     document.documentElement.style.setProperty('--font-scale', fontSize / 100);
     const fv = document.getElementById('fontValue');
