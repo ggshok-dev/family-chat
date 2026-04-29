@@ -1,3 +1,5 @@
+      <script>
+      (function() {
       // ============ FIREBASE ============
       const firebaseConfig = {
         apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
@@ -703,7 +705,7 @@
           `;
         }
         console.log('✅ FChat запущен');
-      }}
+      }
     initApp();
     })();
   </script>
