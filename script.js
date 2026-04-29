@@ -24,8 +24,9 @@
       
       const EMOJI_LIST = ['😀','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','🥰','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥','😮','🤐','😯','😪','😫','😴','😌','😛','😜','😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','☹️','🙁','😖','😞','😟','😤','😢','😭','😦','😧','😨','😩','🤯','😬','😰','😱','🥵','🥶','😳','🤪','😵','😡','😠','🤬','😷','🤒','🤕','🤢','🤮','😇','🤠','🤡','🥳','🥴','🥺','🤥','🤫','🤭','🧐','🤓','😈','👿','👹','👺','💀','👻','👽','🤖','💩','❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❣️','💕','💞','💓','💗','💖','👍','👎','👏','🙌','🤝','💪','✌️','🤞','👌','🤏','✋','👋','🤚','🖐️','✍️','🙏','👨‍👩‍👧‍👦','🏠','🎉','🎂','🍕','🍔','🌮','🍩','☕','🍰','🎄','🎁','🎈','⭐','🌟','🔥'];
       
-      // ============ СОСТОЯНИЕ ============
-      let currentUser = null;
+            // ============ СОСТОЯНИЕ ============
+      // Мы создаем объект state и дублируем в него переменные для совместимости
+      let currentUser = localStorage.getItem('fc_user') || null;
       let activeTab = 'general';
       let privateWith = null;
       let autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
@@ -34,15 +35,24 @@
       let secretCode = localStorage.getItem('fc_code') || 'family2024';
       let fontSize = parseInt(localStorage.getItem('fc_font') || '100');
       let isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
-      let messageListener = null;
-      let mediaRecorder = null;
-      let audioChunks = [];
-      let processedIds = new Set();
-      let pendingPinUser = null;
-      
-      if (!localStorage.getItem('fc_code')) {
-        localStorage.setItem('fc_code', 'family2024');
-      }
+
+      // Создаем тот самый объект state, который просит ошибка
+      const state = {
+        get currentUser() { return currentUser; },
+        set currentUser(v) { currentUser = v; },
+        get activeTab() { return activeTab; },
+        set activeTab(v) { activeTab = v; },
+        get privateWith() { return privateWith; },
+        set privateWith(v) { privateWith = v; },
+        get autoDeleteHours() { return autoDeleteHours; },
+        get notifEnabled() { return notifEnabled; },
+        get soundEnabled() { return soundEnabled; },
+        get isDarkTheme() { return isDarkTheme; },
+        set isDarkTheme(v) { isDarkTheme = v; },
+        get fontSize() { return fontSize; },
+        set fontSize(v) { fontSize = v; },
+        pendingPinUser: null
+      };
       
       // ============ ФУНКЦИИ ============
       function getPin(userId) { return localStorage.getItem('fc_pin_' + userId) || null; }
