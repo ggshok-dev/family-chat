@@ -703,7 +703,8 @@
           `;
         }
         console.log('✅ FChat запущен');
-      }
+      }}
+    initApp();
     })();
   </script>
 </body>
