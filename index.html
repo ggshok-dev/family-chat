@@ -166,5 +166,12 @@
   <input type="file" id="avatarInput" accept="image/*" style="display:none">
    <!-- Основная логика -->
   <script src="script.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg => console.log('✅ SW registered'))
+      .catch(err => console.log('SW error:', err));
+  }
+</script>
 </body>
 </html>
