@@ -1,54 +1,47 @@
+// Service Worker для оффлайн + push
 const CACHE_NAME = 'fchat-v1';
 const urlsToCache = [
-  '/family-chat/',
-  '/family-chat/index.html'
+  '/', 'styles.css', 'config.js', 'auth.js', 'ui.js', 
+  'messaging.js', 'main.js', 'manifest.json'
 ];
 
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
-  );
-});
-
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
-      );
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(urlsToCache))
   );
 });
 
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => response || fetch(event.request))
+    caches.match(event.request)
+      .then(response => response || fetch(event.request))
   );
 });
 
+// PUSH уведомления
 self.addEventListener('push', event => {
-  const data = event.data ? event.data.json() : {};
   const options = {
-    body: data.body || 'Новое сообщение',
-    icon: '/family-chat/icon-192.png',
-    badge: '/family-chat/icon-192.png',
-    vibrate: [200, 100, 200],
-    tag: 'fchat-message',
-    requireInteraction: false
+    body: event.data ? event.data.text() : 'Новое сообщение!',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: { date: Date.now() },
+    actions: [
+      { action: 'open', title: 'Открыть чат' },
+      { action: 'close', title: 'Закрыть' }
+    ]
   };
-  event.waitUntil(self.registration.showNotification(data.title || 'FChat', options));
+  event.waitUntil(
+    self.registration.showNotification('FChat', options)
+  );
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then(clientList => {
-      for (const client of clientList) {
-        if (client.url.includes('/family-chat/') && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) return clients.openWindow('/family-chat/');
-    })
-  );
+  if (event.action === 'open') {
+    event.waitUntil(
+      clients.openWindow('/')
+    );
+  }
 });
