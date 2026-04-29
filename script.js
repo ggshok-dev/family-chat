@@ -30,7 +30,9 @@
   let autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
   let notifEnabled = localStorage.getItem('fc_notif') !== 'false';
   let soundEnabled = localStorage.getItem('fc_sound') !== 'false';
-  let secretCode = localStorage.getItem('fc_code') || 'family2026';
+  // ПРИНУДИТЕЛЬНО устанавливаем новый пароль
+  let secretCode = 'family2026';
+  localStorage.setItem('fc_code', 'family2026');
   let fontSize = parseInt(localStorage.getItem('fc_font') || '100');
   let isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
   let messageListener = null;
@@ -41,15 +43,10 @@
   let listenersInitialized = false;
   let lockedUser = localStorage.getItem('fc_locked_user') || null;
   
-  if (!localStorage.getItem('fc_code')) {
-    localStorage.setItem('fc_code', 'family2026');
-  }
-  
   if (!localStorage.getItem('fc_theme')) {
     localStorage.setItem('fc_theme', 'light');
   }
   
-  // ============ ПИН-КОДЫ ============
   function getPin(userId) { return localStorage.getItem('fc_pin_' + userId) || null; }
   function setPin(userId, pin) { localStorage.setItem('fc_pin_' + userId, pin); }
   function hasPin(userId) { return !!getPin(userId); }
@@ -141,42 +138,40 @@
     currentUser = userId;
     localStorage.setItem('fc_user', userId);
     renderUsers();
-    updatePrivate();
     loadMessages();
     updatePrivateHeader();
   }
   
-  // ============ АВАТАРКИ ============
-  function getAvatar(userId) { return localStorage.getItem('fc_av_' + userId) || null; }
+  // ============ СИНХРОНИЗИРОВАННЫЕ АВАТАРКИ ============
+  function getAvatar(userId) {
+    const local = localStorage.getItem('fc_av_' + userId);
+    if (local) return local;
+    
+    db.ref('avatars/' + userId).once('value').then(function(snap) {
+      const url = snap.val();
+      if (url) {
+        localStorage.setItem('fc_av_' + userId, url);
+        renderUsers();
+      }
+    });
+    
+    return null;
+  }
   
   function saveAvatar(userId, dataUrl) {
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const size = 200;
-      canvas.width = size; canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      const minSide = Math.min(img.width, img.height);
-      const sx = (img.width - minSide) / 2;
-      const sy = (img.height - minSide) / 2;
-      ctx.fillStyle = '#e0e0e0';
-      ctx.fillRect(0, 0, size, size);
-      ctx.drawImage(img, sx, sy, minSide, minSide, 0, 0, size, size);
-      localStorage.setItem('fc_av_' + userId, canvas.toDataURL('image/jpeg', 0.7));
-      renderUsers();
-      alert('✅ Аватар обновлён!');
-    };
-    img.onerror = function() { alert('❌ Не удалось загрузить изображение'); };
-    img.src = dataUrl;
+    localStorage.setItem('fc_av_' + userId, dataUrl);
+    db.ref('avatars/' + userId).set(dataUrl);
+    renderUsers();
+    alert('✅ Аватар обновлён!');
   }
   
   function resetAvatar(userId) {
     localStorage.removeItem('fc_av_' + userId);
+    db.ref('avatars/' + userId).remove();
     renderUsers();
     alert('✅ Аватар сброшен');
   }
   
-  // ============ РЕНДЕРИНГ ============
   function renderUsers() {
     const container = document.getElementById('usersAvatars');
     if (!container) return;
@@ -185,17 +180,10 @@
       const av = getAvatar(m.id);
       const isActive = m.id === currentUser;
       const isLocked = lockedUser && m.id !== lockedUser;
-      const hasPinSet = hasPin(m.id);
-      
-      let title = '';
-      if (isActive) title = 'Это вы';
-      else if (!isActive && currentUser) title = 'Нажмите для личного чата';
-      else if (isLocked && hasPinSet) title = 'Занято другим членом семьи';
-      else if (!lockedUser && !hasPinSet) title = 'Нажмите, чтобы выбрать эту роль';
       
       return `
         <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
-             data-user="${m.id}" title="${title}">
+             data-user="${m.id}" title="${isActive ? 'Это вы' : 'Нажмите для личного чата'}">
           <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
             ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span class="default-emoji">' + m.emoji + '</span>'}
           </div>
@@ -215,17 +203,9 @@
         
         if (userId === currentUser) return;
         
-        if (lockedUser && userId !== lockedUser && hasPin(userId)) {
-          alert('Эта роль занята другим членом семьи.');
-          return;
-        }
-        
-        if (!currentUser && !lockedUser) {
+        if (!currentUser) {
           showPinDialog(userId);
-          return;
         }
-        
-        showPinDialog(userId);
       });
     });
   }
@@ -238,9 +218,8 @@
     const privateTab = document.querySelector('.tab[data-tab="private"]');
     if (privateTab) privateTab.classList.add('active');
     
-    updatePrivate();
-    loadMessages();
     updatePrivateHeader();
+    loadMessages();
   }
   
   function renderEmoji() {
