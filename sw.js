@@ -1,14 +1,13 @@
 // Service Worker для оффлайн + push
-const CACHE_NAME = 'fchat-v2';
+const CACHE_NAME = 'fchat-v3';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/style.css',
-  '/script.js',
-  '/manifest.json'
+  '/family-chat/',
+  '/family-chat/index.html',
+  '/family-chat/style.css',
+  '/family-chat/script.js',
+  '/family-chat/manifest.json'
 ];
 
-// Установка Service Worker
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -17,7 +16,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Активация и очистка старого кэша
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -30,7 +28,6 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Перехват запросов (оффлайн-режим)
 self.addEventListener('fetch', event => {
   event.respondWith(
     caches.match(event.request)
@@ -38,55 +35,30 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// Push-уведомления
 self.addEventListener('push', event => {
-  let body = 'Новое сообщение в семейном чате!';
-  
+  let body = 'Новое сообщение!';
   if (event.data) {
     try {
       const data = event.data.json();
       body = data.body || body;
-    } catch (e) {
+    } catch(e) {
       body = event.data.text() || body;
     }
   }
   
   const options = {
     body: body,
-    icon: '/icon-192.png',
-    badge: '/icon-192.png',
+    icon: '/family-chat/icon-192.png',
+    badge: '/family-chat/icon-192.png',
     vibrate: [200, 100, 200],
-    tag: 'fchat-message',
-    requireInteraction: false,
-    actions: [
-      { action: 'open', title: 'Открыть чат' },
-      { action: 'close', title: 'Закрыть' }
-    ]
+    tag: 'fchat',
+    actions: [{ action: 'open', title: 'Открыть' }]
   };
   
-  event.waitUntil(
-    self.registration.showNotification('👨‍👩‍👧‍👦 FChat', options)
-  );
+  event.waitUntil(self.registration.showNotification('👨‍👩‍👧‍👦 FChat', options));
 });
 
-// Клик по уведомлению
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  
-  if (event.action === 'open' || !event.action) {
-    event.waitUntil(
-      clients.matchAll({ type: 'window' }).then(clientList => {
-        // Если чат уже открыт — фокусируемся на нём
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            return client.focus();
-          }
-        }
-        // Иначе открываем новое окно
-        if (clients.openWindow) {
-          return clients.openWindow('/');
-        }
-      })
-    );
-  }
+  event.waitUntil(clients.openWindow('/family-chat/'));
 });
