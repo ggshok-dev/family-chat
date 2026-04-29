@@ -13,59 +13,154 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 </head>
 <body>
-
-  <!-- Оверлей секретного входа -->
+<!-- Секретный код -->
   <div class="secret-overlay" id="secretOverlay">
     <div class="secret-dialog">
-      <div class="icon">🏠</div>
-      <h2>Вход в FChat</h2>
-      <p>Введите семейный код доступа</p>
-      <input type="password" class="secret-input" id="secretKeyInput" placeholder="****" maxlength="4">
-      <button class="secret-btn" onclick="checkSecretKey()">Войти</button>
-      <div class="error-msg" id="errorMsg">Неверный код доступа</div>
+      <div class="icon">👨‍👩‍👧‍👦</div>
+      <h2>Семейный чат</h2>
+      <p>Введите секретный код семьи</p>
+      <input type="password" class="secret-input" id="secretInput" 
+             placeholder="••••" maxlength="10" autocomplete="off">
+      <button class="secret-btn" id="secretBtn">Войти</button>
+      <div class="error-msg" id="errorMsg">Неверный код</div>
+      <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">
+        По умолчанию: family2024
+      </p>
     </div>
   </div>
 
-  <!-- Оверлей PIN-кода -->
+  <!-- ПИН-код -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-dialog">
       <div class="user-icon" id="pinUserIcon">👤</div>
-      <h2 id="pinUserName">Имя пользователя</h2>
-      <p>Введите ваш личный PIN-код</p>
-      <input type="password" class="pin-input" id="pinInput" placeholder="****" maxlength="4">
-      <button class="pin-btn" onclick="verifyPin()">Подтвердить</button>
-      <div class="error-msg" id="pinErrorMsg">Неверный PIN-код</div>
+      <h2 id="pinTitle">Введите ПИН-код</h2>
+      <p id="pinDescription">Для входа как <strong id="pinUserName"></strong></p>
+      <input type="password" class="pin-input" id="pinInput" 
+             placeholder="••••" maxlength="4" autocomplete="off" inputmode="numeric" pattern="[0-9]*">
+      <button class="pin-btn" id="pinBtn">Подтвердить</button>
+      <div class="error-msg" id="pinError">Неверный ПИН-код</div>
+      <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">
+        <span id="pinHint"></span>
+      </p>
     </div>
   </div>
 
-  <div class="app">
-    <header class="header">
-      <div class="header-logo">💬</div>
-      <div class="header-title">FChat</div>
+  <!-- Приложение -->
+  <div class="app" id="mainApp" style="display:none;">
+    <div class="header">
+      <span class="header-logo">👨‍👩‍👧‍👦</span>
+      <span class="header-title">FChat</span>
       <div class="header-actions">
-        <button class="header-btn" onclick="toggleTheme()">🌓</button>
-        <button class="header-btn" onclick="toggleSettings()">⚙️</button>
+        <button class="header-btn" id="notifBtn">🔔</button>
+        <button class="header-btn" id="soundBtn">🔊</button>
+        <button class="header-btn" id="themeBtn">🌙</button>
+        <button class="header-btn" id="settingsBtn">⚙️</button>
       </div>
-    </header>
-
-    <div class="users-avatars" id="usersList">
-      <!-- Аватары пользователей будут здесь -->
-    </div>
-
-    <div class="private-chat-header" id="privateHeader">
-      <span>🔒 Приватный чат</span>
     </div>
 
     <div class="settings-panel" id="settingsPanel">
-      <h3>Настройки</h3>
-      <!-- Содержимое настроек -->
+      <h3>⚙️ Настройки</h3>
+      <div class="setting-item">
+        <span class="setting-label">🖼️ Аватар</span>
+        <div style="display:flex;gap:8px;">
+          <button class="action-btn primary" id="avatarBtn">Загрузить</button>
+          <button class="action-btn warning" id="avatarResetBtn">По умолчанию</button>
+        </div>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔑 Сменить ПИН-код</span>
+        <button class="action-btn primary" id="changePinBtn">Изменить</button>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔔 Уведомления</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="notifToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔊 Звук</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="soundToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">📝 Шрифт</span>
+        <div class="font-size-controls">
+          <button class="font-size-btn" id="fontDown">A−</button>
+          <span class="font-size-value" id="fontValue">100%</span>
+          <button class="font-size-btn" id="fontUp">A+</button>
+        </div>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🗑️ Автоудаление</span>
+        <select id="autoDelete" style="padding:4px 8px;border-radius:6px;border:1px solid #ddd;background:white;">
+          <option value="0">Выключено</option>
+          <option value="1">1 час</option>
+          <option value="6">6 часов</option>
+          <option value="24" selected>24 часа</option>
+          <option value="168">7 дней</option>
+        </select>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔑 Код семьи</span>
+        <button class="action-btn primary" id="changeCodeBtn">Изменить</button>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🔄 Кэш</span>
+        <button class="action-btn warning" id="cacheBtn">Сбросить</button>
+      </div>
+      <div class="setting-item">
+        <span class="setting-label">🗑️ Очистить чат</span>
+        <button class="action-btn danger" id="clearBtn">Удалить всё</button>
+      </div>
     </div>
-    
-    <!-- Сюда вставим блок сообщений и ввода, когда ты пришлешь вторую часть кода -->
 
+    <div class="users-avatars" id="usersAvatars"></div>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="general">💬 Общий</button>
+      <button class="tab" data-tab="private">🔒 Личный</button>
+    </div>
+
+    <!-- Заголовок личного чата -->
+    <div class="private-chat-header" id="privateChatHeader">
+      <span>🔒 Личный чат с</span>
+      <span class="partner-emoji"></span>
+      <strong class="partner-name"></strong>
+    </div>
+
+    <div class="private-selector" id="privateSel">
+      <select id="privateRecipient">
+        <option value="">Выберите...</option>
+      </select>
+    </div>
+
+    <div class="chat-window" id="chatWindow">
+      <div class="empty-chat">
+        <div class="empty-icon">💬</div>
+        <p>Нет сообщений</p>
+      </div>
+    </div>
+
+    <div class="input-panel">
+      <div class="emoji-picker-wrapper" id="emojiPicker">
+        <div class="emoji-grid" id="emojiGrid"></div>
+      </div>
+      <div class="input-row">
+        <button class="icon-btn" id="emojiBtn">😊</button>
+        <button class="icon-btn" id="micBtn">🎤</button>
+        <button class="icon-btn" id="attachBtn">📎</button>
+        <textarea class="msg-input" id="msgInput" rows="1" placeholder="Сообщение..."></textarea>
+        <button class="send-btn" id="sendBtn">➤</button>
+      </div>
+    </div>
   </div>
 
-  <!-- Логика -->
+  <input type="file" id="fileInput" accept="image/*" style="display:none">
+  <input type="file" id="avatarInput" accept="image/*" style="display:none">
+   <!-- Основная логика -->
   <script src="script.js"></script>
 </body>
 </html>
