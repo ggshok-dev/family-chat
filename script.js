@@ -107,25 +107,32 @@
       
       function processPin() {
         const pin = document.getElementById('pinInput').value.trim();
+        const errorEl = document.getElementById('pinError');
+  
+        // Проверка: есть ли вообще выбранный пользователь
+        if (!state.pendingPinUser) return; 
+
         if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
-          document.getElementById('pinError').textContent = 'ПИН должен состоять из 4 цифр';
-          document.getElementById('pinError').classList.add('show');
+          errorEl.textContent = 'ПИН должен состоять из 4 цифр';
+          errorEl.classList.add('show');
           return;
-        }
-        if (hasPin(pendingPinUser)) {
-          if (verifyPin(pendingPinUser, pin)) {
-            loginAsUser(pendingPinUser);
+      }
+  
+        // Заменяем везде на state.pendingPinUser
+        if (hasPin(state.pendingPinUser)) {
+          if (verifyPin(state.pendingPinUser, pin)) {
+            loginAsUser(state.pendingPinUser);
             hidePinDialog();
-          } else {
-            document.getElementById('pinError').textContent = 'Неверный ПИН-код';
-            document.getElementById('pinError').classList.add('show');
+      } else {
+            errorEl.textContent = 'Неверный ПИН-код';
+            errorEl.classList.add('show');
             document.getElementById('pinInput').value = '';
-          }
-        } else {
-          setPin(pendingPinUser, pin);
-          loginAsUser(pendingPinUser);
+      }
+      } else {
+          setPin(state.pendingPinUser, pin);
+          loginAsUser(state.pendingPinUser);
           hidePinDialog();
-          alert('✅ ПИН-код создан! Теперь только вы можете писать от имени ' + FAMILY[pendingPinUser].name);
+          alert(`✅ ПИН-код создан! Теперь только вы можете писать от имени ${FAMILY[state.pendingPinUser].name}`);
         }
       }
       
