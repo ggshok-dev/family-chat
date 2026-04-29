@@ -1,4 +1,3 @@
-      <script>
       (function() {
       // ============ FIREBASE ============
       const firebaseConfig = {
