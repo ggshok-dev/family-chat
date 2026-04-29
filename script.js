@@ -31,7 +31,7 @@
   let autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
   let notifEnabled = localStorage.getItem('fc_notif') !== 'false';
   let soundEnabled = localStorage.getItem('fc_sound') !== 'false';
-  let secretCode = localStorage.getItem('fc_code') || 'family2024';
+  let secretCode = localStorage.getItem('fc_code') || 'family2026';
   let fontSize = parseInt(localStorage.getItem('fc_font') || '100');
   let isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
   let messageListener = null;
@@ -41,14 +41,17 @@
   let pendingPinUser = null;
   let listenersInitialized = false;
   
+  // Код по умолчанию — family2026
   if (!localStorage.getItem('fc_code')) {
-    localStorage.setItem('fc_code', 'family2024');
+    localStorage.setItem('fc_code', 'family2026');
   }
-
-  // Сохраняем тему по умолчанию, если ещё не выбрана
+  
   if (!localStorage.getItem('fc_theme')) {
     localStorage.setItem('fc_theme', 'light');
   }
+  
+  // Проверяем, закреплена ли уже роль
+  let lockedUser = localStorage.getItem('fc_locked_user') || null;
   
   // ============ ПИН-КОДЫ ============
   function getPin(userId) { return localStorage.getItem('fc_pin_' + userId) || null; }
@@ -77,7 +80,7 @@
     } else {
       if (pinTitle) pinTitle.textContent = 'Создайте ПИН-код';
       if (pinDescription) pinDescription.innerHTML = 'Придумайте ПИН для <strong>' + user.name + '</strong>';
-      if (pinHint) pinHint.textContent = 'Придумайте 4 цифры и запомните их';
+      if (pinHint) pinHint.textContent = '⚠️ После создания ПИН эта роль будет закреплена за вами навсегда';
     }
     
     const pinInput = document.getElementById('pinInput');
@@ -115,6 +118,11 @@
     
     if (hasPin(pendingPinUser)) {
       if (verifyPin(pendingPinUser, pin)) {
+        // Закрепляем роль за этим устройством
+        if (!lockedUser) {
+          lockedUser = pendingPinUser;
+          localStorage.setItem('fc_locked_user', lockedUser);
+        }
         loginAsUser(pendingPinUser);
         hidePinDialog();
       } else {
@@ -125,10 +133,13 @@
         if (pinInput) pinInput.value = '';
       }
     } else {
+      // Первый раз задаём ПИН и закрепляем роль
       setPin(pendingPinUser, pin);
+      lockedUser = pendingPinUser;
+      localStorage.setItem('fc_locked_user', lockedUser);
       loginAsUser(pendingPinUser);
       hidePinDialog();
-      alert('✅ ПИН-код создан! Теперь только вы можете писать от имени ' + FAMILY[pendingPinUser].name);
+      alert('✅ ПИН-код создан! Эта роль теперь закреплена за вами. Чтобы сменить роль, нужно сбросить настройки приложения.');
     }
   }
   
@@ -142,38 +153,14 @@
     console.log('✅ Вошёл как ' + FAMILY[userId].name);
   }
   
-  function logoutUser() {
-    const userName = currentUser ? FAMILY[currentUser].name : '';
-    currentUser = null;
-    localStorage.removeItem('fc_user');
-    
-    // Очищаем чат
-    const chatWindow = document.getElementById('chatWindow');
-    if (chatWindow) {
-      chatWindow.innerHTML = `
-        <div class="empty-chat">
-          <div class="empty-icon">🔒</div>
-          <p>Выберите пользователя и введите ПИН-код</p>
-        </div>
-      `;
-    }
-    
-    // Отключаем слушатель сообщений
-    if (messageListener) {
-      db.ref(getChatPath()).off('child_added', messageListener);
-      messageListener = null;
-    }
-    
-    // Обновляем интерфейс
-    renderUsers();
-    updatePrivateHeader();
-    
-    // Прячем приватный селектор
-    const privateSel = document.getElementById('privateSel');
-    if (privateSel) privateSel.style.display = 'none';
-    
-    if (userName) {
-      console.log('🚪 Вышел из роли ' + userName);
+  function resetApp() {
+    if (confirm('⚠️ Это сбросит все ПИН-коды и закреплённую роль. Продолжить?')) {
+      localStorage.removeItem('fc_locked_user');
+      localStorage.removeItem('fc_user');
+      Object.keys(FAMILY).forEach(function(key) {
+        localStorage.removeItem('fc_pin_' + FAMILY[key].id);
+      });
+      location.reload();
     }
   }
   
@@ -215,11 +202,18 @@
     container.innerHTML = Object.values(FAMILY).map(function(m) {
       const av = getAvatar(m.id);
       const isActive = m.id === currentUser;
-      const isLocked = !isActive && hasPin(m.id);
+      const isLocked = lockedUser && m.id !== lockedUser; // Чужие роли заблокированы
+      const hasPinSet = hasPin(m.id);
+      
+      let title = '';
+      if (isActive) title = 'Это вы';
+      else if (isLocked && hasPinSet) title = 'Занято другим членом семьи';
+      else if (!lockedUser && !hasPinSet) title = 'Нажмите, чтобы выбрать эту роль';
+      else if (isLocked) title = 'Недоступно';
       
       return `
         <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
-             data-user="${m.id}" title="${isActive ? 'Нажмите, чтобы выйти' : (isLocked ? 'Требуется ПИН-код' : 'Создайте ПИН-код')}">
+             data-user="${m.id}" title="${title}">
           <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
             ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span class="default-emoji">' + m.emoji + '</span>'}
           </div>
@@ -232,21 +226,31 @@
       av.addEventListener('click', function() {
         const userId = av.dataset.user;
         
-        // Если нажали на уже активного пользователя — выходим
+        // Если это текущий пользователь — предлагаем выйти (но только если не закреплён)
         if (userId === currentUser) {
-          if (confirm('Выйти из роли ' + FAMILY[userId].name + '?')) {
-            logoutUser();
-          }
+          alert('Вы вошли как ' + FAMILY[userId].name + '. Роль закреплена за этим устройством.');
           return;
         }
         
-        // Если уже авторизован — сначала нужно выйти
-        if (currentUser) {
-          alert('Сначала нажмите на свою аватарку и выйдите из текущей роли');
+        // Если роль закреплена за другим — нельзя переключиться
+        if (lockedUser && userId !== lockedUser && hasPin(userId)) {
+          alert('Эта роль занята другим членом семьи. Сбросить закрепление можно в настройках (кнопка "Сбросить роли").');
           return;
         }
         
-        // Если пользователь не авторизован — показываем ПИН
+        // Если пользователь не авторизован и роль не закреплена — можно войти
+        if (!currentUser && !lockedUser) {
+          showPinDialog(userId);
+          return;
+        }
+        
+        // Если роль не закреплена и нет ПИНа — можно создать
+        if (!lockedUser && !hasPin(userId)) {
+          showPinDialog(userId);
+          return;
+        }
+        
+        // В остальных случаях — показываем ПИН-диалог для входа
         showPinDialog(userId);
       });
     });
@@ -441,30 +445,6 @@
     }
   }
   
-  function switchToPrivateChat(userId) {
-    activeTab = 'private';
-    privateWith = userId;
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    const privateTab = document.querySelector('.tab[data-tab="private"]');
-    if (privateTab) privateTab.classList.add('active');
-    const privateSel = document.getElementById('privateSel');
-    if (privateSel) privateSel.style.display = 'block';
-    updatePrivate();
-    loadMessages();
-    updatePrivateHeader();
-  }
-  
-  function updatePrivate() {
-    const sel = document.getElementById('privateRecipient');
-    if (!sel || !currentUser) return;
-    
-    const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
-    sel.innerHTML = '<option value="">Выберите...</option>' +
-      others.map(function(m) { 
-        return '<option value="' + m.id + '" ' + (m.id === privateWith ? 'selected' : '') + '>' + m.emoji + ' ' + m.name + '</option>'; 
-      }).join('');
-  }
-  
   // ============ УВЕДОМЛЕНИЯ ============
   function notify(title, body) {
     if (!notifEnabled) return;
@@ -515,7 +495,7 @@
     if (type === 'voice') {
       const msg = {
         from: currentUser, type: 'voice', data: dataUrl,
-        timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое'
+        timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое (' + Math.round(audioChunks.length / 1000) + 'с)'
       };
       if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
       db.ref(getChatPath()).push(msg);
@@ -621,7 +601,7 @@
           if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop(); btn.classList.remove('recording'); btn.textContent = '🎤';
           }
-        }, 10000);
+        }, 30000); // Увеличено до 30 секунд
       }).catch(function() { alert('Нет доступа к микрофону'); });
     });
     
@@ -630,7 +610,6 @@
         document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
         tab.classList.add('active');
         activeTab = tab.dataset.tab;
-        document.getElementById('privateSel').style.display = activeTab === 'private' ? 'block' : 'none';
         if (activeTab !== 'private') privateWith = null;
         updatePrivate();
         loadMessages();
@@ -718,10 +697,14 @@
         processedIds.clear();
       }
     });
+    
+    // Обработчик для сброса закреплённой роли
+    document.getElementById('resetLockBtn').addEventListener('click', function() {
+      resetApp();
+    });
   }
   
   function applyStoredSettings() {
-    // Применяем сохранённую тему
     isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
     if (isDarkTheme) {
       document.body.classList.add('dark-theme');
@@ -808,19 +791,16 @@
     requestNotif();
     updatePrivateHeader();
     
-    // Проверяем, был ли сохранён пользователь
-    const savedUser = localStorage.getItem('fc_user');
-    if (savedUser && FAMILY[savedUser]) {
-      // Пользователь был сохранён — показываем ПИН-диалог
-      showPinDialog(savedUser);
+    // Если роль закреплена — автоматически входим
+    if (lockedUser && hasPin(lockedUser)) {
+      showPinDialog(lockedUser);
     } else {
-      // Нет сохранённого пользователя — показываем подсказку
       const chatWindow = document.getElementById('chatWindow');
       if (chatWindow) {
         chatWindow.innerHTML = `
           <div class="empty-chat">
             <div class="empty-icon">🔒</div>
-            <p>Выберите пользователя и введите ПИН-код</p>
+            <p>Выберите свою роль и создайте ПИН-код</p>
           </div>
         `;
       }
