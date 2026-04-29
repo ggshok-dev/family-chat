@@ -26,6 +26,7 @@
       
             // ============ СОСТОЯНИЕ ============
       // Мы создаем объект state и дублируем в него переменные для совместимости
+      let listenersInitialized = false;
       let currentUser = null;
       let activeTab = 'general';
       let privateWith = null;
@@ -518,6 +519,8 @@
       
       // ============ ОБРАБОТЧИКИ ============
       function setupListeners() {
+        if (listenersInitialized) return; // Если уже запускали — выходим
+        listenersInitialized = true;
         document.getElementById('sendBtn').addEventListener('click', function() {
           sendText(document.getElementById('msgInput').value);
         });
