@@ -5,12 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>FChat — Семейный мессенджер</title>
   
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#667eea">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="FChat">
+  <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icon-192.png">
   
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -19,609 +15,95 @@
   <style>
     :root { --font-scale: 1; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh; display: flex; justify-content: center;
-      align-items: center; padding: 10px; transition: background 0.3s;
-    }
-    
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; padding: 10px; }
     body.dark-theme { background: #0f0f1a; }
-    
-    .secret-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85); display: flex; justify-content: center;
-      align-items: center; z-index: 9999; backdrop-filter: blur(10px);
-    }
-    
-    .secret-dialog {
-      background: white; padding: 30px; border-radius: 20px;
-      text-align: center; max-width: 350px; width: 90%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    
-    body.dark-theme .secret-dialog { background: #1e2a44; }
-    body.dark-theme .secret-dialog h2 { color: #e8e8e8; }
-    body.dark-theme .secret-dialog p { color: #aaa; }
-    
-    .secret-dialog h2 { color: #333; margin-bottom: 10px; font-size: 1.5rem; }
-    .secret-dialog .icon { font-size: 50px; margin-bottom: 15px; }
-    .secret-dialog p { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
-    
-    .secret-input {
-      width: 100%; padding: 12px; border: 2px solid #e0e0e0;
-      border-radius: 12px; font-size: 1.1rem; text-align: center;
-      margin-bottom: 15px; outline: none; letter-spacing: 3px;
-      background: white; color: #333; display: block;
-    }
-    
-    body.dark-theme .secret-input {
-      background: #16213e; color: white; border-color: #2a3a5c;
-    }
-    
-    .secret-input:focus { border-color: #667eea; }
-    
-    .secret-btn {
-      width: 100%; padding: 12px; border: none; border-radius: 12px;
-      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
-      font-size: 1rem; font-weight: 600; cursor: pointer;
-    }
-    
-    .secret-btn:hover { transform: scale(1.02); }
-    .error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
+    .secret-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 9999; }
+    .secret-dialog { background: white; padding: 30px; border-radius: 20px; text-align: center; max-width: 350px; width: 90%; }
+    .secret-input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1.1rem; text-align: center; margin: 15px 0; outline: none; background: white; color: #333; display: block; }
+    .secret-btn { width: 100%; padding: 12px; border: none; border-radius: 12px; background: #667eea; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .error-msg { color: #ff4444; margin-top: 10px; display: none; }
     .error-msg.show { display: block; }
-    
-    .pin-overlay {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.85); display: none; justify-content: center;
-      align-items: center; z-index: 9998; backdrop-filter: blur(10px);
-    }
-    
-    .pin-dialog {
-      background: white; padding: 30px; border-radius: 20px;
-      text-align: center; max-width: 350px; width: 90%;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    }
-    
-    body.dark-theme .pin-dialog { background: #1e2a44; }
-    body.dark-theme .pin-dialog h2 { color: #e8e8e8; }
-    body.dark-theme .pin-dialog p { color: #aaa; }
-    
-    .pin-dialog h2 { color: #333; margin-bottom: 10px; font-size: 1.3rem; }
-    .pin-dialog .user-icon { font-size: 60px; margin-bottom: 15px; }
-    .pin-dialog p { color: #666; margin-bottom: 20px; font-size: 0.9rem; }
-    
-    .pin-input {
-      width: 100%; padding: 12px; border: 2px solid #e0e0e0;
-      border-radius: 12px; font-size: 1.3rem; text-align: center;
-      margin-bottom: 15px; outline: none; letter-spacing: 6px;
-      background: white; color: #333; display: block;
-    }
-    
-    body.dark-theme .pin-input {
-      background: #16213e; color: white; border-color: #2a3a5c;
-    }
-    
-    .pin-input:focus { border-color: #667eea; }
-    
-    .pin-btn {
-      width: 100%; padding: 12px; border: none; border-radius: 12px;
-      background: linear-gradient(135deg, #667eea, #764ba2); color: white;
-      font-size: 1rem; font-weight: 600; cursor: pointer;
-    }
-    
-    .pin-btn:hover { transform: scale(1.02); }
-    
-    .app {
-      width: 100%; max-width: 450px; height: 95vh;
-      background: white; border-radius: 24px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      display: none; flex-direction: column; overflow: hidden;
-      transition: background 0.3s;
-    }
-    
-    body.dark-theme .app { background: #1a1a2e; }
-    
-    .header {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white; padding: 15px 20px; display: flex;
-      align-items: center; gap: 10px;
-    }
-    
-    .header-logo { font-size: calc(28px * var(--font-scale)); }
-    .header-title { font-size: calc(1.3rem * var(--font-scale)); font-weight: 700; flex: 1; }
-    
-    .header-actions { display: flex; gap: 8px; }
-    
-    .header-btn {
-      background: rgba(255,255,255,0.2); border: none; color: white;
-      width: 35px; height: 35px; border-radius: 50%; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: calc(18px * var(--font-scale)); transition: 0.2s;
-    }
-    
-    .header-btn:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); }
-    
-    .users-avatars {
-      display: flex; justify-content: center; gap: 15px; padding: 15px;
-      background: #f8f9fa; border-bottom: 1px solid #eee; overflow-x: auto;
-      transition: background 0.3s;
-    }
-    
-    body.dark-theme .users-avatars { background: #1a1a2e; border-color: #2a3a5c; }
-    
-    .user-avatar {
-      display: flex; flex-direction: column; align-items: center; gap: 5px;
-      cursor: pointer; transition: 0.2s; min-width: 65px; position: relative;
-      opacity: 0.6;
-    }
-    
-    .user-avatar.active { opacity: 1; transform: scale(1.05); }
-    .user-avatar:hover { transform: translateY(-3px); }
-    
-    .avatar-circle {
-      width: 55px; height: 55px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: calc(26px * var(--font-scale));
-      border: 3px solid transparent; background: #e0e0e0;
-      overflow: hidden; transition: 0.2s; position: relative;
-    }
-    
-    .avatar-circle img {
-      width: 100%; height: 100%; object-fit: cover;
-      position: absolute; top: 0; left: 0;
-    }
-    
-    .user-avatar.active .avatar-circle {
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
-    }
-    
-    .user-avatar.locked .avatar-circle::after {
-      content: '🔒';
-      position: absolute; bottom: -2px; right: -2px;
-      font-size: 14px; background: white; border-radius: 50%;
-      width: 20px; height: 20px; display: flex;
-      align-items: center; justify-content: center;
-      border: 2px solid #667eea; z-index: 2;
-    }
-    
-    .avatar-name {
-      font-size: calc(0.75rem * var(--font-scale));
-      font-weight: 600; color: #666; transition: color 0.3s;
-    }
-    
-    body.dark-theme .avatar-name { color: #c0c0c0; }
-    .user-avatar.active .avatar-name { color: #667eea; }
-    
-    .settings-panel {
-      display: none; background: white; border-bottom: 1px solid #eee;
-      padding: 12px 15px; color: #333; max-height: 60vh; overflow-y: auto;
-      transition: all 0.3s;
-    }
-    
-    body.dark-theme .settings-panel {
-      background: #1a1a2e; border-color: #2a3a5c; color: #e8e8e8;
-    }
-    
-    .settings-panel.show { display: block; }
-    
-    .settings-panel h3 {
-      font-size: calc(1rem * var(--font-scale));
-      margin-bottom: 10px; color: #667eea;
-    }
-    
-    body.dark-theme .settings-panel h3 { color: #a78bfa; }
-    
-    .setting-item {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 0; border-bottom: 1px solid #f0f0f0;
-      transition: border-color 0.3s;
-    }
-    
-    body.dark-theme .setting-item { border-color: #2a3a5c; }
-    .setting-item:last-child { border-bottom: none; }
-    
-    .setting-label {
-      font-size: calc(0.9rem * var(--font-scale));
-      transition: color 0.3s;
-    }
-    
-    body.dark-theme .setting-label { color: #e8e8e8; }
-    
-    .toggle-switch { position: relative; width: 50px; height: 26px; }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    
-    .toggle-slider {
-      position: absolute; cursor: pointer; top: 0; left: 0;
-      right: 0; bottom: 0; background-color: #ccc; transition: .4s;
-      border-radius: 34px;
-    }
-    
-    .toggle-slider:before {
-      position: absolute; content: ""; height: 20px; width: 20px;
-      left: 3px; bottom: 3px; background-color: white; transition: .4s;
-      border-radius: 50%;
-    }
-    
-    input:checked + .toggle-slider { background-color: #667eea; }
-    input:checked + .toggle-slider:before { transform: translateX(24px); }
-    
-    .tabs {
-      display: flex; padding: 8px 15px; gap: 8px;
-      background: white; border-bottom: 1px solid #eee;
-      transition: background 0.3s;
-    }
-    
-    body.dark-theme .tabs { background: #1a1a2e; border-color: #2a3a5c; }
-    
-    .tab {
-      flex: 1; padding: 8px; border: none; background: #f0f0f0;
-      border-radius: 12px; cursor: pointer; font-weight: 600;
-      font-size: calc(0.9rem * var(--font-scale)); transition: 0.2s;
-    }
-    
-    body.dark-theme .tab { background: #1e2a44; color: #e8e8e8; }
+    .pin-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: none; justify-content: center; align-items: center; z-index: 9998; }
+    .pin-dialog { background: white; padding: 30px; border-radius: 20px; text-align: center; max-width: 350px; width: 90%; }
+    .pin-input { width: 100%; padding: 12px; border: 2px solid #e0e0e0; border-radius: 12px; font-size: 1.3rem; text-align: center; margin: 15px 0; outline: none; letter-spacing: 6px; background: white; color: #333; display: block; }
+    .pin-btn { width: 100%; padding: 12px; border: none; border-radius: 12px; background: #667eea; color: white; font-size: 1rem; font-weight: 600; cursor: pointer; }
+    .app { width: 100%; max-width: 450px; height: 95vh; background: white; border-radius: 24px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: none; flex-direction: column; overflow: hidden; }
+    .header { background: #667eea; color: white; padding: 15px; display: flex; align-items: center; gap: 10px; }
+    .header-title { font-weight: 700; flex: 1; }
+    .header-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 18px; }
+    .users-avatars { display: flex; justify-content: center; gap: 15px; padding: 15px; background: #f8f9fa; overflow-x: auto; }
+    .user-avatar { display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; opacity: 0.6; }
+    .user-avatar.active { opacity: 1; }
+    .avatar-circle { width: 55px; height: 55px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; border: 3px solid transparent; background: #e0e0e0; overflow: hidden; }
+    .user-avatar.active .avatar-circle { border-color: #667eea; }
+    .avatar-name { font-size: 0.75rem; font-weight: 600; }
+    .tabs { display: flex; padding: 8px 15px; gap: 8px; background: white; }
+    .tab { flex: 1; padding: 8px; border: none; background: #f0f0f0; border-radius: 12px; cursor: pointer; font-weight: 600; }
     .tab.active { background: #667eea; color: white; }
-    
-    .private-chat-header {
-      display: none; padding: 8px 15px; background: #e8f5e9;
-      border-bottom: 1px solid #c8e6c9; align-items: center;
-      gap: 8px; font-size: calc(0.9rem * var(--font-scale));
-      color: #2e7d32;
-    }
-    
-    body.dark-theme .private-chat-header {
-      background: #1b3a1b; border-color: #2d5a2d; color: #a5d6a7;
-    }
-    
-    .private-selector {
-      display: none; padding: 8px 15px; background: white;
-      border-bottom: 1px solid #eee; transition: background 0.3s;
-    }
-    
-    body.dark-theme .private-selector { background: #1a1a2e; border-color: #2a3a5c; }
-    
-    .private-selector select {
-      width: 100%; padding: 6px; border-radius: 6px;
-      border: 1px solid #ddd; font-size: calc(0.9rem * var(--font-scale));
-      background: white; color: #333;
-    }
-    
-    body.dark-theme .private-selector select {
-      background: #1e2a44; color: #e8e8e8; border-color: #2a3a5c;
-    }
-    
-    .chat-window {
-      flex: 1; overflow-y: auto; padding: 15px;
-      background: #f5f5f5; display: flex; flex-direction: column; gap: 8px;
-      transition: background 0.3s;
-    }
-    
-    body.dark-theme .chat-window { background: #16213e; }
-    
+    .chat-window { flex: 1; overflow-y: auto; padding: 15px; background: #f5f5f5; display: flex; flex-direction: column; gap: 8px; }
     .empty-chat { text-align: center; color: #999; margin-top: 40px; }
-    body.dark-theme .empty-chat { color: #6b7280; }
-    
-    .empty-icon { font-size: calc(50px * var(--font-scale)); margin-bottom: 10px; }
-    
-    .message { max-width: 80%; animation: slideIn 0.3s; }
-    
-    @keyframes slideIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .message.sent { align-self: flex-end; }
-    .message.received { align-self: flex-start; }
-    
-    .bubble {
-      padding: 10px 14px; border-radius: 18px; line-height: 1.4;
-      word-wrap: break-word; font-size: calc(0.95rem * var(--font-scale));
-    }
-    
-    .sent .bubble {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white; border-bottom-right-radius: 4px;
-    }
-    
-    .received .bubble {
-      background: white; border: 1px solid #e0e0e0;
-      border-bottom-left-radius: 4px; color: #333;
-    }
-    
-    body.dark-theme .received .bubble {
-      background: #1e2a44; border-color: #2a3a5c; color: #e8e8e8;
-    }
-    
-    .msg-sender {
-      font-size: calc(0.75rem * var(--font-scale));
-      font-weight: 600; color: #764ba2;
-      margin-bottom: 2px; display: flex; align-items: center; gap: 5px;
-    }
-    
-    body.dark-theme .msg-sender { color: #a78bfa; }
-    
-    .sender-avatar {
-      width: 22px; height: 22px; border-radius: 50%; overflow: hidden;
-      display: inline-flex; align-items: center; justify-content: center;
-      font-size: calc(12px * var(--font-scale)); background: #e0e0e0;
-      flex-shrink: 0;
-    }
-    
-    .sender-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    
-    .msg-time {
-      font-size: calc(0.7rem * var(--font-scale));
-      color: #999; margin-top: 4px; text-align: right;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    
-    .sent .msg-time { color: rgba(255,255,255,0.8); }
-    
-    .msg-menu-btn {
-      cursor: pointer; opacity: 0.5; padding: 2px 6px; border-radius: 4px;
-    }
-    
-    .msg-menu-btn:hover { opacity: 1; background: rgba(0,0,0,0.1); }
-    
-    .media-img {
-      max-width: 200px; max-height: 200px; border-radius: 10px;
-      cursor: pointer; margin: 5px 0;
-    }
-    
-    .media-audio { margin: 5px 0; max-width: 200px; }
-    
-    .emoji-picker-wrapper {
-      display: none; margin-bottom: 10px; border: 1px solid #ddd;
-      border-radius: 10px; background: white; padding: 10px;
-      transition: background 0.3s;
-    }
-    
-    body.dark-theme .emoji-picker-wrapper {
-      background: #1e2a44; border-color: #2a3a5c;
-    }
-    
-    .emoji-picker-wrapper.show { display: block; }
-    
-    .emoji-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-      gap: 2px;
-      max-height: 250px;
-      overflow-y: auto;
-    }
-    
-    .emoji-item {
-      font-size: calc(1.3rem * var(--font-scale));
-      padding: 4px; cursor: pointer; text-align: center;
-      border-radius: 8px; border: none; background: none; transition: 0.2s;
-    }
-    
-    .emoji-item:hover { background: #f0f0f0; transform: scale(1.3); }
-    body.dark-theme .emoji-item:hover { background: #2a3a5c; }
-    
-    .input-panel {
-      padding: 12px 15px; background: white;
-      border-top: 1px solid #eee; transition: background 0.3s;
-    }
-    
-    body.dark-theme .input-panel { background: #1a1a2e; border-color: #2a3a5c; }
-    
-    .input-row { display: flex; gap: 8px; align-items: flex-end; }
-    
-    .icon-btn {
-      width: 38px; height: 38px; border: none; background: #f0f0f0;
-      border-radius: 50%; font-size: calc(1.2rem * var(--font-scale));
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: center; transition: 0.2s; flex-shrink: 0;
-    }
-    
-    body.dark-theme .icon-btn { background: #1e2a44; color: #e8e8e8; }
-    .icon-btn:hover { background: #e0e0e0; }
-    body.dark-theme .icon-btn:hover { background: #2a3a5c; }
-    
-    .icon-btn.recording { background: #ff4444; color: white; animation: pulse 1.5s infinite; }
-    
-    @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255,68,68,0.4); }
-      50% { box-shadow: 0 0 0 10px rgba(255,68,68,0); }
-    }
-    
-    .msg-input {
-      flex: 1; border: 1px solid #ddd; border-radius: 20px;
-      padding: 10px 15px; font-size: calc(0.95rem * var(--font-scale));
-      resize: none; max-height: 100px; font-family: inherit;
-      outline: none; color: #333; background: white; transition: all 0.3s;
-    }
-    
-    body.dark-theme .msg-input {
-      background: #1e2a44; color: #e8e8e8; border-color: #2a3a5c;
-    }
-    
-    .msg-input:focus { border-color: #667eea; }
-    
-    .send-btn {
-      width: 38px; height: 38px; border: none; background: #667eea;
-      color: white; border-radius: 50%; font-size: calc(1.2rem * var(--font-scale));
-      cursor: pointer; flex-shrink: 0; transition: 0.2s;
-    }
-    
-    .send-btn:hover { background: #764ba2; }
-    
-    .context-menu {
-      position: fixed; background: white; border-radius: 10px;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.2); z-index: 1000;
-      overflow: hidden; animation: fadeIn 0.2s;
-    }
-    
-    body.dark-theme .context-menu {
-      background: #1e2a44; box-shadow: 0 5px 25px rgba(0,0,0,0.5);
-    }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    
-    .context-menu button {
-      display: block; width: 100%; padding: 10px 15px; border: none;
-      background: none; text-align: left; cursor: pointer;
-      font-size: calc(0.9rem * var(--font-scale)); transition: background 0.2s;
-      color: #333;
-    }
-    
-    body.dark-theme .context-menu button { color: #e8e8e8; }
-    .context-menu button:hover { background: #f5f5f5; }
-    body.dark-theme .context-menu button:hover { background: #2a3a5c; }
-    .danger-btn { color: #ff4444; }
-    
-    .font-size-controls { display: flex; gap: 8px; align-items: center; }
-    
-    .font-size-btn {
-      width: 32px; height: 32px; border: 2px solid #667eea;
-      background: white; color: #667eea; border-radius: 50%;
-      cursor: pointer; display: flex; align-items: center;
-      justify-content: center; font-weight: bold;
-      font-size: calc(0.9rem * var(--font-scale)); transition: 0.2s;
-    }
-    
-    body.dark-theme .font-size-btn {
-      background: #1e2a44; color: #a78bfa; border-color: #a78bfa;
-    }
-    
-    .font-size-btn:hover { background: #667eea; color: white; }
-    body.dark-theme .font-size-btn:hover { background: #a78bfa; }
-    
-    .font-size-value {
-      font-weight: 600; min-width: 45px; text-align: center;
-      font-size: calc(0.9rem * var(--font-scale));
-    }
-    
-    body.dark-theme .font-size-value { color: #e8e8e8; }
-    
-    .action-btn {
-      padding: 6px 14px; border: none; border-radius: 8px; cursor: pointer;
-      font-size: calc(0.85rem * var(--font-scale)); font-weight: 500;
-      transition: 0.2s;
-    }
-    
+    .empty-icon { font-size: 50px; }
+    .message { max-width: 80%; padding: 10px 14px; border-radius: 15px; }
+    .message.sent { background: #667eea; color: white; align-self: flex-end; }
+    .message.received { background: white; align-self: flex-start; }
+    .input-panel { padding: 10px 15px; background: white; display: flex; gap: 8px; }
+    .msg-input { flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 10px 15px; font-size: 0.95rem; resize: none; outline: none; }
+    .send-btn { padding: 10px 20px; background: #667eea; color: white; border: none; border-radius: 20px; cursor: pointer; }
+    .settings-panel { display: none; background: white; padding: 15px; max-height: 60vh; overflow-y: auto; }
+    .settings-panel.show { display: block; }
+    .setting-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+    .action-btn { padding: 6px 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
     .action-btn.primary { background: #667eea; color: white; }
     .action-btn.danger { background: #ff4444; color: white; }
     .action-btn.warning { background: #ff9800; color: white; }
-    .action-btn:hover { transform: scale(1.05); opacity: 0.9; }
-    
-    @media (max-width: 480px) {
-      .app { height: 100vh; border-radius: 0; }
-      body { padding: 0; }
-      .emoji-grid { grid-template-columns: repeat(6, 1fr); }
-    }
+    .emoji-picker-wrapper { display: none; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 10px; background: white; padding: 10px; }
+    .emoji-picker-wrapper.show { display: block; }
+    .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 5px; max-height: 200px; overflow-y: auto; }
+    .emoji-item { font-size: 1.3rem; padding: 5px; cursor: pointer; text-align: center; border: none; background: none; }
+    .icon-btn { width: 38px; height: 38px; border: none; background: #f0f0f0; border-radius: 50%; font-size: 1.2rem; cursor: pointer; }
+    .private-selector { display: none; padding: 8px 15px; background: white; }
+    .private-selector select { width: 100%; padding: 6px; border-radius: 6px; border: 1px solid #ddd; }
+    .private-chat-header { display: none; padding: 8px 15px; background: #e8f5e9; }
+    @media (max-width: 480px) { .app { height: 100vh; border-radius: 0; } body { padding: 0; } }
   </style>
 </head>
 <body>
-  <!-- Секретный код -->
   <div class="secret-overlay" id="secretOverlay">
     <div class="secret-dialog">
-      <div class="icon">👨‍👩‍👧‍👦</div>
+      <div style="font-size:50px;">👨‍👩‍👧‍👦</div>
       <h2>Семейный чат</h2>
       <p>Введите секретный код семьи</p>
-      <input type="password" class="secret-input" id="secretInput" 
-             placeholder="••••" maxlength="10" autocomplete="off">
+      <input type="password" class="secret-input" id="secretInput" placeholder="••••" maxlength="10">
       <button class="secret-btn" id="secretBtn">Войти</button>
       <div class="error-msg" id="errorMsg">Неверный код</div>
-      <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">
-        По умолчанию: family2024
-      </p>
+      <p style="margin-top:10px;font-size:0.8rem;opacity:0.7;">По умолчанию: family2024</p>
     </div>
   </div>
 
-  <!-- ПИН-код -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-dialog">
-      <div class="user-icon" id="pinUserIcon">👤</div>
+      <div style="font-size:60px;" id="pinUserIcon">👤</div>
       <h2 id="pinTitle">Введите ПИН-код</h2>
-      <p id="pinDescription">Для входа как <strong id="pinUserName"></strong></p>
-      <input type="password" class="pin-input" id="pinInput" 
-             placeholder="••••" maxlength="4" autocomplete="off" inputmode="numeric" pattern="[0-9]*">
+      <p>Для входа как <strong id="pinUserName"></strong></p>
+      <input type="password" class="pin-input" id="pinInput" placeholder="••••" maxlength="4" inputmode="numeric">
       <button class="pin-btn" id="pinBtn">Подтвердить</button>
       <div class="error-msg" id="pinError">Неверный ПИН-код</div>
-      <p style="margin-top: 15px; font-size: 0.8rem; opacity: 0.7;">
-        <span id="pinHint"></span>
-      </p>
+      <p style="margin-top:10px;font-size:0.8rem;opacity:0.7;"><span id="pinHint"></span></p>
     </div>
   </div>
 
-  <!-- Приложение -->
   <div class="app" id="mainApp">
     <div class="header">
-      <span class="header-logo">👨‍👩‍👧‍👦</span>
+      <span>👨‍👩‍👧‍👦</span>
       <span class="header-title">FChat</span>
-      <div class="header-actions">
-        <button class="header-btn" id="notifBtn">🔔</button>
-        <button class="header-btn" id="soundBtn">🔊</button>
-        <button class="header-btn" id="themeBtn">🌙</button>
-        <button class="header-btn" id="settingsBtn">⚙️</button>
-      </div>
+      <button class="header-btn" id="themeBtn">🌙</button>
+      <button class="header-btn" id="settingsBtn">⚙️</button>
     </div>
 
     <div class="settings-panel" id="settingsPanel">
       <h3>⚙️ Настройки</h3>
-      <div class="setting-item">
-        <span class="setting-label">🖼️ Аватар</span>
-        <div style="display:flex;gap:8px;">
-          <button class="action-btn primary" id="avatarBtn">Загрузить</button>
-          <button class="action-btn warning" id="avatarResetBtn">По умолчанию</button>
-        </div>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">🔑 Сменить ПИН-код</span>
-        <button class="action-btn primary" id="changePinBtn">Изменить</button>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">🔔 Уведомления</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="notifToggle" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">🔊 Звук</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="soundToggle" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">📝 Шрифт</span>
-        <div class="font-size-controls">
-          <button class="font-size-btn" id="fontDown">A−</button>
-          <span class="font-size-value" id="fontValue">100%</span>
-          <button class="font-size-btn" id="fontUp">A+</button>
-        </div>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">🗑️ Автоудаление</span>
-        <select id="autoDelete">
-          <option value="0">Выключено</option>
-          <option value="1">1 час</option>
-          <option value="6">6 часов</option>
-          <option value="24" selected>24 часа</option>
-          <option value="168">7 дней</option>
-        </select>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">🔑 Код семьи</span>
-        <button class="action-btn primary" id="changeCodeBtn">Изменить</button>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">🔄 Кэш</span>
-        <button class="action-btn warning" id="cacheBtn">Сбросить</button>
-      </div>
-      <div class="setting-item">
-        <span class="setting-label">🗑️ Очистить чат</span>
-        <button class="action-btn danger" id="clearBtn">Удалить всё</button>
-      </div>
+      <div class="setting-item"><span>🔑 Код семьи</span><button class="action-btn primary" id="changeCodeBtn">Изменить</button></div>
+      <div class="setting-item"><span>🗑️ Очистить чат</span><button class="action-btn danger" id="clearBtn">Удалить всё</button></div>
     </div>
 
     <div class="users-avatars" id="usersAvatars"></div>
@@ -633,44 +115,30 @@
 
     <div class="private-chat-header" id="privateChatHeader">
       <span>🔒 Личный чат с</span>
-      <span class="partner-emoji"></span>
       <strong class="partner-name"></strong>
     </div>
 
     <div class="private-selector" id="privateSel">
-      <select id="privateRecipient">
-        <option value="">Выберите...</option>
-      </select>
+      <select id="privateRecipient"><option value="">Выберите...</option></select>
     </div>
 
     <div class="chat-window" id="chatWindow">
-      <div class="empty-chat">
-        <div class="empty-icon">💬</div>
-        <p>Нет сообщений</p>
-      </div>
+      <div class="empty-chat"><div class="empty-icon">💬</div><p>Нет сообщений</p></div>
     </div>
 
     <div class="input-panel">
-      <div class="emoji-picker-wrapper" id="emojiPicker">
-        <div class="emoji-grid" id="emojiGrid"></div>
-      </div>
-      <div class="input-row">
-        <button class="icon-btn" id="emojiBtn">😊</button>
-        <button class="icon-btn" id="micBtn">🎤</button>
-        <button class="icon-btn" id="attachBtn">📎</button>
-        <textarea class="msg-input" id="msgInput" rows="1" placeholder="Сообщение..."></textarea>
-        <button class="send-btn" id="sendBtn">➤</button>
-      </div>
+      <div class="emoji-picker-wrapper" id="emojiPicker"><div class="emoji-grid" id="emojiGrid"></div></div>
+      <button class="icon-btn" id="emojiBtn">😊</button>
+      <textarea class="msg-input" id="msgInput" rows="1" placeholder="Сообщение..."></textarea>
+      <button class="send-btn" id="sendBtn">➤</button>
     </div>
   </div>
 
   <input type="file" id="fileInput" accept="image/*" style="display:none">
-  <input type="file" id="avatarInput" accept="image/*" style="display:none">
 
   <script>
-    // Весь JavaScript из вчерашней рабочей версии
     document.addEventListener('DOMContentLoaded', function() {
-      
+      // Firebase
       const firebaseConfig = {
         apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
         authDomain: "fchat-d6879.firebaseapp.com",
@@ -684,18 +152,285 @@
       firebase.initializeApp(firebaseConfig);
       const db = firebase.database();
       
-      // ... весь остальной JavaScript код из рабочей версии ...
+      const FAMILY = {
+        dad: { id: 'dad', name: 'Папа', emoji: '👨' },
+        mom: { id: 'mom', name: 'Мама', emoji: '👩' },
+        sergey: { id: 'sergey', name: 'Сергей', emoji: '👦' },
+        sveta: { id: 'sveta', name: 'Света', emoji: '👧' },
+        katya: { id: 'katya', name: 'Катя', emoji: '👧' }
+      };
       
-      console.log('✅ FChat запущен');
+      const EMOJI_LIST = ['😀','😂','🤣','😊','😍','🥰','😘','😎','🤩','😇','🤗','🤔','😴','😢','😡','👍','❤️','💔','🎉','🔥','🌟','👨‍👩‍👧‍👦','🏠','🎂','🍕','☕'];
+      
+      let currentUser = null;
+      let activeTab = 'general';
+      let privateWith = null;
+      let secretCode = localStorage.getItem('fc_code') || 'family2024';
+      let pendingPinUser = null;
+      
+      if (!localStorage.getItem('fc_code')) localStorage.setItem('fc_code', 'family2024');
+      
+      function getPin(uid) { return localStorage.getItem('fc_pin_' + uid); }
+      function setPin(uid, pin) { localStorage.setItem('fc_pin_' + uid, pin); }
+      function hasPin(uid) { return !!getPin(uid); }
+      function verifyPin(uid, pin) { return getPin(uid) === pin; }
+      
+      function showPinDialog(userId) {
+        pendingPinUser = userId;
+        const user = FAMILY[userId];
+        document.getElementById('pinUserIcon').textContent = user.emoji;
+        document.getElementById('pinUserName').textContent = user.name;
+        document.getElementById('pinTitle').textContent = hasPin(userId) ? 'Введите ПИН-код' : 'Создайте ПИН-код';
+        document.getElementById('pinHint').textContent = hasPin(userId) ? 'Введите ваш 4-значный ПИН' : 'Придумайте 4 цифры';
+        document.getElementById('pinInput').value = '';
+        document.getElementById('pinError').classList.remove('show');
+        document.getElementById('pinOverlay').style.display = 'flex';
+        document.getElementById('pinInput').focus();
+      }
+      
+      function hidePinDialog() {
+        document.getElementById('pinOverlay').style.display = 'none';
+        pendingPinUser = null;
+      }
+      
+      function processPin() {
+        const pin = document.getElementById('pinInput').value.trim();
+        if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+          document.getElementById('pinError').textContent = 'ПИН должен состоять из 4 цифр';
+          document.getElementById('pinError').classList.add('show');
+          return;
+        }
+        if (hasPin(pendingPinUser)) {
+          if (verifyPin(pendingPinUser, pin)) { loginAsUser(pendingPinUser); hidePinDialog(); }
+          else { document.getElementById('pinError').textContent = 'Неверный ПИН-код'; document.getElementById('pinError').classList.add('show'); }
+        } else {
+          setPin(pendingPinUser, pin);
+          loginAsUser(pendingPinUser);
+          hidePinDialog();
+          alert('✅ ПИН-код создан!');
+        }
+      }
+      
+      function loginAsUser(userId) {
+        currentUser = userId;
+        localStorage.setItem('fc_user', userId);
+        renderUsers();
+        updatePrivate();
+        loadMessages();
+      }
+      
+      function renderUsers() {
+        const container = document.getElementById('usersAvatars');
+        container.innerHTML = Object.values(FAMILY).map(m => 
+          `<div class="user-avatar ${m.id === currentUser ? 'active' : ''}" data-user="${m.id}">
+            <div class="avatar-circle">${m.emoji}</div>
+            <span class="avatar-name">${m.name}</span>
+          </div>`
+        ).join('');
+        
+        container.querySelectorAll('.user-avatar').forEach(av => {
+          av.addEventListener('click', function() {
+            const uid = this.dataset.user;
+            if (uid === currentUser) return;
+            if (currentUser && activeTab === 'general' && hasPin(uid)) {
+              if (confirm('Перейти в личный чат с ' + FAMILY[uid].name + '?')) {
+                switchToPrivate(uid);
+                return;
+              }
+            }
+            showPinDialog(uid);
+          });
+        });
+      }
+      
+      function getChatPath() {
+        if (!currentUser) return 'general';
+        if (activeTab === 'private' && privateWith) {
+          const u = [currentUser, privateWith].sort();
+          return 'private/' + u[0] + '_' + u[1];
+        }
+        return 'general';
+      }
+      
+      function loadMessages() {
+        if (!currentUser) return;
+        const ref = db.ref(getChatPath());
+        const chat = document.getElementById('chatWindow');
+        
+        ref.off('child_added');
+        ref.once('value', snap => {
+          const msgs = snap.val();
+          chat.innerHTML = '';
+          if (!msgs) { chat.innerHTML = '<div class="empty-chat"><div class="empty-icon">💬</div><p>Нет сообщений</p></div>'; return; }
+          Object.entries(msgs)
+            .map(e => Object.assign({id: e[0]}, e[1]))
+            .sort((a,b) => (a.timestamp||0) - (b.timestamp||0))
+            .forEach(m => showMessage(m));
+        });
+        
+        ref.on('child_added', snap => {
+          showMessage(Object.assign({id: snap.key}, snap.val()));
+        });
+      }
+      
+      function showMessage(msg) {
+        const chat = document.getElementById('chatWindow');
+        const empty = chat.querySelector('.empty-chat');
+        if (empty) empty.remove();
+        
+        const div = document.createElement('div');
+        div.className = 'message ' + (msg.from === currentUser ? 'sent' : 'received');
+        const sender = FAMILY[msg.from] || {name: 'Кто-то', emoji: '👤'};
+        div.innerHTML = `<strong>${sender.emoji} ${sender.name}</strong><br>${msg.text || ''}`;
+        chat.appendChild(div);
+        chat.scrollTop = chat.scrollHeight;
+      }
+      
+      function sendText(text) {
+        if (!currentUser) { alert('Выберите пользователя'); return; }
+        if (!text.trim()) return;
+        db.ref(getChatPath()).push({
+          from: currentUser,
+          text: text.trim(),
+          timestamp: Date.now()
+        });
+        document.getElementById('msgInput').value = '';
+      }
+      
+      function switchToPrivate(uid) {
+        activeTab = 'private';
+        privateWith = uid;
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.tab[data-tab="private"]').classList.add('active');
+        document.getElementById('privateSel').style.display = 'block';
+        updatePrivate();
+        loadMessages();
+        document.getElementById('privateChatHeader').style.display = 'flex';
+        document.querySelector('.partner-name').textContent = FAMILY[uid].name;
+      }
+      
+      function updatePrivate() {
+        const sel = document.getElementById('privateRecipient');
+        const others = Object.values(FAMILY).filter(m => m.id !== currentUser);
+        sel.innerHTML = '<option value="">Выберите...</option>' +
+          others.map(m => `<option value="${m.id}" ${m.id===privateWith?'selected':''}>${m.emoji} ${m.name}</option>`).join('');
+      }
+      
+      // Секретный код
+      document.getElementById('secretBtn').addEventListener('click', function() {
+        if (document.getElementById('secretInput').value === secretCode) {
+          document.getElementById('secretOverlay').style.display = 'none';
+          document.getElementById('mainApp').style.display = 'flex';
+          initApp();
+        } else {
+          document.getElementById('errorMsg').classList.add('show');
+          document.getElementById('secretInput').value = '';
+        }
+      });
+      
+      document.getElementById('secretInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') document.getElementById('secretBtn').click();
+      });
+      
+      document.getElementById('secretInput').focus();
+      
+      // ПИН
+      document.getElementById('pinBtn').addEventListener('click', processPin);
+      document.getElementById('pinInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') processPin();
+      });
+      document.getElementById('pinOverlay').addEventListener('click', function(e) {
+        if (e.target === this) hidePinDialog();
+      });
+      
+      // Отправка
+      document.getElementById('sendBtn').addEventListener('click', function() {
+        sendText(document.getElementById('msgInput').value);
+      });
+      
+      document.getElementById('msgInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(this.value); }
+      });
+      
+      // Вкладки
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          this.classList.add('active');
+          activeTab = this.dataset.tab;
+          document.getElementById('privateSel').style.display = activeTab === 'private' ? 'block' : 'none';
+          if (activeTab !== 'private') privateWith = null;
+          updatePrivate();
+          loadMessages();
+          document.getElementById('privateChatHeader').style.display = 'none';
+        });
+      });
+      
+      document.getElementById('privateRecipient').addEventListener('change', function() {
+        privateWith = this.value;
+        if (privateWith) {
+          loadMessages();
+          document.getElementById('privateChatHeader').style.display = 'flex';
+          document.querySelector('.partner-name').textContent = FAMILY[privateWith].name;
+        }
+      });
+      
+      // Настройки
+      document.getElementById('settingsBtn').addEventListener('click', function() {
+        document.getElementById('settingsPanel').classList.toggle('show');
+      });
+      
+      document.getElementById('themeBtn').addEventListener('click', function() {
+        document.body.classList.toggle('dark-theme');
+        this.textContent = document.body.classList.contains('dark-theme') ? '☀️' : '🌙';
+      });
+      
+      document.getElementById('changeCodeBtn').addEventListener('click', function() {
+        const old = prompt('Текущий код:');
+        if (old !== secretCode) { alert('Неверно'); return; }
+        const newCode = prompt('Новый код:');
+        if (newCode && newCode.length >= 4) {
+          secretCode = newCode;
+          localStorage.setItem('fc_code', secretCode);
+          alert('✅ Код изменён!');
+        }
+      });
+      
+      document.getElementById('clearBtn').addEventListener('click', function() {
+        if (!currentUser) return;
+        if (confirm('Удалить все сообщения?')) db.ref(getChatPath()).remove();
+      });
+      
+      // Эмодзи
+      const emojiGrid = document.getElementById('emojiGrid');
+      emojiGrid.innerHTML = EMOJI_LIST.map(e => `<button class="emoji-item">${e}</button>`).join('');
+      emojiGrid.querySelectorAll('.emoji-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.getElementById('msgInput').value += this.textContent;
+          document.getElementById('msgInput').focus();
+        });
+      });
+      
+      document.getElementById('emojiBtn').addEventListener('click', function() {
+        document.getElementById('emojiPicker').classList.toggle('show');
+      });
+      
+      function initApp() {
+        renderUsers();
+        const savedUser = localStorage.getItem('fc_user');
+        if (savedUser && FAMILY[savedUser]) {
+          showPinDialog(savedUser);
+        } else {
+          document.getElementById('chatWindow').innerHTML = '<div class="empty-chat"><div class="empty-icon">🔒</div><p>Выберите пользователя</p></div>';
+        }
+        console.log('✅ FChat запущен');
+      }
     });
   </script>
   
-  <!-- Регистрация Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-        .then(reg => console.log('✅ SW registered'))
-        .catch(err => console.log('SW error:', err));
+      navigator.serviceWorker.register('sw.js').catch(() => {});
     }
   </script>
 </body>
