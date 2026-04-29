@@ -51,24 +51,44 @@
       function verifyPin(userId, pin) { return getPin(userId) === pin; }
       
       function showPinDialog(userId) {
-        pendingPinUser = userId;
-        const user = FAMILY[userId];
-        document.getElementById('pinUserIcon').textContent = user.emoji;
-        document.getElementById('pinUserName').textContent = user.name;
-        if (hasPin(userId)) {
-          document.getElementById('pinTitle').textContent = 'Введите ПИН-код';
-          document.getElementById('pinDescription').innerHTML = 'Для входа как <strong>' + user.name + '</strong>';
-          document.getElementById('pinHint').textContent = 'Введите ваш 4-значный ПИН';
-        } else {
-          document.getElementById('pinTitle').textContent = 'Создайте ПИН-код';
-          document.getElementById('pinDescription').innerHTML = 'Придумайте ПИН для <strong>' + user.name + '</strong>';
-          document.getElementById('pinHint').textContent = 'Придумайте 4 цифры и запомните их';
-        }
-        document.getElementById('pinInput').value = '';
-        document.getElementById('pinError').classList.remove('show');
-        document.getElementById('pinOverlay').style.display = 'flex';
-        setTimeout(() => document.getElementById('pinInput').focus(), 100);
-      }
+      if (!userId || !FAMILY[userId]) return;
+      state.pendingPinUser = userId;
+      const user = FAMILY[userId];
+
+      // Безопасная установка текста (не сломает код, если ID не найден)
+      const setT = (id, txt) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = txt;
+    };
+      const setH = (id, html) => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = html;
+    };
+
+      setT('pinUserIcon', user.emoji);
+      setT('pinUserName', user.name); // Та самая 57-я строка
+
+      if (hasPin(userId)) {
+        setT('pinTitle', 'Введите ПИН-код');
+        setH('pinDescription', `Для входа как <strong>${user.name}</strong>`);
+        setT('pinHint', 'Введите ваш 4-значный ПИН');
+    } else {
+        setT('pinTitle', 'Создайте ПИН-код');
+        setH('pinDescription', `Придумайте ПИН для <strong>${user.name}</strong>`);
+        setT('pinHint', 'Придумайте 4 цифры и запомните их');
+    }
+
+      const pinInput = document.getElementById('pinInput');
+      if (pinInput) pinInput.value = '';
+    
+      const errorEl = document.getElementById('pinError');
+      if (errorEl) errorEl.classList.remove('show');
+
+      const overlay = document.getElementById('pinOverlay');
+      if (overlay) overlay.style.display = 'flex';
+
+      setTimeout(() => { if (pinInput) pinInput.focus(); }, 100);
+}
       
       function hidePinDialog() {
         document.getElementById('pinOverlay').style.display = 'none';
