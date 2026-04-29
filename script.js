@@ -813,6 +813,5 @@
       }
     }
     console.log('✅ FChat запущен');
-  }
     console.log('📱 FChat готов к работе');
 })();
