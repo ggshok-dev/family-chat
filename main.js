@@ -544,9 +544,10 @@
         if (partnerName) partnerName.textContent = partner.name;
       }
     } else {
+      // ВАЖНО: Скрываем заголовок для общего чата
       header.style.display = 'none';
     }
-  }
+}
   
   // ============ УВЕДОМЛЕНИЯ (УЛУЧШЕННЫЕ) ============
   function notify(title, body) {
@@ -756,6 +757,8 @@
       }
       document.getElementById('privateSel').style.display = 'block';
     } else {
+      // Сбрасываем собеседника для общего чата
+      privateWith = null;
       document.getElementById('privateSel').style.display = 'none';
     }
     
