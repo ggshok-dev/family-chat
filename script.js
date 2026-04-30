@@ -805,157 +805,118 @@ if (msg.type === 'image') {
     if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
   }
   
-  // ============ ПРОСМОТРЩИК ФОТО С ПРОЛИСТЫВАНИЕМ ============
+  // ============ ПРОСМОТРЩИК ФОТО (РАБОТАЕТ ВЕЗДЕ) ============
 window.openImageViewer = function(src) {
   // Собираем все фото из чата
   const allImages = [];
   const chatMessages = document.querySelectorAll('.media-img');
-  chatMessages.forEach(img => {
+  chatMessages.forEach(function(img) {
     if (img.src) allImages.push(img.src);
   });
   
   const currentIndex = allImages.indexOf(src);
   
+  // Удаляем старый просмотрщик
   const old = document.querySelector('.image-viewer');
   if (old) old.remove();
   
+  // Создаём контейнер
   const viewer = document.createElement('div');
   viewer.className = 'image-viewer';
-  Object.assign(viewer.style, {
-    position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-    background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', zIndex: '10000', cursor: 'zoom-out',
-    flexDirection: 'column'
-  });
+  viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:10000;flex-direction:column;';
   
+  // Создаём изображение
   const img = document.createElement('img');
   img.src = src;
-  Object.assign(img.style, {
-    maxWidth: '90%', maxHeight: '70%', objectFit: 'contain',
-    transition: 'transform 0.3s', cursor: 'grab', borderRadius: '8px'
-  });
+  img.style.cssText = 'max-width:90%;max-height:70%;object-fit:contain;transition:transform 0.3s;border-radius:8px;';
   
+  // Переменные для зума
   let scale = 1;
-  let translateX = 0, translateY = 0;
-  let isDragging = false, startX, startY, startTranslateX, startTranslateY;
+  let translateX = 0;
+  let translateY = 0;
   
-  // Функция обновления трансформации
   function updateTransform() {
-    img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
-    img.style.cursor = scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in';
+    img.style.transform = 'scale(' + scale + ') translate(' + translateX + 'px, ' + translateY + 'px)';
   }
   
-  // Зум двумя пальцами
+  // ========== ПОДДЕРЖКА ЖЕСТОВ ДЛЯ ТЕЛЕФОНА ==========
   let lastDistance = 0;
+  let isPinching = false;
+  
   img.addEventListener('touchstart', function(e) {
     if (e.touches.length === 2) {
+      // Начинаем пинч-зум
+      isPinching = true;
       lastDistance = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
-    } else if (e.touches.length === 1 && scale > 1) {
-      isDragging = true;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      startTranslateX = translateX;
-      startTranslateY = translateY;
     }
   });
   
   img.addEventListener('touchmove', function(e) {
     e.preventDefault();
-    if (e.touches.length === 2) {
+    if (e.touches.length === 2 && isPinching) {
+      // Пинч-зум
       const newDistance = Math.hypot(
         e.touches[0].clientX - e.touches[1].clientX,
         e.touches[0].clientY - e.touches[1].clientY
       );
-      scale *= newDistance / lastDistance;
+      scale = scale * (newDistance / lastDistance);
       scale = Math.min(Math.max(0.5, scale), 5);
       lastDistance = newDistance;
       updateTransform();
-    } else if (isDragging && e.touches.length === 1) {
-      translateX = startTranslateX + (e.touches[0].clientX - startX);
-      translateY = startTranslateY + (e.touches[0].clientY - startY);
+    }
+  });
+  
+  img.addEventListener('touchend', function(e) {
+    if (e.touches.length < 2) {
+      isPinching = false;
+    }
+  });
+  
+  // Двойной тап для зума (телефон)
+  let lastTap = 0;
+  img.addEventListener('click', function(e) {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      // Двойной тап
+      e.preventDefault();
+      if (scale > 1) {
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
+      } else {
+        scale = 2.5;
+      }
       updateTransform();
     }
+    lastTap = now;
   });
   
-  img.addEventListener('touchend', function() {
-    isDragging = false;
-    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-  });
-  
-  // Двойной клик для зума
-  img.addEventListener('dblclick', function(e) {
-    e.stopPropagation();
-    if (scale > 1) {
-      scale = 1;
-      translateX = 0;
-      translateY = 0;
-    } else {
-      scale = 2.5;
-    }
-    updateTransform();
-  });
-  
-  // Зум колёсиком
+  // Зум колёсиком (компьютер)
   viewer.addEventListener('wheel', function(e) {
     e.preventDefault();
     scale += e.deltaY * -0.01;
     scale = Math.min(Math.max(0.5, scale), 5);
     updateTransform();
-  });
-  
-  // Перетаскивание мышью
-  img.addEventListener('mousedown', function(e) {
-    if (scale > 1) {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startTranslateX = translateX;
-      startTranslateY = translateY;
-      img.style.cursor = 'grabbing';
-    }
-  });
-  
-  window.addEventListener('mousemove', function(e) {
-    if (isDragging) {
-      translateX = startTranslateX + (e.clientX - startX);
-      translateY = startTranslateY + (e.clientY - startY);
-      updateTransform();
-    }
-  });
-  
-  window.addEventListener('mouseup', function() {
-    isDragging = false;
-    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-  });
+  }, { passive: false });
   
   viewer.appendChild(img);
   
-  // Счётчик фото
+  // ========== СЧЁТЧИК ФОТО ==========
   if (allImages.length > 1) {
     const counter = document.createElement('div');
-    counter.textContent = `${currentIndex + 1} / ${allImages.length}`;
-    Object.assign(counter.style, {
-      position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
-      color: 'white', fontSize: '1rem', background: 'rgba(0,0,0,0.5)',
-      padding: '5px 15px', borderRadius: '20px', zIndex: '10001'
-    });
+    counter.textContent = (currentIndex + 1) + ' / ' + allImages.length;
+    counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;font-size:1rem;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
     viewer.appendChild(counter);
     
-    // Кнопка "Назад"
+    // Кнопка НАЗАД
     if (currentIndex > 0) {
       const prevBtn = document.createElement('button');
       prevBtn.innerHTML = '‹';
-      Object.assign(prevBtn.style, {
-        position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)',
-        background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none',
-        borderRadius: '50%', width: '50px', height: '50px', fontSize: '2rem',
-        cursor: 'pointer', zIndex: '10001', display: 'flex', alignItems: 'center',
-        justifyContent: 'center'
-      });
-      prevBtn.onclick = (e) => {
+      prevBtn.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:45px;height:45px;font-size:2rem;cursor:pointer;z-index:10001;';
+      prevBtn.onclick = function(e) {
         e.stopPropagation();
         viewer.remove();
         window.openImageViewer(allImages[currentIndex - 1]);
@@ -963,18 +924,12 @@ window.openImageViewer = function(src) {
       viewer.appendChild(prevBtn);
     }
     
-    // Кнопка "Вперёд"
+    // Кнопка ВПЕРЁД
     if (currentIndex < allImages.length - 1) {
       const nextBtn = document.createElement('button');
       nextBtn.innerHTML = '›';
-      Object.assign(nextBtn.style, {
-        position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)',
-        background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none',
-        borderRadius: '50%', width: '50px', height: '50px', fontSize: '2rem',
-        cursor: 'pointer', zIndex: '10001', display: 'flex', alignItems: 'center',
-        justifyContent: 'center'
-      });
-      nextBtn.onclick = (e) => {
+      nextBtn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:45px;height:45px;font-size:2rem;cursor:pointer;z-index:10001;';
+      nextBtn.onclick = function(e) {
         e.stopPropagation();
         viewer.remove();
         window.openImageViewer(allImages[currentIndex + 1]);
@@ -983,23 +938,15 @@ window.openImageViewer = function(src) {
     }
   }
   
-  // Панель управления
+  // ========== КНОПКИ УПРАВЛЕНИЯ ==========
   const controls = document.createElement('div');
-  controls.style.cssText = `
-    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
-    display: flex; gap: 15px; z-index: 10001;
-  `;
+  controls.style.cssText = 'position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10001;';
   
   // Кнопка Скачать
   const downloadBtn = document.createElement('button');
   downloadBtn.textContent = '💾';
-  downloadBtn.title = 'Скачать';
-  Object.assign(downloadBtn.style, {
-    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
-    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
-    width: '45px', height: '45px'
-  });
-  downloadBtn.onclick = (e) => {
+  downloadBtn.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
+  downloadBtn.onclick = function(e) {
     e.stopPropagation();
     const a = document.createElement('a');
     a.href = src;
@@ -1009,44 +956,32 @@ window.openImageViewer = function(src) {
   controls.appendChild(downloadBtn);
   
   // Кнопка Зум +
-  const zoomInBtn = document.createElement('button');
-  zoomInBtn.textContent = '🔍+';
-  Object.assign(zoomInBtn.style, {
-    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
-    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
-    width: '45px', height: '45px'
-  });
-  zoomInBtn.onclick = (e) => {
+  const zoomIn = document.createElement('button');
+  zoomIn.textContent = '🔍+';
+  zoomIn.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
+  zoomIn.onclick = function(e) {
     e.stopPropagation();
     scale = Math.min(5, scale + 0.5);
     updateTransform();
   };
-  controls.appendChild(zoomInBtn);
+  controls.appendChild(zoomIn);
   
   // Кнопка Зум -
-  const zoomOutBtn = document.createElement('button');
-  zoomOutBtn.textContent = '🔍-';
-  Object.assign(zoomOutBtn.style, {
-    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
-    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
-    width: '45px', height: '45px'
-  });
-  zoomOutBtn.onclick = (e) => {
+  const zoomOut = document.createElement('button');
+  zoomOut.textContent = '🔍-';
+  zoomOut.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
+  zoomOut.onclick = function(e) {
     e.stopPropagation();
     scale = Math.max(0.5, scale - 0.5);
     updateTransform();
   };
-  controls.appendChild(zoomOutBtn);
+  controls.appendChild(zoomOut);
   
   // Кнопка Сброс
   const resetBtn = document.createElement('button');
   resetBtn.textContent = '↺';
-  Object.assign(resetBtn.style, {
-    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
-    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
-    width: '45px', height: '45px'
-  });
-  resetBtn.onclick = (e) => {
+  resetBtn.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
+  resetBtn.onclick = function(e) {
     e.stopPropagation();
     scale = 1;
     translateX = 0;
@@ -1060,30 +995,27 @@ window.openImageViewer = function(src) {
   // Кнопка Закрыть
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
-  Object.assign(closeBtn.style, {
-    position: 'absolute', top: '20px', right: '20px',
-    padding: '10px 16px', background: 'rgba(255,255,255,0.2)',
-    color: 'white', border: 'none', borderRadius: '8px',
-    cursor: 'pointer', fontSize: '1.2rem', zIndex: '10001'
-  });
-  closeBtn.onclick = (e) => {
+  closeBtn.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;font-size:1.2rem;z-index:10001;';
+  closeBtn.onclick = function(e) {
     e.stopPropagation();
     viewer.remove();
   };
   viewer.appendChild(closeBtn);
   
+  // Закрытие по клику на фон
   viewer.addEventListener('click', function(e) {
     if (e.target === viewer) viewer.remove();
   });
   
   document.body.appendChild(viewer);
   
-  const escHandler = function(e) {
+  // Закрытие по Escape
+  function escHandler(e) {
     if (e.key === 'Escape') {
       viewer.remove();
       window.removeEventListener('keydown', escHandler);
     }
-  };
+  }
   window.addEventListener('keydown', escHandler);
 };
 
