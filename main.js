@@ -743,36 +743,50 @@
       }).catch(function() { alert('Нет доступа к микрофону'); });
     });
     
-    // Вкладки с правильной логикой
-    document.querySelectorAll('.tab').forEach(function(tab) {
-      tab.addEventListener('click', function() {
-        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-        tab.classList.add('active');
-        
-        const newTab = tab.dataset.tab;
-        
-        if (newTab === 'private') {
-          if (!privateWith) {
-            const savedPrivate = localStorage.getItem('fc_private_' + currentUser);
-            if (savedPrivate && FAMILY[savedPrivate]) {
-              privateWith = savedPrivate;
-            } else {
-              const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
-              if (others.length > 0) privateWith = others[0].id;
-            }
-          }
-          document.getElementById('privateSel').style.display = 'block';
-        } else {
-          privateWith = null;
-          document.getElementById('privateSel').style.display = 'none';
-        }
-        
-        activeTab = newTab;
-        updatePrivate();
-        loadMessages();
-        updatePrivateHeader();
-      });
+    // Вкладки — простая и надёжная версия
+document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    // Убираем активный класс со всех вкладок
+    document.querySelectorAll('.tab').forEach(function(t) { 
+      t.classList.remove('active'); 
     });
+    
+    // Делаем активной нажатую вкладку
+    tab.classList.add('active');
+    
+    // Меняем тип чата
+    activeTab = tab.dataset.tab;
+    
+    // Если перешли на общий чат
+    if (activeTab === 'general') {
+      privateWith = null;
+      document.getElementById('privateSel').style.display = 'none';
+      updatePrivateHeader();
+      loadMessages();
+    }
+    
+    // Если перешли на личный чат
+    if (activeTab === 'private') {
+      // Если собеседник не выбран — выбираем последнего
+      if (!privateWith) {
+        const saved = localStorage.getItem('fc_private_' + currentUser);
+        if (saved && FAMILY[saved]) {
+          privateWith = saved;
+        } else {
+          // Первый доступный собеседник
+          const others = Object.values(FAMILY).filter(function(m) { 
+            return m.id !== currentUser; 
+          });
+          if (others.length > 0) privateWith = others[0].id;
+        }
+      }
+      document.getElementById('privateSel').style.display = 'block';
+      updatePrivate();
+      updatePrivateHeader();
+      loadMessages();
+    }
+  });
+});
     
     document.getElementById('settingsBtn').addEventListener('click', function() {
       document.getElementById('settingsPanel').classList.toggle('show');
