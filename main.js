@@ -760,7 +760,8 @@ document.querySelectorAll('.tab').forEach(function(tab) {
     // Если перешли на общий чат
     if (activeTab === 'general') {
       privateWith = null;
-      document.getElementById('privateSel').style.display = 'none';
+      const privateSel = document.getElementById('privateSel');
+    if (privateSel) privateSel.style.display = 'none';
       updatePrivateHeader();
       loadMessages();
     }
@@ -780,6 +781,7 @@ document.querySelectorAll('.tab').forEach(function(tab) {
           if (others.length > 0) privateWith = others[0].id;
         }
       }
+      
       document.getElementById('privateSel').style.display = 'block';
       updatePrivate();
       updatePrivateHeader();
