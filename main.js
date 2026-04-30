@@ -42,55 +42,58 @@
   let listenersInitialized = false;
   let lockedUser = localStorage.getItem('fc_locked_user') || null;
   let unreadCount = 0;
+  let lastMessagePreview = '';
   
   if (!localStorage.getItem('fc_theme')) {
     localStorage.setItem('fc_theme', 'light');
   }
   
-  // Синхронизированные ПИН-коды через Firebase
-const pinsRef = db.ref('pins');
-
-function getPin(userId) {
-  // Сначала проверяем локально для быстрого доступа
-  const localPin = localStorage.getItem('fc_pin_' + userId);
-  if (localPin) return localPin;
-  return null;
-}
-
-function setPin(userId, pin) {
-  // Сохраняем локально
-  localStorage.setItem('fc_pin_' + userId, pin);
-  // Сохраняем в Firebase для синхронизации
-  pinsRef.child(userId).set(pin);
-}
-
-function hasPin(userId) {
-  return !!getPin(userId);
-}
-
-function verifyPin(userId, pin) {
-  return getPin(userId) === pin;
-}
-
-// Загружаем ПИН-коды из Firebase при запуске
-function loadPinsFromFirebase() {
-  pinsRef.once('value').then(function(snap) {
-    const pins = snap.val();
-    if (pins) {
-      Object.entries(pins).forEach(function([userId, pin]) {
-        if (!localStorage.getItem('fc_pin_' + userId)) {
-          localStorage.setItem('fc_pin_' + userId, pin);
-        }
-      });
-    }
-  });
-}
+  const pinsRef = db.ref('pins');
   
-  function updateUnreadBadge() {
+  // ============ ПИН-КОДЫ (синхронизированные через Firebase) ============
+  function getPin(userId) {
+    const localPin = localStorage.getItem('fc_pin_' + userId);
+    if (localPin) return localPin;
+    return null;
+  }
+  
+  function setPin(userId, pin) {
+    localStorage.setItem('fc_pin_' + userId, pin);
+    pinsRef.child(userId).set(pin);
+  }
+  
+  function hasPin(userId) {
+    return !!getPin(userId);
+  }
+  
+  function verifyPin(userId, pin) {
+    return getPin(userId) === pin;
+  }
+  
+  function loadPinsFromFirebase() {
+    pinsRef.once('value').then(function(snap) {
+      const pins = snap.val();
+      if (pins) {
+        Object.entries(pins).forEach(function([userId, pin]) {
+          if (!localStorage.getItem('fc_pin_' + userId)) {
+            localStorage.setItem('fc_pin_' + userId, pin);
+          }
+        });
+        renderUsers();
+      }
+    });
+  }
+  
+  function updateUnreadBadge(msg) {
+    if (msg) {
+      const sender = FAMILY[msg.from] || {name: 'Кто-то'};
+      lastMessagePreview = sender.name + ': ' + (msg.text || '📷 Фото');
+    }
+    
     if (unreadCount > 0) {
-      document.title = '(' + unreadCount + ') FChat';
+      document.title = '(' + unreadCount + ') ' + lastMessagePreview;
     } else {
-      document.title = 'FChat';
+      document.title = 'FChat — Семейный мессенджер';
     }
   }
   
@@ -115,7 +118,7 @@ function loadPinsFromFirebase() {
     } else {
       if (pinTitle) pinTitle.textContent = 'Создайте ПИН-код';
       if (pinDescription) pinDescription.innerHTML = 'Придумайте ПИН для <strong>' + user.name + '</strong>';
-      if (pinHint) pinHint.textContent = '⚠️ После создания ПИН эта роль будет закреплена за вами';
+      if (pinHint) pinHint.textContent = '⚠️ После создания ПИН эта роль будет закреплена за вами на всех устройствах';
     }
     
     const pinInput = document.getElementById('pinInput');
@@ -168,7 +171,7 @@ function loadPinsFromFirebase() {
           hidePinDialog();
         } else {
           if (pinError) {
-            pinError.textContent = 'Неверный ПИН-код или роль уже занята';
+            pinError.textContent = 'Неверный ПИН-код или роль уже занята другим членом семьи';
             pinError.classList.add('show');
           }
           if (pinInput) pinInput.value = '';
@@ -181,11 +184,11 @@ function loadPinsFromFirebase() {
           localStorage.setItem('fc_locked_user', lockedUser);
           loginAsUser(pendingPinUser);
           hidePinDialog();
-          alert('✅ ПИН-код создан! Эта роль закреплена за вами.');
+          alert('✅ ПИН-код создан! Эта роль закреплена за вами на всех устройствах.');
         });
       }
     });
-}
+  }
   
   function loginAsUser(userId) {
     currentUser = userId;
@@ -285,13 +288,12 @@ function loadPinsFromFirebase() {
         });
       });
     });
-}
+  }
   
   function switchToPrivateChat(userId) {
     activeTab = 'private';
     privateWith = userId;
     
-    // Сохраняем последнего собеседника
     localStorage.setItem('fc_private_' + currentUser, userId);
     
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
@@ -325,11 +327,6 @@ function loadPinsFromFirebase() {
     if (processedIds.has(msg.id)) return;
     processedIds.add(msg.id);
 
-    if (msg.from !== currentUser && document.visibilityState !== 'visible') {
-      unreadCount++;
-      updateUnreadBadge();
-    }
-
     const chat = document.getElementById('chatWindow');
     if (!chat) return;
     
@@ -353,12 +350,22 @@ function loadPinsFromFirebase() {
       content = msg.text || '';
     }
     
+    // Индикатор чата для входящих сообщений
+    let chatIndicator = '';
+    if (!isSent) {
+      if (activeTab === 'general') {
+        chatIndicator = ' <span style="font-size:0.65rem;opacity:0.6;">📢 общий</span>';
+      } else {
+        chatIndicator = ' <span style="font-size:0.65rem;opacity:0.6;">🔒 личный</span>';
+      }
+    }
+    
     const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
     
     div.innerHTML = 
       (!isSent ? '<div class="msg-sender"><span class="sender-avatar">' + 
         (senderAv ? '<img src="' + senderAv + '">' : '<span>' + sender.emoji + '</span>') + 
-        '</span>' + sender.name + '</div>' : '') +
+        '</span><strong>' + sender.name + '</strong>' + chatIndicator + '</div>' : '') +
       '<div class="bubble">' + content + 
         '<div class="msg-time"><span>' + time + '</span>' + 
         (isSent ? '<span class="msg-menu-btn">⋮</span>' : '') + 
@@ -376,6 +383,12 @@ function loadPinsFromFirebase() {
     
     chat.appendChild(div);
     chat.scrollTop = chat.scrollHeight;
+    
+    // Уведомление о новом сообщении
+    if (msg.from !== currentUser && document.visibilityState !== 'visible') {
+      unreadCount++;
+      updateUnreadBadge(msg);
+    }
   }
   
   function showMenu(event, msg) {
@@ -493,7 +506,8 @@ function loadPinsFromFirebase() {
         showMessage(msg);
         if (msg.from !== currentUser) {
           const sender = FAMILY[msg.from] || {name: 'Кто-то'};
-          notify(sender.emoji + ' ' + sender.name, msg.text || 'Новое сообщение');
+          const chatType = activeTab === 'private' ? ' (личное)' : '';
+          notify(sender.emoji + ' ' + sender.name, (msg.text || '📷 Фото') + chatType);
         }
       }
     });
@@ -531,13 +545,34 @@ function loadPinsFromFirebase() {
     }
   }
   
-  // ============ УВЕДОМЛЕНИЯ ============
+  // ============ УВЕДОМЛЕНИЯ (УЛУЧШЕННЫЕ) ============
   function notify(title, body) {
     if (!notifEnabled) return;
-    if (document.visibilityState === 'visible') { playSound(); return; }
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification(title, {body: body, icon: '👨‍👩‍👧‍👦', tag: 'fc'});
+    
+    // Вибрация на телефоне
+    if (navigator.vibrate) {
+      navigator.vibrate([200, 100, 200]);
     }
+    
+    // Мигание заголовка
+    const header = document.querySelector('.header');
+    if (header) {
+      header.style.animation = 'flash 0.5s ease 3';
+      setTimeout(function() { header.style.animation = ''; }, 1500);
+    }
+    
+    // Показываем уведомление ТОЛЬКО если чат не активен
+    if (document.visibilityState !== 'visible') {
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification(title, {
+          body: body,
+          icon: 'icon-192.png',
+          tag: 'fchat',
+          vibrate: [200, 100, 200, 100, 200]
+        });
+      }
+    }
+    
     playSound();
   }
   
@@ -849,7 +884,7 @@ function loadPinsFromFirebase() {
     if (autoDelete) autoDelete.value = autoDeleteHours;
   }
   
-  // ============ ПРОСМОТРЩИК ФОТО ============
+  // ============ ПРОСМОТРЩИК ФОТО (РАБОТАЕТ НА ТЕЛЕФОНЕ) ============
   window.openImageViewer = function(src) {
     const allImages = [];
     document.querySelectorAll('.media-img').forEach(function(img) {
@@ -946,32 +981,27 @@ function loadPinsFromFirebase() {
       }
     }
     
-    // Кнопки управления
     const controls = document.createElement('div');
     controls.style.cssText = 'position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10001;';
     
-    // Скачать
     const downloadBtn = document.createElement('button');
     downloadBtn.textContent = '💾';
     downloadBtn.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
     downloadBtn.onclick = function(e) { e.stopPropagation(); const a = document.createElement('a'); a.href = src; a.download = 'photo_' + Date.now() + '.jpg'; a.click(); };
     controls.appendChild(downloadBtn);
     
-    // Зум +
     const zoomIn = document.createElement('button');
     zoomIn.textContent = '🔍+';
     zoomIn.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
     zoomIn.onclick = function(e) { e.stopPropagation(); scale = Math.min(5, scale + 0.5); updateTransform(); };
     controls.appendChild(zoomIn);
     
-    // Зум -
     const zoomOut = document.createElement('button');
     zoomOut.textContent = '🔍-';
     zoomOut.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
     zoomOut.onclick = function(e) { e.stopPropagation(); scale = Math.max(0.5, scale - 0.5); updateTransform(); };
     controls.appendChild(zoomOut);
     
-    // Сброс
     const resetBtn = document.createElement('button');
     resetBtn.textContent = '↺';
     resetBtn.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;';
@@ -980,7 +1010,6 @@ function loadPinsFromFirebase() {
     
     viewer.appendChild(controls);
     
-    // Закрыть
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
     closeBtn.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;font-size:1.2rem;z-index:10001;';
@@ -1089,8 +1118,7 @@ function loadPinsFromFirebase() {
       }
     }
     console.log('✅ FChat запущен');
-}
+  }
 
   console.log('📱 FChat готов к работе');
 })();
-// Force update
