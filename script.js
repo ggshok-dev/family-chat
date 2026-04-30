@@ -794,6 +794,64 @@ if (msg.type === 'image') {
     if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
   }
   
+    // ============ ПРОСМОТРЩИК ФОТО ============
+  window.openImageViewer = function(src) {
+    const old = document.querySelector('.image-viewer');
+    if (old) old.remove();
+    
+    const viewer = document.createElement('div');
+    viewer.className = 'image-viewer';
+    Object.assign(viewer.style, {
+      position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+      background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center',
+      justifyContent: 'center', zIndex: '10000', cursor: 'zoom-out'
+    });
+    
+    const img = document.createElement('img');
+    img.src = src;
+    Object.assign(img.style, {
+      maxWidth: '90%', maxHeight: '90%', objectFit: 'contain',
+      transition: 'transform 0.2s', cursor: 'grab'
+    });
+    
+    let scale = 1, translateX = 0, translateY = 0, isDragging = false, startX, startY;
+    
+    img.addEventListener('wheel', function(e) {
+      e.preventDefault();
+      scale += e.deltaY * -0.01;
+      scale = Math.min(Math.max(0.5, scale), 5);
+      img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+    });
+    
+    viewer.appendChild(img);
+    
+    // Кнопка закрытия
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    Object.assign(closeBtn.style, {
+      position: 'absolute', top: '20px', right: '20px',
+      padding: '10px 16px', background: 'rgba(255,255,255,0.2)',
+      color: 'white', border: 'none', borderRadius: '8px',
+      cursor: 'pointer', fontSize: '1.2rem', zIndex: '10001'
+    });
+    closeBtn.onclick = () => viewer.remove();
+    viewer.appendChild(closeBtn);
+    
+    viewer.addEventListener('click', function(e) {
+      if (e.target === viewer) viewer.remove();
+    });
+    
+    document.body.appendChild(viewer);
+    
+    const escHandler = function(e) {
+      if (e.key === 'Escape') {
+        viewer.remove();
+        window.removeEventListener('keydown', escHandler);
+      }
+    };
+    window.addEventListener('keydown', escHandler);
+  };
+
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
     setInterval(function() {
@@ -813,7 +871,7 @@ if (msg.type === 'image') {
       });
     }, 30000);
   }
-  
+
   // ============ СЕКРЕТНЫЙ КОД ============
   document.getElementById('secretBtn').addEventListener('click', function() {
     const input = document.getElementById('secretInput').value;
@@ -827,13 +885,13 @@ if (msg.type === 'image') {
       document.getElementById('secretInput').focus();
     }
   });
-  
+
   document.getElementById('secretInput').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') document.getElementById('secretBtn').click();
   });
-  
+
   document.getElementById('secretInput').focus();
-  
+
   // ============ ПИН-ОБРАБОТЧИКИ ============
   document.getElementById('pinBtn').addEventListener('click', processPin);
   document.getElementById('pinInput').addEventListener('keydown', function(e) {
@@ -842,18 +900,17 @@ if (msg.type === 'image') {
   document.getElementById('pinOverlay').addEventListener('click', function(e) {
     if (e.target === this) hidePinDialog();
   });
-  
+
   function updatePrivate() {
     const sel = document.getElementById('privateRecipient');
     if (!sel || !currentUser) return;
-    
     const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
     sel.innerHTML = '<option value="">Выберите...</option>' +
       others.map(function(m) { 
         return '<option value="' + m.id + '" ' + (m.id === privateWith ? 'selected' : '') + '>' + m.emoji + ' ' + m.name + '</option>'; 
       }).join('');
   }
-  
+
   // ============ ЗАПУСК ============
   function initApp() {
     applyStoredSettings();
@@ -879,150 +936,6 @@ if (msg.type === 'image') {
     }
     console.log('✅ FChat запущен');
   }
-  
+
   console.log('📱 FChat готов к работе');
-// ============ ПРОСМОТРЩИК ФОТО ============
-window.openImageViewer = function(src) {
-  // Удаляем старый просмотрщик, если есть
-  const old = document.querySelector('.image-viewer');
-  if (old) old.remove();
-  
-  // Создаём контейнер
-  const viewer = document.createElement('div');
-  viewer.className = 'image-viewer';
-  viewer.style.cssText = `
-    position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.95);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 10000;
-    cursor: zoom-out;
-  `;
-  
-  // Создаём изображение
-  const img = document.createElement('img');
-  img.src = src;
-  img.style.cssText = `
-    max-width: 90%;
-    max-height: 90%;
-    object-fit: contain;
-    transition: transform 0.2s;
-    cursor: grab;
-  `;
-  
-  // Переменные для зума и перетаскивания
-  let scale = 1;
-  let isDragging = false;
-  let startX, startY, translateX = 0, translateY = 0;
-  
-  // Зум колёсиком
-  img.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    scale += e.deltaY * -0.01;
-    scale = Math.min(Math.max(0.5, scale), 5);
-    img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
-    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-  });
-  
-  // Двойной клик для сброса зума
-  img.addEventListener('dblclick', function(e) {
-    e.stopPropagation();
-    if (scale > 1) {
-      scale = 1;
-      translateX = 0;
-      translateY = 0;
-      img.style.transform = 'scale(1)';
-      img.style.cursor = 'zoom-in';
-    } else {
-      scale = 2;
-      img.style.transform = 'scale(2)';
-      img.style.cursor = 'grab';
-    }
-  });
-  
-  // Перетаскивание
-  img.addEventListener('mousedown', function(e) {
-    if (scale > 1) {
-      isDragging = true;
-      startX = e.clientX - translateX;
-      startY = e.clientY - translateY;
-      img.style.cursor = 'grabbing';
-    }
-  });
-  
-  window.addEventListener('mousemove', function(e) {
-    if (isDragging) {
-      translateX = e.clientX - startX;
-      translateY = e.clientY - startY;
-      img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
-    }
-  });
-  
-  window.addEventListener('mouseup', function() {
-    isDragging = false;
-    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-  });
-  
-  // Кнопки управления
-  const controls = document.createElement('div');
-  controls.style.cssText = `
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 10001;
-  `;
-  
-  const buttons = [
-    { text: '🔍−', action: () => { scale = Math.max(0.5, scale - 0.5); img.style.transform = `scale(${scale})`; } },
-    { text: '🔍+', action: () => { scale = Math.min(5, scale + 0.5); img.style.transform = `scale(${scale})`; } },
-    { text: '↺', action: () => { scale = 1; translateX = 0; translateY = 0; img.style.transform = 'scale(1)'; } },
-    { text: '✕', action: () => viewer.remove() }
-  ];
-  
-  buttons.forEach(btn => {
-    const button = document.createElement('button');
-    button.textContent = btn.text;
-    button.style.cssText = `
-      padding: 10px 16px;
-      background: rgba(255,255,255,0.15);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.2);
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 1rem;
-      backdrop-filter: blur(10px);
-    `;
-    button.addEventListener('click', (e) => {
-      e.stopPropagation();
-      btn.action();
-    });
-    controls.appendChild(button);
-  });
-  
-  // Закрытие по клику на фон
-  viewer.addEventListener('click', function(e) {
-    if (e.target === viewer) {
-      viewer.remove();
-    }
-  });
-  
-  viewer.appendChild(img);
-  viewer.appendChild(controls);
-  document.body.appendChild(viewer);
-  
-  // Закрытие по Escape
-  const escHandler = function(e) {
-    if (e.key === 'Escape') {
-      viewer.remove();
-      window.removeEventListener('keydown', escHandler);
-    }
-  };
-  window.addEventListener('keydown', escHandler);
-};
 })();
