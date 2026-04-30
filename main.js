@@ -154,14 +154,11 @@
       return;
     }
     
-    // Проверяем, не занята ли роль в Firebase
     pinsRef.child(pendingPinUser).once('value').then(function(snap) {
       const existingPin = snap.val();
       
       if (existingPin) {
-        // Роль уже занята — проверяем ПИН
         if (existingPin === pin) {
-          // ПИН верный — входим
           localStorage.setItem('fc_pin_' + pendingPinUser, pin);
           if (!lockedUser) {
             lockedUser = pendingPinUser;
@@ -177,7 +174,6 @@
           if (pinInput) pinInput.value = '';
         }
       } else {
-        // Роль свободна — создаём ПИН
         pinsRef.child(pendingPinUser).set(pin).then(function() {
           localStorage.setItem('fc_pin_' + pendingPinUser, pin);
           lockedUser = pendingPinUser;
@@ -194,13 +190,11 @@
     currentUser = userId;
     localStorage.setItem('fc_user', userId);
     
-    // Восстанавливаем последнего собеседника
     const savedPrivateWith = localStorage.getItem('fc_private_' + userId);
     if (savedPrivateWith && FAMILY[savedPrivateWith]) {
       privateWith = savedPrivateWith;
     }
     
-    // Всегда открываем общий чат при входе
     activeTab = 'general';
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
     const generalTab = document.querySelector('.tab[data-tab="general"]');
@@ -246,7 +240,6 @@
     const container = document.getElementById('usersAvatars');
     if (!container) return;
     
-    // Проверяем занятость ролей через Firebase
     pinsRef.once('value').then(function(snap) {
       const pins = snap.val() || {};
       
@@ -323,15 +316,17 @@
     });
   }
   
-  function showMessage(msg) {
+  function showMessage(msg, fragment) {
     if (processedIds.has(msg.id)) return;
     processedIds.add(msg.id);
 
-    const chat = document.getElementById('chatWindow');
+    const chat = fragment || document.getElementById('chatWindow');
     if (!chat) return;
     
-    const empty = chat.querySelector('.empty-chat');
-    if (empty) empty.remove();
+    if (!fragment) {
+      const empty = chat.querySelector('.empty-chat');
+      if (empty) empty.remove();
+    }
     
     const isSent = msg.from === currentUser;
     const sender = FAMILY[msg.from] || { name: 'Кто-то', emoji: '👤' };
@@ -350,7 +345,6 @@
       content = msg.text || '';
     }
     
-    // Индикатор чата для входящих сообщений
     let chatIndicator = '';
     if (!isSent) {
       if (activeTab === 'general') {
@@ -381,10 +375,13 @@
       }
     }
     
-    chat.appendChild(div);
-    chat.scrollTop = chat.scrollHeight;
+    if (fragment) {
+      fragment.appendChild(div);
+    } else {
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
     
-    // Уведомление о новом сообщении
     if (msg.from !== currentUser && document.visibilityState !== 'visible') {
       unreadCount++;
       updateUnreadBadge(msg);
@@ -438,13 +435,23 @@
       }
     });
     
+    // Оптимизированное удаление
     menu.querySelectorAll('button')[2].addEventListener('click', function() {
       menu.remove();
       if (confirm('Удалить сообщение?')) {
-        db.ref(getChatPath() + '/' + msg.id).remove();
-        const el = document.querySelector('[data-id="' + msg.id + '"]');
-        if (el) el.remove();
-        processedIds.delete(msg.id);
+        const msgPath = getChatPath() + '/' + msg.id;
+        
+        db.ref(msgPath).set(null)
+          .then(function() {
+            const el = document.querySelector('[data-id="' + msg.id + '"]');
+            if (el) {
+              el.style.opacity = '0';
+              el.style.transform = 'scale(0.8)';
+              el.style.transition = '0.3s';
+              setTimeout(function() { el.remove(); }, 300);
+            }
+            processedIds.delete(msg.id);
+          });
       }
     });
     
@@ -471,11 +478,9 @@
     return 'general';
   }
   
+  // Оптимизированная загрузка сообщений
   function loadMessages() {
     if (!currentUser) return;
-    
-    // ОТЛАДКА
-    console.log('Загружаем чат:', getChatPath());
     
     if (messageListener) {
       db.ref(getChatPath()).off('child_added', messageListener);
@@ -488,7 +493,8 @@
     }
     processedIds.clear();
     
-    ref.once('value', function(snap) {
+    // Загружаем только последние 100 сообщений для производительности
+    ref.orderByChild('timestamp').limitToLast(100).once('value', function(snap) {
       const msgs = snap.val();
       if (chatWindow) chatWindow.innerHTML = '';
       if (!msgs) {
@@ -500,7 +506,12 @@
       const sorted = Object.entries(msgs)
         .map(function(e) { return Object.assign({id: e[0]}, e[1]); })
         .sort(function(a, b) { return (a.timestamp || 0) - (b.timestamp || 0); });
-      sorted.forEach(function(msg) { showMessage(msg); });
+      
+      const fragment = document.createDocumentFragment();
+      sorted.forEach(function(msg) { 
+        showMessage(msg, fragment);
+      });
+      if (chatWindow) chatWindow.appendChild(fragment);
     });
     
     messageListener = ref.on('child_added', function(snap) {
@@ -509,8 +520,7 @@
         showMessage(msg);
         if (msg.from !== currentUser) {
           const sender = FAMILY[msg.from] || {name: 'Кто-то'};
-          const chatType = activeTab === 'private' ? ' (личное)' : '';
-          notify(sender.emoji + ' ' + sender.name, (msg.text || '📷 Фото') + chatType);
+          notify(sender.emoji + ' ' + sender.name, (msg.text || '📷 Фото'));
         }
       }
     });
@@ -544,28 +554,24 @@
         if (partnerName) partnerName.textContent = partner.name;
       }
     } else {
-      // ВАЖНО: Скрываем заголовок для общего чата
       header.style.display = 'none';
     }
-}
+  }
   
-  // ============ УВЕДОМЛЕНИЯ (УЛУЧШЕННЫЕ) ============
+  // ============ УВЕДОМЛЕНИЯ ============
   function notify(title, body) {
     if (!notifEnabled) return;
     
-    // Вибрация на телефоне
     if (navigator.vibrate) {
       navigator.vibrate([200, 100, 200]);
     }
     
-    // Мигание заголовка
     const header = document.querySelector('.header');
     if (header) {
       header.style.animation = 'flash 0.5s ease 3';
       setTimeout(function() { header.style.animation = ''; }, 1500);
     }
     
-    // Показываем уведомление ТОЛЬКО если чат не активен
     if (document.visibilityState !== 'visible') {
       if ('Notification' in window && Notification.permission === 'granted') {
         new Notification(title, {
@@ -650,7 +656,6 @@
     if (listenersInitialized) return;
     listenersInitialized = true;
     
-    // Сброс счётчика непрочитанных при возвращении в чат
     document.addEventListener('visibilitychange', function() {
       if (document.visibilityState === 'visible') {
         unreadCount = 0;
@@ -738,38 +743,36 @@
       }).catch(function() { alert('Нет доступа к микрофону'); });
     });
     
+    // Вкладки с правильной логикой
     document.querySelectorAll('.tab').forEach(function(tab) {
-  tab.addEventListener('click', function() {
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    tab.classList.add('active');
-    
-    const newTab = tab.dataset.tab;
-    
-    if (newTab === 'private') {
-      if (!privateWith) {
-        const savedPrivate = localStorage.getItem('fc_private_' + currentUser);
-        if (savedPrivate && FAMILY[savedPrivate]) {
-          privateWith = savedPrivate;
+      tab.addEventListener('click', function() {
+        document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        
+        const newTab = tab.dataset.tab;
+        
+        if (newTab === 'private') {
+          if (!privateWith) {
+            const savedPrivate = localStorage.getItem('fc_private_' + currentUser);
+            if (savedPrivate && FAMILY[savedPrivate]) {
+              privateWith = savedPrivate;
+            } else {
+              const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
+              if (others.length > 0) privateWith = others[0].id;
+            }
+          }
+          document.getElementById('privateSel').style.display = 'block';
         } else {
-          const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
-          if (others.length > 0) privateWith = others[0].id;
+          privateWith = null;
+          document.getElementById('privateSel').style.display = 'none';
         }
-      }
-      document.getElementById('privateSel').style.display = 'block';
-    } else {
-      // Сбрасываем собеседника для общего чата
-      privateWith = null;
-      document.getElementById('privateSel').style.display = 'none';
-    }
-    
-    // ВАЖНО: меняем activeTab только после всех проверок
-    activeTab = newTab;
-    
-    updatePrivate();
-    loadMessages();
-    updatePrivateHeader();
-  });
-});
+        
+        activeTab = newTab;
+        updatePrivate();
+        loadMessages();
+        updatePrivateHeader();
+      });
+    });
     
     document.getElementById('settingsBtn').addEventListener('click', function() {
       document.getElementById('settingsPanel').classList.toggle('show');
@@ -782,7 +785,6 @@
       localStorage.setItem('fc_theme', isDarkTheme ? 'dark' : 'light');
     });
     
-    // Кнопка уведомлений в заголовке
     document.getElementById('notifBtn').addEventListener('click', function() {
       notifEnabled = !notifEnabled;
       localStorage.setItem('fc_notif', notifEnabled);
@@ -792,7 +794,6 @@
       if (notifEnabled) requestNotif();
     });
     
-    // Кнопка звука в заголовке
     document.getElementById('soundBtn').addEventListener('click', function() {
       soundEnabled = !soundEnabled;
       localStorage.setItem('fc_sound', soundEnabled);
@@ -865,20 +866,22 @@
       if (confirm('Перезагрузить страницу?')) location.reload();
     });
     
+    // Оптимизированная очистка чата
     document.getElementById('clearBtn').addEventListener('click', function() {
       if (!currentUser) return;
       if (confirm('Удалить все сообщения в этом чате?')) {
-        db.ref(getChatPath()).remove();
-        processedIds.clear();
-        const chatWindow = document.getElementById('chatWindow');
-        if (chatWindow) {
-          chatWindow.innerHTML = `
-            <div class="empty-chat">
-              <div class="empty-icon">💬</div>
-              <p>Нет сообщений</p>
-            </div>
-          `;
-        }
+        const chatPath = getChatPath();
+        
+        db.ref(chatPath).set(null)
+          .then(function() {
+            processedIds.clear();
+            const chatWindow = document.getElementById('chatWindow');
+            if (chatWindow) chatWindow.innerHTML = '';
+            loadMessages();
+          })
+          .catch(function(error) {
+            console.error('Ошибка очистки:', error);
+          });
       }
     });
   }
@@ -909,149 +912,127 @@
     if (autoDelete) autoDelete.value = autoDeleteHours;
   }
   
-  // ============ ПРОСМОТРЩИК ФОТО (СВОБОДНЫЙ ЗУМ И ПЕРЕМЕЩЕНИЕ) ============
-window.openImageViewer = function(src) {
-  const allImages = [];
-  document.querySelectorAll('.media-img').forEach(function(img) {
-    if (img.src) allImages.push(img.src);
-  });
-  
-  const currentIndex = allImages.indexOf(src);
-  
-  const old = document.querySelector('.image-viewer');
-  if (old) old.remove();
-  
-  const viewer = document.createElement('div');
-  viewer.className = 'image-viewer';
-  viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:10000;overflow:hidden;';
-  
-  // Контейнер для изображения
-  const imgContainer = document.createElement('div');
-  imgContainer.style.cssText = 'position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
-  
-  const img = document.createElement('img');
-  img.src = src;
-  img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;cursor:grab;user-select:none;-webkit-user-select:none;';
-  
-  let scale = 1;
-  let translateX = 0;
-  let translateY = 0;
-  let isDragging = false;
-  let startX = 0;
-  let startY = 0;
-  let startTranslateX = 0;
-  let startTranslateY = 0;
-  
-  function updateTransform() {
-    img.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
-    img.style.cursor = scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in';
-  }
-  
-  // Перетаскивание мышью
-  img.addEventListener('mousedown', function(e) {
-    if (scale > 1) {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startTranslateX = translateX;
-      startTranslateY = translateY;
-      img.style.cursor = 'grabbing';
-      e.preventDefault();
+  // ============ ПРОСМОТРЩИК ФОТО ============
+  window.openImageViewer = function(src) {
+    const allImages = [];
+    document.querySelectorAll('.media-img').forEach(function(img) {
+      if (img.src) allImages.push(img.src);
+    });
+    
+    const currentIndex = allImages.indexOf(src);
+    
+    const old = document.querySelector('.image-viewer');
+    if (old) old.remove();
+    
+    const viewer = document.createElement('div');
+    viewer.className = 'image-viewer';
+    viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:10000;overflow:hidden;';
+    
+    const imgContainer = document.createElement('div');
+    imgContainer.style.cssText = 'position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+    
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;cursor:grab;user-select:none;-webkit-user-select:none;';
+    
+    let scale = 1;
+    let translateX = 0;
+    let translateY = 0;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startTranslateX = 0;
+    let startTranslateY = 0;
+    
+    function updateTransform() {
+      img.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
+      img.style.cursor = scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in';
     }
-  });
-  
-  window.addEventListener('mousemove', function(e) {
-    if (isDragging) {
-      translateX = startTranslateX + (e.clientX - startX);
-      translateY = startTranslateY + (e.clientY - startY);
-      updateTransform();
-    }
-  });
-  
-  window.addEventListener('mouseup', function() {
-    isDragging = false;
-    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-  });
-  
-  // Перетаскивание пальцем (телефон)
-  img.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 1 && scale > 1) {
-      isDragging = true;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      startTranslateX = translateX;
-      startTranslateY = translateY;
-    }
-  });
-  
-  img.addEventListener('touchmove', function(e) {
-    if (isDragging && e.touches.length === 1 && scale > 1) {
-      e.preventDefault();
-      translateX = startTranslateX + (e.touches[0].clientX - startX);
-      translateY = startTranslateY + (e.touches[0].clientY - startY);
-      updateTransform();
-    }
-  });
-  
-  img.addEventListener('touchend', function() {
-    isDragging = false;
-  });
-  
-  // Пинч-зум (телефон)
-  let lastDistance = 0;
-  let pinchStartScale = 1;
-  
-  img.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 2) {
+    
+    img.addEventListener('mousedown', function(e) {
+      if (scale > 1) {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+        img.style.cursor = 'grabbing';
+        e.preventDefault();
+      }
+    });
+    
+    window.addEventListener('mousemove', function(e) {
+      if (isDragging) {
+        translateX = startTranslateX + (e.clientX - startX);
+        translateY = startTranslateY + (e.clientY - startY);
+        updateTransform();
+      }
+    });
+    
+    window.addEventListener('mouseup', function() {
       isDragging = false;
-      lastDistance = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      pinchStartScale = scale;
-    }
-  });
-  
-  img.addEventListener('touchmove', function(e) {
-    if (e.touches.length === 2) {
+      img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+    });
+    
+    img.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 1 && scale > 1) {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        startTranslateX = translateX;
+        startTranslateY = translateY;
+      }
+    });
+    
+    img.addEventListener('touchmove', function(e) {
+      if (isDragging && e.touches.length === 1 && scale > 1) {
+        e.preventDefault();
+        translateX = startTranslateX + (e.touches[0].clientX - startX);
+        translateY = startTranslateY + (e.touches[0].clientY - startY);
+        updateTransform();
+      }
+    });
+    
+    img.addEventListener('touchend', function() {
+      isDragging = false;
+    });
+    
+    let lastDistance = 0;
+    let pinchStartScale = 1;
+    
+    img.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        isDragging = false;
+        lastDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        pinchStartScale = scale;
+      }
+    });
+    
+    img.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const newDistance = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        scale = pinchStartScale * (newDistance / lastDistance);
+        scale = Math.min(Math.max(0.5, scale), 5);
+        updateTransform();
+      }
+    });
+    
+    viewer.addEventListener('wheel', function(e) {
       e.preventDefault();
-      const newDistance = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      scale = pinchStartScale * (newDistance / lastDistance);
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      scale *= delta;
       scale = Math.min(Math.max(0.5, scale), 5);
       updateTransform();
-    }
-  });
-  
-  // Зум колёсиком (компьютер)
-  viewer.addEventListener('wheel', function(e) {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    scale *= delta;
-    scale = Math.min(Math.max(0.5, scale), 5);
-    updateTransform();
-  });
-  
-  // Двойной клик/тап для зума
-  img.addEventListener('dblclick', function(e) {
-    e.preventDefault();
-    if (scale > 1) {
-      scale = 1;
-      translateX = 0;
-      translateY = 0;
-    } else {
-      scale = 2.5;
-    }
-    updateTransform();
-  });
-  
-  // Одинарный тап для зума на телефоне
-  let lastTap = 0;
-  img.addEventListener('click', function(e) {
-    const now = Date.now();
-    if (now - lastTap < 300) {
+    });
+    
+    img.addEventListener('dblclick', function(e) {
       e.preventDefault();
       if (scale > 1) {
         scale = 1;
@@ -1061,81 +1042,91 @@ window.openImageViewer = function(src) {
         scale = 2.5;
       }
       updateTransform();
-    }
-    lastTap = now;
-  });
-  
-  imgContainer.appendChild(img);
-  viewer.appendChild(imgContainer);
-  
-  // Счётчик и стрелки
-  if (allImages.length > 1) {
-    const counter = document.createElement('div');
-    counter.textContent = (currentIndex + 1) + ' / ' + allImages.length;
-    counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;font-size:1rem;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
-    viewer.appendChild(counter);
+    });
     
-    if (currentIndex > 0) {
-      const prevBtn = document.createElement('button');
-      prevBtn.innerHTML = '‹';
-      prevBtn.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;';
-      prevBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); window.openImageViewer(allImages[currentIndex - 1]); };
-      viewer.appendChild(prevBtn);
+    let lastTap = 0;
+    img.addEventListener('click', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        e.preventDefault();
+        if (scale > 1) {
+          scale = 1;
+          translateX = 0;
+          translateY = 0;
+        } else {
+          scale = 2.5;
+        }
+        updateTransform();
+      }
+      lastTap = now;
+    });
+    
+    imgContainer.appendChild(img);
+    viewer.appendChild(imgContainer);
+    
+    if (allImages.length > 1) {
+      const counter = document.createElement('div');
+      counter.textContent = (currentIndex + 1) + ' / ' + allImages.length;
+      counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;font-size:1rem;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
+      viewer.appendChild(counter);
+      
+      if (currentIndex > 0) {
+        const prevBtn = document.createElement('button');
+        prevBtn.innerHTML = '‹';
+        prevBtn.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;';
+        prevBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); window.openImageViewer(allImages[currentIndex - 1]); };
+        viewer.appendChild(prevBtn);
+      }
+      
+      if (currentIndex < allImages.length - 1) {
+        const nextBtn = document.createElement('button');
+        nextBtn.innerHTML = '›';
+        nextBtn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;';
+        nextBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); window.openImageViewer(allImages[currentIndex + 1]); };
+        viewer.appendChild(nextBtn);
+      }
     }
     
-    if (currentIndex < allImages.length - 1) {
-      const nextBtn = document.createElement('button');
-      nextBtn.innerHTML = '›';
-      nextBtn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;';
-      nextBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); window.openImageViewer(allImages[currentIndex + 1]); };
-      viewer.appendChild(nextBtn);
+    const controls = document.createElement('div');
+    controls.style.cssText = 'position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10001;';
+    
+    const buttons = [
+      { text: '💾', action: function() { const a = document.createElement('a'); a.href = src; a.download = 'photo_' + Date.now() + '.jpg'; a.click(); } },
+      { text: '🔍+', action: function() { scale = Math.min(5, scale + 0.5); updateTransform(); } },
+      { text: '🔍-', action: function() { scale = Math.max(0.5, scale - 0.5); updateTransform(); } },
+      { text: '↺', action: function() { scale = 1; translateX = 0; translateY = 0; updateTransform(); } }
+    ];
+    
+    buttons.forEach(function(btn) {
+      const button = document.createElement('button');
+      button.textContent = btn.text;
+      button.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;display:flex;align-items:center;justify-content:center;';
+      button.onclick = function(e) { e.stopPropagation(); btn.action(); };
+      controls.appendChild(button);
+    });
+    
+    viewer.appendChild(controls);
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;font-size:1.2rem;z-index:10001;';
+    closeBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); };
+    viewer.appendChild(closeBtn);
+    
+    viewer.addEventListener('click', function(e) {
+      if (e.target === viewer) viewer.remove();
+    });
+    
+    document.body.appendChild(viewer);
+    
+    function escHandler(e) {
+      if (e.key === 'Escape') {
+        viewer.remove();
+        window.removeEventListener('keydown', escHandler);
+      }
     }
-  }
-  
-  // Кнопки управления
-  const controls = document.createElement('div');
-  controls.style.cssText = 'position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10001;';
-  
-  const buttons = [
-    { text: '💾', action: function() { const a = document.createElement('a'); a.href = src; a.download = 'photo_' + Date.now() + '.jpg'; a.click(); } },
-    { text: '🔍+', action: function() { scale = Math.min(5, scale + 0.5); updateTransform(); } },
-    { text: '🔍-', action: function() { scale = Math.max(0.5, scale - 0.5); updateTransform(); } },
-    { text: '↺', action: function() { scale = 1; translateX = 0; translateY = 0; updateTransform(); } }
-  ];
-  
-  buttons.forEach(function(btn) {
-    const button = document.createElement('button');
-    button.textContent = btn.text;
-    button.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;display:flex;align-items:center;justify-content:center;';
-    button.onclick = function(e) { e.stopPropagation(); btn.action(); };
-    controls.appendChild(button);
-  });
-  
-  viewer.appendChild(controls);
-  
-  // Кнопка закрыть
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;font-size:1.2rem;z-index:10001;';
-  closeBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); };
-  viewer.appendChild(closeBtn);
-  
-  // Закрытие по клику на фон
-  viewer.addEventListener('click', function(e) {
-    if (e.target === viewer) viewer.remove();
-  });
-  
-  document.body.appendChild(viewer);
-  
-  // Закрытие по Escape
-  function escHandler(e) {
-    if (e.key === 'Escape') {
-      viewer.remove();
-      window.removeEventListener('keydown', escHandler);
-    }
-  }
-  window.addEventListener('keydown', escHandler);
-};
+    window.addEventListener('keydown', escHandler);
+  };
 
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
@@ -1206,7 +1197,6 @@ window.openImageViewer = function(src) {
     requestNotif();
     updatePrivateHeader();
     
-    // Загружаем ПИН-коды из Firebase
     loadPinsFromFirebase();
     
     const savedUser = localStorage.getItem('fc_user');
@@ -1231,8 +1221,16 @@ window.openImageViewer = function(src) {
         `;
       }
     }
-    console.log('✅ FChat запущен');
+    console.log('✅ FChat запущен (оптимизированная версия)');
   }
+
+  // Очистка кэша каждые 5 минут
+  setInterval(function() {
+    if (processedIds.size > 100) {
+      processedIds.clear();
+      console.log('🧹 Кэш сообщений очищен');
+    }
+  }, 300000);
 
   console.log('📱 FChat готов к работе');
 })();
