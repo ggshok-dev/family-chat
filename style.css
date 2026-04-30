@@ -272,13 +272,36 @@ body.dark-theme .settings-panel {
     body.dark-theme .tabs { background: #1a1a2e; border-color: #2a3a5c; }
     
     .tab {
-      flex: 1; padding: 8px; border: none; background: #f0f0f0;
-      border-radius: 12px; cursor: pointer; font-weight: 600;
-      font-size: calc(0.9rem * var(--font-scale)); transition: 0.2s;
+      flex: 1;
+      padding: 10px 8px;
+      border: none;
+      background: #f0f0f0;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: calc(0.9rem * var(--font-scale));
+      transition: 0.2s;
+      color: #555;
     }
-    
-    body.dark-theme .tab { background: #1e2a44; color: #e8e8e8; }
-    .tab.active { background: #667eea; color: white; }
+
+    body.dark-theme .tab {
+      background: #2a2a4a;
+      color: #ccc;
+    }
+
+    .tab.active {
+      background: #667eea;
+      color: white;
+    }
+
+    body.dark-theme .tab.active {
+      background: #667eea;
+      color: white;
+    }
+
+    .tab:hover {
+      opacity: 0.8;
+    }
     
     .private-selector {
       display: none; padding: 8px 15px; background: white;
