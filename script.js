@@ -718,15 +718,31 @@ if (msg.type === 'image') {
     });
     
     document.getElementById('changeCodeBtn').addEventListener('click', function() {
-      const old = prompt('Текущий код семьи:');
-      if (old !== secretCode) { alert('Неверно'); return; }
-      const newCode = prompt('Новый код семьи:');
-      if (newCode && newCode.length >= 4) {
-        secretCode = newCode;
-        localStorage.setItem('fc_code', secretCode);
-        alert('✅ Код семьи изменён!');
-      }
-    });
+  if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
+  
+  // Только Папа и Мама могут менять код семьи
+  if (currentUser !== 'dad' && currentUser !== 'mom') {
+    alert('Только Папа или Мама могут изменить код семьи');
+    return;
+  }
+  
+  // Подтверждаем ПИН-кодом
+  const pin = prompt('Введите ваш ПИН-код для подтверждения:');
+  if (!pin || !verifyPin(currentUser, pin)) {
+    alert('Неверный ПИН-код');
+    return;
+  }
+  
+  const old = prompt('Текущий код семьи:');
+  if (old !== secretCode) { alert('Неверный текущий код'); return; }
+  
+  const newCode = prompt('Новый код семьи (минимум 4 символа):');
+  if (newCode && newCode.length >= 4) {
+    secretCode = newCode;
+    localStorage.setItem('fc_code', secretCode);
+    alert('✅ Код семьи изменён!');
+  }
+});
     
     document.getElementById('cacheBtn').addEventListener('click', function() {
       if (confirm('Перезагрузить страницу?')) location.reload();
