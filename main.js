@@ -47,10 +47,44 @@
     localStorage.setItem('fc_theme', 'light');
   }
   
-  function getPin(userId) { return localStorage.getItem('fc_pin_' + userId) || null; }
-  function setPin(userId, pin) { localStorage.setItem('fc_pin_' + userId, pin); }
-  function hasPin(userId) { return !!getPin(userId); }
-  function verifyPin(userId, pin) { return getPin(userId) === pin; }
+  // Синхронизированные ПИН-коды через Firebase
+const pinsRef = db.ref('pins');
+
+function getPin(userId) {
+  // Сначала проверяем локально для быстрого доступа
+  const localPin = localStorage.getItem('fc_pin_' + userId);
+  if (localPin) return localPin;
+  return null;
+}
+
+function setPin(userId, pin) {
+  // Сохраняем локально
+  localStorage.setItem('fc_pin_' + userId, pin);
+  // Сохраняем в Firebase для синхронизации
+  pinsRef.child(userId).set(pin);
+}
+
+function hasPin(userId) {
+  return !!getPin(userId);
+}
+
+function verifyPin(userId, pin) {
+  return getPin(userId) === pin;
+}
+
+// Загружаем ПИН-коды из Firebase при запуске
+function loadPinsFromFirebase() {
+  pinsRef.once('value').then(function(snap) {
+    const pins = snap.val();
+    if (pins) {
+      Object.entries(pins).forEach(function([userId, pin]) {
+        if (!localStorage.getItem('fc_pin_' + userId)) {
+          localStorage.setItem('fc_pin_' + userId, pin);
+        }
+      });
+    }
+  });
+}
   
   function updateUnreadBadge() {
     if (unreadCount > 0) {
@@ -117,30 +151,41 @@
       return;
     }
     
-    if (hasPin(pendingPinUser)) {
-      if (verifyPin(pendingPinUser, pin)) {
-        if (!lockedUser) {
+    // Проверяем, не занята ли роль в Firebase
+    pinsRef.child(pendingPinUser).once('value').then(function(snap) {
+      const existingPin = snap.val();
+      
+      if (existingPin) {
+        // Роль уже занята — проверяем ПИН
+        if (existingPin === pin) {
+          // ПИН верный — входим
+          localStorage.setItem('fc_pin_' + pendingPinUser, pin);
+          if (!lockedUser) {
+            lockedUser = pendingPinUser;
+            localStorage.setItem('fc_locked_user', lockedUser);
+          }
+          loginAsUser(pendingPinUser);
+          hidePinDialog();
+        } else {
+          if (pinError) {
+            pinError.textContent = 'Неверный ПИН-код или роль уже занята';
+            pinError.classList.add('show');
+          }
+          if (pinInput) pinInput.value = '';
+        }
+      } else {
+        // Роль свободна — создаём ПИН
+        pinsRef.child(pendingPinUser).set(pin).then(function() {
+          localStorage.setItem('fc_pin_' + pendingPinUser, pin);
           lockedUser = pendingPinUser;
           localStorage.setItem('fc_locked_user', lockedUser);
-        }
-        loginAsUser(pendingPinUser);
-        hidePinDialog();
-      } else {
-        if (pinError) {
-          pinError.textContent = 'Неверный ПИН-код';
-          pinError.classList.add('show');
-        }
-        if (pinInput) pinInput.value = '';
+          loginAsUser(pendingPinUser);
+          hidePinDialog();
+          alert('✅ ПИН-код создан! Эта роль закреплена за вами.');
+        });
       }
-    } else {
-      setPin(pendingPinUser, pin);
-      lockedUser = pendingPinUser;
-      localStorage.setItem('fc_locked_user', lockedUser);
-      loginAsUser(pendingPinUser);
-      hidePinDialog();
-      alert('✅ ПИН-код создан! Эта роль закреплена за вами.');
-    }
-  }
+    });
+}
   
   function loginAsUser(userId) {
     currentUser = userId;
@@ -198,39 +243,49 @@
     const container = document.getElementById('usersAvatars');
     if (!container) return;
     
-    container.innerHTML = Object.values(FAMILY).map(function(m) {
-      const av = getAvatar(m.id);
-      const isActive = m.id === currentUser;
-      const isLocked = lockedUser && m.id !== lockedUser;
+    // Проверяем занятость ролей через Firebase
+    pinsRef.once('value').then(function(snap) {
+      const pins = snap.val() || {};
       
-      return `
-        <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
-             data-user="${m.id}" title="${isActive ? 'Это вы' : 'Нажмите для личного чата'}">
-          <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
-            ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span class="default-emoji">' + m.emoji + '</span>'}
+      container.innerHTML = Object.values(FAMILY).map(function(m) {
+        const av = getAvatar(m.id);
+        const isActive = m.id === currentUser;
+        const isLocked = pins[m.id] && m.id !== currentUser;
+        
+        let title = '';
+        if (isActive) title = 'Это вы';
+        else if (isLocked) title = 'Занято (' + m.name + ')';
+        else if (!pins[m.id]) title = 'Нажмите, чтобы выбрать эту роль';
+        
+        return `
+          <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
+               data-user="${m.id}" title="${title}">
+            <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
+              ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span class="default-emoji">' + m.emoji + '</span>'}
+            </div>
+            <span class="avatar-name">${m.name}</span>
           </div>
-          <span class="avatar-name">${m.name}</span>
-        </div>
-      `;
-    }).join('');
-    
-    container.querySelectorAll('.user-avatar').forEach(function(av) {
-      av.addEventListener('click', function() {
-        const userId = av.dataset.user;
-        
-        if (userId !== currentUser && currentUser) {
-          switchToPrivateChat(userId);
-          return;
-        }
-        
-        if (userId === currentUser) return;
-        
-        if (!currentUser) {
-          showPinDialog(userId);
-        }
+        `;
+      }).join('');
+      
+      container.querySelectorAll('.user-avatar').forEach(function(av) {
+        av.addEventListener('click', function() {
+          const userId = av.dataset.user;
+          
+          if (userId !== currentUser && currentUser) {
+            switchToPrivateChat(userId);
+            return;
+          }
+          
+          if (userId === currentUser) return;
+          
+          if (!currentUser) {
+            showPinDialog(userId);
+          }
+        });
       });
     });
-  }
+}
   
   function switchToPrivateChat(userId) {
     activeTab = 'private';
@@ -1008,6 +1063,9 @@
     requestNotif();
     updatePrivateHeader();
     
+    // Загружаем ПИН-коды из Firebase
+    loadPinsFromFirebase();
+    
     const savedUser = localStorage.getItem('fc_user');
     if (savedUser && FAMILY[savedUser]) {
       const savedPrivate = localStorage.getItem('fc_private_' + savedUser);
@@ -1031,7 +1089,7 @@
       }
     }
     console.log('✅ FChat запущен');
-  }
+}
 
   console.log('📱 FChat готов к работе');
 })();
