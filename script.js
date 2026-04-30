@@ -273,13 +273,23 @@
     div.dataset.id = msg.id;
     
     let content = '';
-    if (msg.type === 'image') {
-      content = `<img src="${msg.data}" class="media-img" alt="Фото" loading="lazy" onclick="window.openImageViewer('${msg.data.replace(/'/g, "\\'")}')">`;
-    } else if (msg.type === 'voice') {
-      content = `<audio controls class="media-audio" src="${msg.data}"></audio>`;
-    } else {
-      content = msg.text || '';
-    }
+if (msg.type === 'image') {
+  content = `<img src="${msg.data}" class="media-img" alt="Фото" loading="lazy" onclick="window.openImageViewer('${msg.data.replace(/'/g, "\\'")}')">`;
+} else if (msg.type === 'voice') {
+  content = `<audio controls class="media-audio" src="${msg.data}"></audio>`;
+} else if (msg.type === 'file') {
+  content = `
+    <div class="file-message" style="display:flex;align-items:center;gap:10px;padding:10px;background:rgba(255,255,255,0.1);border-radius:10px;">
+      <span style="font-size:2rem;">📎</span>
+      <div>
+        <div style="font-weight:600;">${msg.fileName || 'Файл'}</div>
+        <a href="${msg.data}" download="${msg.fileName}" style="color:#667eea;font-size:0.85rem;">📥 Скачать</a>
+      </div>
+    </div>
+  `;
+} else {
+  content = msg.text || '';
+}
     
     const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
     
@@ -503,36 +513,49 @@
     if (msgInput) msgInput.value = '';
   }
   
-  function sendMedia(type, dataUrl) {
-    if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
-    
-    if (type === 'voice') {
-      const msg = {
-        from: currentUser, type: 'voice', data: dataUrl,
-        timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое'
-      };
-      if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
-      db.ref(getChatPath()).push(msg);
-      return;
-    }
-    
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      let w = img.width, h = img.height;
-      if (w > 1200) { h = (h * 1200) / w; w = 1200; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      
-      const msg = {
-        from: currentUser, type: 'image', data: canvas.toDataURL('image/jpeg', 0.7),
-        timestamp: firebase.database.ServerValue.TIMESTAMP, text: '📷 Фото'
-      };
-      if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
-      db.ref(getChatPath()).push(msg);
+  function sendMedia(type, dataUrl, fileName, fileType) {
+  if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
+  
+  if (type === 'voice') {
+    const msg = {
+      from: currentUser, type: 'voice', data: dataUrl,
+      timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое'
     };
-    img.src = dataUrl;
+    if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
+    db.ref(getChatPath()).push(msg);
+    return;
   }
+  
+  if (type === 'file') {
+    const msg = {
+      from: currentUser, type: 'file', data: dataUrl,
+      fileName: fileName, fileType: fileType,
+      timestamp: firebase.database.ServerValue.TIMESTAMP, 
+      text: '📎 ' + (fileName || 'Файл')
+    };
+    if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
+    db.ref(getChatPath()).push(msg);
+    return;
+  }
+  
+  // Сжатие изображений
+  const img = new Image();
+  img.onload = function() {
+    const canvas = document.createElement('canvas');
+    let w = img.width, h = img.height;
+    if (w > 1200) { h = (h * 1200) / w; w = 1200; }
+    canvas.width = w; canvas.height = h;
+    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+    
+    const msg = {
+      from: currentUser, type: 'image', data: canvas.toDataURL('image/jpeg', 0.7),
+      timestamp: firebase.database.ServerValue.TIMESTAMP, text: '📷 Фото'
+    };
+    if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
+    db.ref(getChatPath()).push(msg);
+  };
+  img.src = dataUrl;
+}
   
   // ============ ОБРАБОТЧИКИ ============
   function setupListeners() {
@@ -569,16 +592,31 @@
       if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
       document.getElementById('fileInput').click();
     });
+
+    document.getElementById('fileInput').setAttribute('multiple', 'multiple');
     
     document.getElementById('fileInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onload = function(ev) { sendMedia('image', ev.target.result); };
-        reader.readAsDataURL(file);
-      }
-      e.target.value = '';
-    });
+  const files = e.target.files;
+  if (!files.length) return;
+  
+  for (let file of files) {
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        sendMedia('image', ev.target.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      // Для других файлов — отправляем как документ
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        sendMedia('file', ev.target.result, file.name, file.type);
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  e.target.value = '';
+});
     
     document.getElementById('avatarBtn').addEventListener('click', function() {
       if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
@@ -767,62 +805,287 @@
     if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
   }
   
-  // ============ ПРОСМОТРЩИК ФОТО ============
-  window.openImageViewer = function(src) {
-    const old = document.querySelector('.image-viewer');
-    if (old) old.remove();
-    
-    const viewer = document.createElement('div');
-    viewer.className = 'image-viewer';
-    Object.assign(viewer.style, {
-      position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
-      background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center',
-      justifyContent: 'center', zIndex: '10000', cursor: 'zoom-out'
-    });
-    
-    const img = document.createElement('img');
-    img.src = src;
-    Object.assign(img.style, {
-      maxWidth: '90%', maxHeight: '90%', objectFit: 'contain',
-      transition: 'transform 0.2s', cursor: 'grab'
-    });
-    
-    let scale = 1, translateX = 0, translateY = 0;
-    
-    img.addEventListener('wheel', function(e) {
-      e.preventDefault();
-      scale += e.deltaY * -0.01;
+  // ============ ПРОСМОТРЩИК ФОТО С ПРОЛИСТЫВАНИЕМ ============
+window.openImageViewer = function(src) {
+  // Собираем все фото из чата
+  const allImages = [];
+  const chatMessages = document.querySelectorAll('.media-img');
+  chatMessages.forEach(img => {
+    if (img.src) allImages.push(img.src);
+  });
+  
+  const currentIndex = allImages.indexOf(src);
+  
+  const old = document.querySelector('.image-viewer');
+  if (old) old.remove();
+  
+  const viewer = document.createElement('div');
+  viewer.className = 'image-viewer';
+  Object.assign(viewer.style, {
+    position: 'fixed', top: '0', left: '0', width: '100%', height: '100%',
+    background: 'rgba(0,0,0,0.95)', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', zIndex: '10000', cursor: 'zoom-out',
+    flexDirection: 'column'
+  });
+  
+  const img = document.createElement('img');
+  img.src = src;
+  Object.assign(img.style, {
+    maxWidth: '90%', maxHeight: '70%', objectFit: 'contain',
+    transition: 'transform 0.3s', cursor: 'grab', borderRadius: '8px'
+  });
+  
+  let scale = 1;
+  let translateX = 0, translateY = 0;
+  let isDragging = false, startX, startY, startTranslateX, startTranslateY;
+  
+  // Функция обновления трансформации
+  function updateTransform() {
+    img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+    img.style.cursor = scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in';
+  }
+  
+  // Зум двумя пальцами
+  let lastDistance = 0;
+  img.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      lastDistance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    } else if (e.touches.length === 1 && scale > 1) {
+      isDragging = true;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startTranslateX = translateX;
+      startTranslateY = translateY;
+    }
+  });
+  
+  img.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (e.touches.length === 2) {
+      const newDistance = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      scale *= newDistance / lastDistance;
       scale = Math.min(Math.max(0.5, scale), 5);
-      img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+      lastDistance = newDistance;
+      updateTransform();
+    } else if (isDragging && e.touches.length === 1) {
+      translateX = startTranslateX + (e.touches[0].clientX - startX);
+      translateY = startTranslateY + (e.touches[0].clientY - startY);
+      updateTransform();
+    }
+  });
+  
+  img.addEventListener('touchend', function() {
+    isDragging = false;
+    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+  });
+  
+  // Двойной клик для зума
+  img.addEventListener('dblclick', function(e) {
+    e.stopPropagation();
+    if (scale > 1) {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+    } else {
+      scale = 2.5;
+    }
+    updateTransform();
+  });
+  
+  // Зум колёсиком
+  viewer.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    scale += e.deltaY * -0.01;
+    scale = Math.min(Math.max(0.5, scale), 5);
+    updateTransform();
+  });
+  
+  // Перетаскивание мышью
+  img.addEventListener('mousedown', function(e) {
+    if (scale > 1) {
+      isDragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startTranslateX = translateX;
+      startTranslateY = translateY;
+      img.style.cursor = 'grabbing';
+    }
+  });
+  
+  window.addEventListener('mousemove', function(e) {
+    if (isDragging) {
+      translateX = startTranslateX + (e.clientX - startX);
+      translateY = startTranslateY + (e.clientY - startY);
+      updateTransform();
+    }
+  });
+  
+  window.addEventListener('mouseup', function() {
+    isDragging = false;
+    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+  });
+  
+  viewer.appendChild(img);
+  
+  // Счётчик фото
+  if (allImages.length > 1) {
+    const counter = document.createElement('div');
+    counter.textContent = `${currentIndex + 1} / ${allImages.length}`;
+    Object.assign(counter.style, {
+      position: 'absolute', top: '20px', left: '50%', transform: 'translateX(-50%)',
+      color: 'white', fontSize: '1rem', background: 'rgba(0,0,0,0.5)',
+      padding: '5px 15px', borderRadius: '20px', zIndex: '10001'
     });
+    viewer.appendChild(counter);
     
-    viewer.appendChild(img);
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    Object.assign(closeBtn.style, {
-      position: 'absolute', top: '20px', right: '20px',
-      padding: '10px 16px', background: 'rgba(255,255,255,0.2)',
-      color: 'white', border: 'none', borderRadius: '8px',
-      cursor: 'pointer', fontSize: '1.2rem', zIndex: '10001'
-    });
-    closeBtn.onclick = () => viewer.remove();
-    viewer.appendChild(closeBtn);
-    
-    viewer.addEventListener('click', function(e) {
-      if (e.target === viewer) viewer.remove();
-    });
-    
-    document.body.appendChild(viewer);
-    
-    const escHandler = function(e) {
-      if (e.key === 'Escape') {
+    // Кнопка "Назад"
+    if (currentIndex > 0) {
+      const prevBtn = document.createElement('button');
+      prevBtn.innerHTML = '‹';
+      Object.assign(prevBtn.style, {
+        position: 'absolute', left: '20px', top: '50%', transform: 'translateY(-50%)',
+        background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none',
+        borderRadius: '50%', width: '50px', height: '50px', fontSize: '2rem',
+        cursor: 'pointer', zIndex: '10001', display: 'flex', alignItems: 'center',
+        justifyContent: 'center'
+      });
+      prevBtn.onclick = (e) => {
+        e.stopPropagation();
         viewer.remove();
-        window.removeEventListener('keydown', escHandler);
-      }
-    };
-    window.addEventListener('keydown', escHandler);
+        window.openImageViewer(allImages[currentIndex - 1]);
+      };
+      viewer.appendChild(prevBtn);
+    }
+    
+    // Кнопка "Вперёд"
+    if (currentIndex < allImages.length - 1) {
+      const nextBtn = document.createElement('button');
+      nextBtn.innerHTML = '›';
+      Object.assign(nextBtn.style, {
+        position: 'absolute', right: '20px', top: '50%', transform: 'translateY(-50%)',
+        background: 'rgba(255,255,255,0.2)', color: 'white', border: 'none',
+        borderRadius: '50%', width: '50px', height: '50px', fontSize: '2rem',
+        cursor: 'pointer', zIndex: '10001', display: 'flex', alignItems: 'center',
+        justifyContent: 'center'
+      });
+      nextBtn.onclick = (e) => {
+        e.stopPropagation();
+        viewer.remove();
+        window.openImageViewer(allImages[currentIndex + 1]);
+      };
+      viewer.appendChild(nextBtn);
+    }
+  }
+  
+  // Панель управления
+  const controls = document.createElement('div');
+  controls.style.cssText = `
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 15px; z-index: 10001;
+  `;
+  
+  // Кнопка Скачать
+  const downloadBtn = document.createElement('button');
+  downloadBtn.textContent = '💾';
+  downloadBtn.title = 'Скачать';
+  Object.assign(downloadBtn.style, {
+    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
+    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
+    width: '45px', height: '45px'
+  });
+  downloadBtn.onclick = (e) => {
+    e.stopPropagation();
+    const a = document.createElement('a');
+    a.href = src;
+    a.download = 'photo_' + Date.now() + '.jpg';
+    a.click();
   };
+  controls.appendChild(downloadBtn);
+  
+  // Кнопка Зум +
+  const zoomInBtn = document.createElement('button');
+  zoomInBtn.textContent = '🔍+';
+  Object.assign(zoomInBtn.style, {
+    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
+    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
+    width: '45px', height: '45px'
+  });
+  zoomInBtn.onclick = (e) => {
+    e.stopPropagation();
+    scale = Math.min(5, scale + 0.5);
+    updateTransform();
+  };
+  controls.appendChild(zoomInBtn);
+  
+  // Кнопка Зум -
+  const zoomOutBtn = document.createElement('button');
+  zoomOutBtn.textContent = '🔍-';
+  Object.assign(zoomOutBtn.style, {
+    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
+    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
+    width: '45px', height: '45px'
+  });
+  zoomOutBtn.onclick = (e) => {
+    e.stopPropagation();
+    scale = Math.max(0.5, scale - 0.5);
+    updateTransform();
+  };
+  controls.appendChild(zoomOutBtn);
+  
+  // Кнопка Сброс
+  const resetBtn = document.createElement('button');
+  resetBtn.textContent = '↺';
+  Object.assign(resetBtn.style, {
+    padding: '12px', background: 'rgba(255,255,255,0.2)', color: 'white',
+    border: 'none', borderRadius: '50%', cursor: 'pointer', fontSize: '1.2rem',
+    width: '45px', height: '45px'
+  });
+  resetBtn.onclick = (e) => {
+    e.stopPropagation();
+    scale = 1;
+    translateX = 0;
+    translateY = 0;
+    updateTransform();
+  };
+  controls.appendChild(resetBtn);
+  
+  viewer.appendChild(controls);
+  
+  // Кнопка Закрыть
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  Object.assign(closeBtn.style, {
+    position: 'absolute', top: '20px', right: '20px',
+    padding: '10px 16px', background: 'rgba(255,255,255,0.2)',
+    color: 'white', border: 'none', borderRadius: '8px',
+    cursor: 'pointer', fontSize: '1.2rem', zIndex: '10001'
+  });
+  closeBtn.onclick = (e) => {
+    e.stopPropagation();
+    viewer.remove();
+  };
+  viewer.appendChild(closeBtn);
+  
+  viewer.addEventListener('click', function(e) {
+    if (e.target === viewer) viewer.remove();
+  });
+  
+  document.body.appendChild(viewer);
+  
+  const escHandler = function(e) {
+    if (e.key === 'Escape') {
+      viewer.remove();
+      window.removeEventListener('keydown', escHandler);
+    }
+  };
+  window.addEventListener('keydown', escHandler);
+};
 
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
