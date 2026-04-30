@@ -782,13 +782,15 @@ document.querySelectorAll('.tab').forEach(function(tab) {
         }
       }
       
-      document.getElementById('privateSel').style.display = 'block';
-      updatePrivate();
-      updatePrivateHeader();
-      loadMessages();
-    }
-  });
-});
+          const privateSel = document.getElementById('privateSel');
+          if (privateSel) privateSel.style.display = 'block';
+  
+          updatePrivate();
+          updatePrivateHeader();
+          loadMessages();
+          }
+       });
+    });
     
     document.getElementById('settingsBtn').addEventListener('click', function() {
       document.getElementById('settingsPanel').classList.toggle('show');
