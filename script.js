@@ -30,7 +30,6 @@
   let autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '24');
   let notifEnabled = localStorage.getItem('fc_notif') !== 'false';
   let soundEnabled = localStorage.getItem('fc_sound') !== 'false';
-  // ПРИНУДИТЕЛЬНО устанавливаем новый пароль
   let secretCode = 'family2026';
   localStorage.setItem('fc_code', 'family2026');
   let fontSize = parseInt(localStorage.getItem('fc_font') || '100');
@@ -52,6 +51,14 @@
   function setPin(userId, pin) { localStorage.setItem('fc_pin_' + userId, pin); }
   function hasPin(userId) { return !!getPin(userId); }
   function verifyPin(userId, pin) { return getPin(userId) === pin; }
+  
+  function updateUnreadBadge() {
+    if (unreadCount > 0) {
+      document.title = '(' + unreadCount + ') FChat';
+    } else {
+      document.title = 'FChat';
+    }
+  }
   
   function showPinDialog(userId) {
     if (!userId || !FAMILY[userId]) return;
@@ -88,14 +95,6 @@
     
     setTimeout(function() { if (pinInput) pinInput.focus(); }, 100);
   }
-
-  function updateUnreadBadge() {
-  if (unreadCount > 0) {
-    document.title = '(' + unreadCount + ') FChat';
-  } else {
-    document.title = 'FChat';
-  }
-}
 
   function hidePinDialog() {
     const pinOverlay = document.getElementById('pinOverlay');
@@ -255,18 +254,10 @@
     processedIds.add(msg.id);
 
     if (msg.from !== currentUser && document.visibilityState !== 'visible') {
-  unreadCount++;
-  updateUnreadBadge();
-}
+      unreadCount++;
+      updateUnreadBadge();
+    }
 
-// При возвращении в чат — сбрасываем
-document.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'visible') {
-    unreadCount = 0;
-    updateUnreadBadge();
-  }
-});
-    
     const chat = document.getElementById('chatWindow');
     if (!chat) return;
     
@@ -281,21 +272,14 @@ document.addEventListener('visibilitychange', function() {
     div.className = 'message ' + (isSent ? 'sent' : 'received');
     div.dataset.id = msg.id;
     
-   let content = '';
-if (msg.type === 'image') {
-  content = `
-    <img src="${msg.data}" 
-         class="media-img" 
-         alt="Фото" 
-         loading="lazy" 
-         onclick="window.openImageViewer('${msg.data.replace(/'/g, "\\'")}')">
-  `;
-}
-} else if (msg.type === 'voice') {
-  content = `<audio controls class="media-audio" src="${msg.data}"></audio>`;
-} else {
-  content = msg.text || '';
-}
+    let content = '';
+    if (msg.type === 'image') {
+      content = `<img src="${msg.data}" class="media-img" alt="Фото" loading="lazy" onclick="window.openImageViewer('${msg.data.replace(/'/g, "\\'")}')">`;
+    } else if (msg.type === 'voice') {
+      content = `<audio controls class="media-audio" src="${msg.data}"></audio>`;
+    } else {
+      content = msg.text || '';
+    }
     
     const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
     
@@ -323,86 +307,74 @@ if (msg.type === 'image') {
   }
   
   function showMenu(event, msg) {
-  // Удаляем старое меню
-  const old = document.querySelector('.context-menu');
-  if (old) old.remove();
-  
-  const menu = document.createElement('div');
-  menu.className = 'context-menu';
-  menu.innerHTML = `
-    <button>📋 Копировать</button>
-    <button>✏️ Редактировать</button>
-    <button class="danger-btn">🗑️ Удалить</button>
-  `;
-  
-  // Позиционируем меню
-  const x = event.clientX || (event.touches && event.touches[0].clientX) || 100;
-  const y = event.clientY || (event.touches && event.touches[0].clientY) || 100;
-  
-  menu.style.position = 'fixed';
-  menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
-  menu.style.top = Math.min(y, window.innerHeight - 120) + 'px';
-  menu.style.zIndex = '9999';
-  
-  document.body.appendChild(menu);
-  
-  // Копировать
-  menu.querySelectorAll('button')[0].addEventListener('click', function() {
-    menu.remove();
-    const text = msg.text || '';
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(text).then(() => {
-        // Показываем краткое уведомление
-        const toast = document.createElement('div');
-        toast.textContent = '✅ Скопировано!';
-        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 20px;border-radius:20px;z-index:9999;font-size:0.9rem;';
-        document.body.appendChild(toast);
-        setTimeout(() => toast.remove(), 1500);
-      });
-    }
-  });
-  
-  // Редактировать
-  menu.querySelectorAll('button')[1].addEventListener('click', function() {
-    menu.remove();
-    const newText = prompt('Редактировать сообщение:', msg.text || '');
-    if (newText && newText !== msg.text) {
-      db.ref(getChatPath() + '/' + msg.id).update({
-        text: newText,
-        edited: true
-      });
-    }
-  });
-  
-  // Удалить
-  menu.querySelectorAll('button')[2].addEventListener('click', function() {
-    menu.remove();
-    if (confirm('Удалить сообщение?')) {
-      // Удаляем из Firebase
-      db.ref(getChatPath() + '/' + msg.id).remove();
-      
-      // Удаляем из DOM
-      const el = document.querySelector('[data-id="' + msg.id + '"]');
-      if (el) el.remove();
-      
-      // Удаляем из кэша
-      processedIds.delete(msg.id);
-    }
-  });
-  
-  // Закрываем меню при клике вне его
-  setTimeout(() => {
-    const closeMenu = function(e) {
-      if (!menu.contains(e.target)) {
-        menu.remove();
-        document.removeEventListener('click', closeMenu);
-        document.removeEventListener('touchend', closeMenu);
+    const old = document.querySelector('.context-menu');
+    if (old) old.remove();
+    
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.innerHTML = `
+      <button>📋 Копировать</button>
+      <button>✏️ Редактировать</button>
+      <button class="danger-btn">🗑️ Удалить</button>
+    `;
+    
+    const x = event.clientX || (event.touches && event.touches[0].clientX) || 100;
+    const y = event.clientY || (event.touches && event.touches[0].clientY) || 100;
+    
+    menu.style.position = 'fixed';
+    menu.style.left = Math.min(x, window.innerWidth - 180) + 'px';
+    menu.style.top = Math.min(y, window.innerHeight - 120) + 'px';
+    menu.style.zIndex = '9999';
+    
+    document.body.appendChild(menu);
+    
+    menu.querySelectorAll('button')[0].addEventListener('click', function() {
+      menu.remove();
+      const text = msg.text || '';
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => {
+          const toast = document.createElement('div');
+          toast.textContent = '✅ Скопировано!';
+          toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 20px;border-radius:20px;z-index:9999;font-size:0.9rem;';
+          document.body.appendChild(toast);
+          setTimeout(() => toast.remove(), 1500);
+        });
       }
-    };
-    document.addEventListener('click', closeMenu);
-    document.addEventListener('touchend', closeMenu);
-  }, 10);
-}
+    });
+    
+    menu.querySelectorAll('button')[1].addEventListener('click', function() {
+      menu.remove();
+      const newText = prompt('Редактировать сообщение:', msg.text || '');
+      if (newText && newText !== msg.text) {
+        db.ref(getChatPath() + '/' + msg.id).update({
+          text: newText,
+          edited: true
+        });
+      }
+    });
+    
+    menu.querySelectorAll('button')[2].addEventListener('click', function() {
+      menu.remove();
+      if (confirm('Удалить сообщение?')) {
+        db.ref(getChatPath() + '/' + msg.id).remove();
+        const el = document.querySelector('[data-id="' + msg.id + '"]');
+        if (el) el.remove();
+        processedIds.delete(msg.id);
+      }
+    });
+    
+    setTimeout(() => {
+      const closeMenu = function(e) {
+        if (!menu.contains(e.target)) {
+          menu.remove();
+          document.removeEventListener('click', closeMenu);
+          document.removeEventListener('touchend', closeMenu);
+        }
+      };
+      document.addEventListener('click', closeMenu);
+      document.addEventListener('touchend', closeMenu);
+    }, 10);
+  }
   
   // ============ ЧАТ ============
   function getChatPath() {
@@ -567,6 +539,14 @@ if (msg.type === 'image') {
     if (listenersInitialized) return;
     listenersInitialized = true;
     
+    // Сброс счётчика непрочитанных при возвращении в чат
+    document.addEventListener('visibilitychange', function() {
+      if (document.visibilityState === 'visible') {
+        unreadCount = 0;
+        updateUnreadBadge();
+      }
+    });
+    
     document.getElementById('sendBtn').addEventListener('click', function() {
       sendText(document.getElementById('msgInput').value);
     });
@@ -713,57 +693,50 @@ if (msg.type === 'image') {
     });
     
     document.getElementById('changeCodeBtn').addEventListener('click', function() {
-  if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
-  
-  // Только Папа и Мама могут менять код семьи
-  if (currentUser !== 'dad' && currentUser !== 'mom') {
-    alert('Только Папа или Мама могут изменить код семьи');
-    return;
-  }
-  
-  // Подтверждаем ПИН-кодом
-  const pin = prompt('Введите ваш ПИН-код для подтверждения:');
-  if (!pin || !verifyPin(currentUser, pin)) {
-    alert('Неверный ПИН-код');
-    return;
-  }
-  
-  const old = prompt('Текущий код семьи:');
-  if (old !== secretCode) { alert('Неверный текущий код'); return; }
-  
-  const newCode = prompt('Новый код семьи (минимум 4 символа):');
-  if (newCode && newCode.length >= 4) {
-    secretCode = newCode;
-    localStorage.setItem('fc_code', secretCode);
-    alert('✅ Код семьи изменён!');
-  }
-});
+      if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
+      
+      if (currentUser !== 'dad' && currentUser !== 'mom') {
+        alert('Только Папа или Мама могут изменить код семьи');
+        return;
+      }
+      
+      const pin = prompt('Введите ваш ПИН-код для подтверждения:');
+      if (!pin || !verifyPin(currentUser, pin)) {
+        alert('Неверный ПИН-код');
+        return;
+      }
+      
+      const old = prompt('Текущий код семьи:');
+      if (old !== secretCode) { alert('Неверный текущий код'); return; }
+      
+      const newCode = prompt('Новый код семьи (минимум 4 символа):');
+      if (newCode && newCode.length >= 4) {
+        secretCode = newCode;
+        localStorage.setItem('fc_code', secretCode);
+        alert('✅ Код семьи изменён!');
+      }
+    });
     
     document.getElementById('cacheBtn').addEventListener('click', function() {
       if (confirm('Перезагрузить страницу?')) location.reload();
     });
     
     document.getElementById('clearBtn').addEventListener('click', function() {
-  if (!currentUser) return;
-  if (confirm('Удалить все сообщения в этом чате?')) {
-    // Удаляем сообщения из Firebase
-    db.ref(getChatPath()).remove();
-    
-    // Очищаем локальный кэш сообщений
-    processedIds.clear();
-    
-    // Очищаем окно чата
-    const chatWindow = document.getElementById('chatWindow');
-    if (chatWindow) {
-      chatWindow.innerHTML = `
-        <div class="empty-chat">
-          <div class="empty-icon">💬</div>
-          <p>Нет сообщений</p>
-        </div>
-      `;
-    }
-  }
-});
+      if (!currentUser) return;
+      if (confirm('Удалить все сообщения в этом чате?')) {
+        db.ref(getChatPath()).remove();
+        processedIds.clear();
+        const chatWindow = document.getElementById('chatWindow');
+        if (chatWindow) {
+          chatWindow.innerHTML = `
+            <div class="empty-chat">
+              <div class="empty-icon">💬</div>
+              <p>Нет сообщений</p>
+            </div>
+          `;
+        }
+      }
+    });
   }
   
   function applyStoredSettings() {
@@ -794,7 +767,7 @@ if (msg.type === 'image') {
     if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
   }
   
-    // ============ ПРОСМОТРЩИК ФОТО ============
+  // ============ ПРОСМОТРЩИК ФОТО ============
   window.openImageViewer = function(src) {
     const old = document.querySelector('.image-viewer');
     if (old) old.remove();
@@ -814,7 +787,7 @@ if (msg.type === 'image') {
       transition: 'transform 0.2s', cursor: 'grab'
     });
     
-    let scale = 1, translateX = 0, translateY = 0, isDragging = false, startX, startY;
+    let scale = 1, translateX = 0, translateY = 0;
     
     img.addEventListener('wheel', function(e) {
       e.preventDefault();
@@ -825,7 +798,6 @@ if (msg.type === 'image') {
     
     viewer.appendChild(img);
     
-    // Кнопка закрытия
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '✕';
     Object.assign(closeBtn.style, {
