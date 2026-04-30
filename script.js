@@ -143,12 +143,28 @@
   }
   
   function loginAsUser(userId) {
-    currentUser = userId;
-    localStorage.setItem('fc_user', userId);
-    renderUsers();
-    loadMessages();
-    updatePrivateHeader();
+  currentUser = userId;
+  localStorage.setItem('fc_user', userId);
+  
+  // Восстанавливаем последнего собеседника
+  const savedPrivateWith = localStorage.getItem('fc_private_' + userId);
+  if (savedPrivateWith && FAMILY[savedPrivateWith]) {
+    privateWith = savedPrivateWith;
   }
+  
+  // Всегда открываем общий чат при входе
+  activeTab = 'general';
+  
+  // Обновляем вкладки
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  const generalTab = document.querySelector('.tab[data-tab="general"]');
+  if (generalTab) generalTab.classList.add('active');
+  
+  renderUsers();
+  updatePrivate();
+  loadMessages();
+  updatePrivateHeader();
+}
   
   // ============ СИНХРОНИЗИРОВАННЫЕ АВАТАРКИ ============
   function getAvatar(userId) {
@@ -219,16 +235,19 @@
   }
   
   function switchToPrivateChat(userId) {
-    activeTab = 'private';
-    privateWith = userId;
-    
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    const privateTab = document.querySelector('.tab[data-tab="private"]');
-    if (privateTab) privateTab.classList.add('active');
-    
-    updatePrivateHeader();
-    loadMessages();
-  }
+  activeTab = 'private';
+  privateWith = userId;
+  
+  // Сохраняем последнего собеседника
+  localStorage.setItem('fc_private_' + currentUser, userId);
+  
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  const privateTab = document.querySelector('.tab[data-tab="private"]');
+  if (privateTab) privateTab.classList.add('active');
+  
+  updatePrivateHeader();
+  loadMessages();
+}
   
   function renderEmoji() {
     const grid = document.getElementById('emojiGrid');
@@ -561,6 +580,30 @@ if (msg.type === 'image') {
   function setupListeners() {
     if (listenersInitialized) return;
     listenersInitialized = true;
+
+    // Кнопка уведомлений в заголовке
+document.getElementById('notifBtn').addEventListener('click', function() {
+  notifEnabled = !notifEnabled;
+  localStorage.setItem('fc_notif', notifEnabled);
+  this.textContent = notifEnabled ? '🔔' : '🔕';
+  
+  // Синхронизируем с переключателем в настройках
+  const notifToggle = document.getElementById('notifToggle');
+  if (notifToggle) notifToggle.checked = notifEnabled;
+  
+  if (notifEnabled) requestNotif();
+});
+
+// Кнопка звука в заголовке
+document.getElementById('soundBtn').addEventListener('click', function() {
+  soundEnabled = !soundEnabled;
+  localStorage.setItem('fc_sound', soundEnabled);
+  this.textContent = soundEnabled ? '🔊' : '🔇';
+  
+  // Синхронизируем с переключателем в настройках
+  const soundToggle = document.getElementById('soundToggle');
+  if (soundToggle) soundToggle.checked = soundEnabled;
+});
     
     // Сброс счётчика непрочитанных при возвращении в чат
     document.addEventListener('visibilitychange', function() {
@@ -778,32 +821,35 @@ if (msg.type === 'image') {
   }
   
   function applyStoredSettings() {
-    isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
-    if (isDarkTheme) {
-      document.body.classList.add('dark-theme');
-      const themeBtn = document.getElementById('themeBtn');
-      if (themeBtn) themeBtn.textContent = '☀️';
-    }
-    
-    document.documentElement.style.setProperty('--font-scale', fontSize / 100);
-    const fv = document.getElementById('fontValue');
-    if (fv) fv.textContent = fontSize + '%';
-    
-    const notifToggle = document.getElementById('notifToggle');
-    if (notifToggle) notifToggle.checked = notifEnabled;
-    
-    const soundToggle = document.getElementById('soundToggle');
-    if (soundToggle) soundToggle.checked = soundEnabled;
-    
-    const autoDelete = document.getElementById('autoDelete');
-    if (autoDelete) autoDelete.value = autoDeleteHours;
-    
-    const notifBtn = document.getElementById('notifBtn');
-    if (notifBtn) notifBtn.textContent = notifEnabled ? '🔔' : '🔕';
-    
-    const soundBtn = document.getElementById('soundBtn');
-    if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+  // Тема
+  isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
+  if (isDarkTheme) {
+    document.body.classList.add('dark-theme');
+    const themeBtn = document.getElementById('themeBtn');
+    if (themeBtn) themeBtn.textContent = '☀️';
   }
+  
+  // Шрифт
+  document.documentElement.style.setProperty('--font-scale', fontSize / 100);
+  const fv = document.getElementById('fontValue');
+  if (fv) fv.textContent = fontSize + '%';
+  
+  // Уведомления
+  const notifToggle = document.getElementById('notifToggle');
+  if (notifToggle) notifToggle.checked = notifEnabled;
+  const notifBtn = document.getElementById('notifBtn');
+  if (notifBtn) notifBtn.textContent = notifEnabled ? '🔔' : '🔕';
+  
+  // Звук
+  const soundToggle = document.getElementById('soundToggle');
+  if (soundToggle) soundToggle.checked = soundEnabled;
+  const soundBtn = document.getElementById('soundBtn');
+  if (soundBtn) soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+  
+  // Автоудаление
+  const autoDelete = document.getElementById('autoDelete');
+  if (autoDelete) autoDelete.value = autoDeleteHours;
+}
   
   // ============ ПРОСМОТРЩИК ФОТО (РАБОТАЕТ ВЕЗДЕ) ============
 window.openImageViewer = function(src) {
@@ -1080,29 +1126,40 @@ window.openImageViewer = function(src) {
 
   // ============ ЗАПУСК ============
   function initApp() {
-    applyStoredSettings();
-    renderEmoji();
-    renderUsers();
-    setupListeners();
-    startAutoDelete();
-    requestNotif();
-    updatePrivateHeader();
-    
-    if (lockedUser && hasPin(lockedUser)) {
-      showPinDialog(lockedUser);
-    } else {
-      const chatWindow = document.getElementById('chatWindow');
-      if (chatWindow) {
-        chatWindow.innerHTML = `
-          <div class="empty-chat">
-            <div class="empty-icon">🔒</div>
-            <p>Выберите свою роль и создайте ПИН-код</p>
-          </div>
-        `;
-      }
+  applyStoredSettings();
+  renderEmoji();
+  renderUsers();
+  setupListeners();
+  startAutoDelete();
+  requestNotif();
+  updatePrivateHeader();
+  
+  // Загружаем сохранённого собеседника для личного чата
+  const savedUser = localStorage.getItem('fc_user');
+  if (savedUser && FAMILY[savedUser]) {
+    const savedPrivate = localStorage.getItem('fc_private_' + savedUser);
+    if (savedPrivate && FAMILY[savedPrivate]) {
+      privateWith = savedPrivate;
+      updatePrivate();
     }
-    console.log('✅ FChat запущен');
   }
+  
+  // Проверяем закреплённую роль
+  if (lockedUser && hasPin(lockedUser)) {
+    showPinDialog(lockedUser);
+  } else {
+    const chatWindow = document.getElementById('chatWindow');
+    if (chatWindow) {
+      chatWindow.innerHTML = `
+        <div class="empty-chat">
+          <div class="empty-icon">🔒</div>
+          <p>Выберите свою роль и создайте ПИН-код</p>
+        </div>
+      `;
+    }
+  }
+  console.log('✅ FChat запущен');
+}
 
   console.log('📱 FChat готов к работе');
 })();
