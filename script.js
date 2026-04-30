@@ -281,21 +281,16 @@ document.addEventListener('visibilitychange', function() {
     div.className = 'message ' + (isSent ? 'sent' : 'received');
     div.dataset.id = msg.id;
     
-    let content = '';
+   let content = '';
 if (msg.type === 'image') {
   content = `
     <img src="${msg.data}" 
          class="media-img" 
          alt="Фото" 
          loading="lazy" 
-         onclick="
-           const modal = document.createElement('div');
-           modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center;z-index:9999;cursor:pointer;';
-           modal.innerHTML = '<img src=\\'${msg.data}\\' style=\\'max-width:95%;max-height:95%;object-fit:contain;\\'>';
-           modal.onclick = function() { this.remove(); };
-           document.body.appendChild(modal);
-         ">
+         onclick="window.openImageViewer('${msg.data.replace(/'/g, "\\'")}')">
   `;
+}
 } else if (msg.type === 'voice') {
   content = `<audio controls class="media-audio" src="${msg.data}"></audio>`;
 } else {
@@ -886,4 +881,148 @@ if (msg.type === 'image') {
   }
   
   console.log('📱 FChat готов к работе');
+// ============ ПРОСМОТРЩИК ФОТО ============
+window.openImageViewer = function(src) {
+  // Удаляем старый просмотрщик, если есть
+  const old = document.querySelector('.image-viewer');
+  if (old) old.remove();
+  
+  // Создаём контейнер
+  const viewer = document.createElement('div');
+  viewer.className = 'image-viewer';
+  viewer.style.cssText = `
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.95);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    cursor: zoom-out;
+  `;
+  
+  // Создаём изображение
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = `
+    max-width: 90%;
+    max-height: 90%;
+    object-fit: contain;
+    transition: transform 0.2s;
+    cursor: grab;
+  `;
+  
+  // Переменные для зума и перетаскивания
+  let scale = 1;
+  let isDragging = false;
+  let startX, startY, translateX = 0, translateY = 0;
+  
+  // Зум колёсиком
+  img.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    scale += e.deltaY * -0.01;
+    scale = Math.min(Math.max(0.5, scale), 5);
+    img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+  });
+  
+  // Двойной клик для сброса зума
+  img.addEventListener('dblclick', function(e) {
+    e.stopPropagation();
+    if (scale > 1) {
+      scale = 1;
+      translateX = 0;
+      translateY = 0;
+      img.style.transform = 'scale(1)';
+      img.style.cursor = 'zoom-in';
+    } else {
+      scale = 2;
+      img.style.transform = 'scale(2)';
+      img.style.cursor = 'grab';
+    }
+  });
+  
+  // Перетаскивание
+  img.addEventListener('mousedown', function(e) {
+    if (scale > 1) {
+      isDragging = true;
+      startX = e.clientX - translateX;
+      startY = e.clientY - translateY;
+      img.style.cursor = 'grabbing';
+    }
+  });
+  
+  window.addEventListener('mousemove', function(e) {
+    if (isDragging) {
+      translateX = e.clientX - startX;
+      translateY = e.clientY - startY;
+      img.style.transform = `scale(${scale}) translate(${translateX}px, ${translateY}px)`;
+    }
+  });
+  
+  window.addEventListener('mouseup', function() {
+    isDragging = false;
+    img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
+  });
+  
+  // Кнопки управления
+  const controls = document.createElement('div');
+  controls.style.cssText = `
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10001;
+  `;
+  
+  const buttons = [
+    { text: '🔍−', action: () => { scale = Math.max(0.5, scale - 0.5); img.style.transform = `scale(${scale})`; } },
+    { text: '🔍+', action: () => { scale = Math.min(5, scale + 0.5); img.style.transform = `scale(${scale})`; } },
+    { text: '↺', action: () => { scale = 1; translateX = 0; translateY = 0; img.style.transform = 'scale(1)'; } },
+    { text: '✕', action: () => viewer.remove() }
+  ];
+  
+  buttons.forEach(btn => {
+    const button = document.createElement('button');
+    button.textContent = btn.text;
+    button.style.cssText = `
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      backdrop-filter: blur(10px);
+    `;
+    button.addEventListener('click', (e) => {
+      e.stopPropagation();
+      btn.action();
+    });
+    controls.appendChild(button);
+  });
+  
+  // Закрытие по клику на фон
+  viewer.addEventListener('click', function(e) {
+    if (e.target === viewer) {
+      viewer.remove();
+    }
+  });
+  
+  viewer.appendChild(img);
+  viewer.appendChild(controls);
+  document.body.appendChild(viewer);
+  
+  // Закрытие по Escape
+  const escHandler = function(e) {
+    if (e.key === 'Escape') {
+      viewer.remove();
+      window.removeEventListener('keydown', escHandler);
+    }
+  };
+  window.addEventListener('keydown', escHandler);
+};
 })();
