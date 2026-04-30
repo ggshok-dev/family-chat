@@ -474,6 +474,9 @@
   function loadMessages() {
     if (!currentUser) return;
     
+    // ОТЛАДКА
+    console.log('Загружаем чат:', getChatPath());
+    
     if (messageListener) {
       db.ref(getChatPath()).off('child_added', messageListener);
     }
@@ -738,28 +741,26 @@
   tab.addEventListener('click', function() {
     document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
     tab.classList.add('active');
-    activeTab = tab.dataset.tab;
     
-    if (activeTab === 'private') {
-      // Если переключаемся на личный чат, но собеседник не выбран
+    const newTab = tab.dataset.tab;
+    
+    if (newTab === 'private') {
       if (!privateWith) {
-        // Восстанавливаем последнего собеседника
         const savedPrivate = localStorage.getItem('fc_private_' + currentUser);
         if (savedPrivate && FAMILY[savedPrivate]) {
           privateWith = savedPrivate;
         } else {
-          // Если нет сохранённого — выбираем первого доступного
           const others = Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; });
-          if (others.length > 0) {
-            privateWith = others[0].id;
-          }
+          if (others.length > 0) privateWith = others[0].id;
         }
       }
       document.getElementById('privateSel').style.display = 'block';
     } else {
-      privateWith = null;
       document.getElementById('privateSel').style.display = 'none';
     }
+    
+    // ВАЖНО: меняем activeTab только после всех проверок
+    activeTab = newTab;
     
     updatePrivate();
     loadMessages();
