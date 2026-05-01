@@ -445,18 +445,31 @@
       index++;
     }
     
+    // Удалить
     if (msg.from === currentUser && allButtons[index]) {
-      allButtons[index].addEventListener('click', function() {
-        menu.remove();
-        if (confirm('Удалить сообщение?')) {
-          db.ref(getChatPath() + '/' + msg.id).set(null);
-          var el = document.querySelector('[data-id="' + msg.id + '"]');
-          if (el) { el.style.opacity = '0'; el.style.transition = '0.3s'; setTimeout(function() { el.remove(); }, 300); }
-          processedIds.delete(msg.id);
-        }
-      });
-      index++;
+    allButtons[index].addEventListener('click', function() {
+    menu.remove();
+    if (confirm('Удалить сообщение?')) {
+      // ВАЖНО: Используем set(null) для синхронизации
+      db.ref(getChatPath() + '/' + msg.id).set(null)
+        .then(function() {
+          console.log('✅ Сообщение удалено из Firebase');
+        })
+        .catch(function(error) {
+          console.error('Ошибка удаления:', error);
+        });
+      
+      var el = document.querySelector('[data-id="' + msg.id + '"]');
+      if (el) { 
+        el.style.opacity = '0'; 
+        el.style.transition = '0.3s'; 
+        setTimeout(function() { el.remove(); }, 300); 
+      }
+      processedIds.delete(msg.id);
     }
+  });
+  index++;
+}
     
     if (allButtons[index]) {
       allButtons[index].addEventListener('click', function(e) {
@@ -551,7 +564,38 @@
         }
       }
     });
+    
+    // Слушаем удаление сообщений (для синхронизации между устройствами)
+    ref.on('child_removed', function(snap) {
+      var el = document.querySelector('[data-id="' + snap.key + '"]');
+      if (el) { 
+        el.style.opacity = '0';
+        el.style.transition = '0.3s';
+        setTimeout(function() { el.remove(); }, 300);
+      }
+      processedIds.delete(snap.key);
+    });
+    
+    // Слушаем изменения сообщений (для редактирования)
+    ref.on('child_changed', function(snap) {
+      const msg = Object.assign({id: snap.key}, snap.val());
+      var old = document.querySelector('[data-id="' + msg.id + '"]');
+      if (old) old.remove();
+      processedIds.delete(msg.id);
+      showMessage(msg);
+    });
+}
+
+  // Слушаем удаление сообщений (для синхронизации)
+ref.on('child_removed', function(snap) {
+  var el = document.querySelector('[data-id="' + snap.key + '"]');
+  if (el) { 
+    el.style.opacity = '0';
+    el.style.transition = '0.3s';
+    setTimeout(function() { el.remove(); }, 300);
   }
+  processedIds.delete(snap.key);
+});
   
   function updatePrivateHeader() {
     const header = document.getElementById('privateChatHeader');
