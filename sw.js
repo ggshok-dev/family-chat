@@ -4,7 +4,7 @@ const urlsToCache = [
   '/family-chat/',
   '/family-chat/index.html',
   '/family-chat/style.css',
-  '/family-chat/script.js',
+  '/family-chat/main.js',
   '/family-chat/manifest.json'
 ];
 
