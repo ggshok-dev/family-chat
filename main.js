@@ -1172,7 +1172,8 @@ window.openImageViewer = function(src) {
         setTimeout(() => el.style.background = '', 2000);
     }
 }
-    
+
+  // Очистка кэша каждые 5 минут
   setInterval(function() { if (processedIds.size > 100) processedIds.clear(); }, 300000);
   console.log('📱 FChat готов');
 })();
