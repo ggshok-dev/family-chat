@@ -1022,7 +1022,17 @@ window.openImageViewer = function(src) {
   
   viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
   document.body.appendChild(viewer);
-};
+});
+  
+    // Закрытие по клавише Escape (для компьютера)
+    function escHandler(e) {
+      if (e.key === 'Escape') {
+        viewer.remove();
+        window.removeEventListener('keydown', escHandler);
+      }
+    }
+    window.addEventListener('keydown', escHandler);
+  };
   
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
