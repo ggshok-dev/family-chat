@@ -242,6 +242,18 @@
     
     pinsRef.once('value').then(function(snap) {
       const pins = snap.val() || {};
+
+      const onlineDot = isActive ? '<div class="online-dot"></div>' : '';
+
+return `
+  <div class="user-avatar ...">
+    <div class="avatar-circle" style="...">
+      ${onlineDot}
+      ...
+    </div>
+    ...
+  </div>
+`;
       
       container.innerHTML = Object.values(FAMILY).map(function(m) {
         const av = getAvatar(m.id);
@@ -356,6 +368,17 @@
     
     const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
     
+    // Добавляем разделитель дат
+    const dateLabel = getDateLabel(msg.timestamp);
+    const lastLabel = chat.querySelector('.date-separator:last-child');
+    if (!lastLabel || lastLabel.textContent !== dateLabel) {
+    const separator = document.createElement('div');
+    separator.className = 'date-separator';
+    separator.textContent = dateLabel;
+    separator.style.cssText = 'text-align:center;color:#999;font-size:0.8rem;margin:10px 0;';
+    chat.appendChild(separator);
+    }
+    
     div.innerHTML = 
       (!isSent ? '<div class="msg-sender"><span class="sender-avatar">' + 
         (senderAv ? '<img src="' + senderAv + '">' : '<span>' + sender.emoji + '</span>') + 
@@ -364,6 +387,13 @@
         '<div class="msg-time"><span>' + time + '</span>' + 
         (isSent ? '<span class="msg-menu-btn">⋮</span>' : '') + 
       '</div></div>';
+
+    if (msg.reactions) {
+     const reactionsDiv = document.createElement('div');
+     reactionsDiv.style.cssText = 'font-size:0.8rem;margin-top:4px;';
+     reactionsDiv.textContent = Object.values(msg.reactions).join(' ');
+     div.querySelector('.bubble').appendChild(reactionsDiv);
+   }
     
     if (isSent) {
       const menuBtn = div.querySelector('.msg-menu-btn');
@@ -391,6 +421,15 @@
   function showMenu(event, msg) {
     const old = document.querySelector('.context-menu');
     if (old) old.remove();
+
+    menu.innerHTML += '<button>💬 Ответить</button>';
+
+menu.querySelectorAll('button')[menu.querySelectorAll('button').length - 1].addEventListener('click', () => {
+  menu.remove();
+  const quote = '> ' + (msg.text || '📷 Фото') + '\n';
+  document.getElementById('msgInput').value = quote;
+  document.getElementById('msgInput').focus();
+});
     
     const menu = document.createElement('div');
     menu.className = 'context-menu';
@@ -409,6 +448,25 @@
     menu.style.zIndex = '9999';
     
     document.body.appendChild(menu);
+
+    menu.innerHTML = `
+  <button>👍</button>
+  <button>❤️</button>
+  <button>😂</button>
+  <button>📋 Копировать</button>
+  <button>✏️ Редактировать</button>
+  <button class="danger-btn">🗑️ Удалить</button>
+`;
+
+    function addReaction(msg, emoji) {
+  const reactions = msg.reactions || {};
+  reactions[state.currentUser] = emoji;
+  db.ref(getChatPath() + '/' + msg.id + '/reactions').set(reactions);
+}
+// Обработчик реакций
+menu.querySelectorAll('button')[0].addEventListener('click', () => { addReaction(msg, '👍'); menu.remove(); });
+menu.querySelectorAll('button')[1].addEventListener('click', () => { addReaction(msg, '❤️'); menu.remove(); });
+menu.querySelectorAll('button')[2].addEventListener('click', () => { addReaction(msg, '😂'); menu.remove(); });
     
     menu.querySelectorAll('button')[0].addEventListener('click', function() {
       menu.remove();
@@ -434,6 +492,50 @@
         });
       }
     });
+
+    let typingTimer = null;
+let typingUsers = {};
+
+document.getElementById('msgInput').addEventListener('input', function() {
+  if (!state.currentUser) return;
+  
+  // Отправляем статус "печатает" в Firebase
+  db.ref('typing/' + getChatPath() + '/' + state.currentUser).set(true);
+  
+  clearTimeout(typingTimer);
+  typingTimer = setTimeout(() => {
+    db.ref('typing/' + getChatPath() + '/' + state.currentUser).remove();
+  }, 2000);
+});
+
+// Слушаем статус печати
+function listenTyping() {
+  db.ref('typing/' + getChatPath()).on('value', snap => {
+    const typing = snap.val() || {};
+    const users = Object.keys(typing).filter(id => id !== state.currentUser);
+    
+    const indicator = document.getElementById('typingIndicator') || createTypingIndicator();
+    
+    if (users.length > 0) {
+      const names = users.map(id => FAMILY[id]?.name || 'Кто-то').join(', ');
+      indicator.textContent = names + ' печатает...';
+      indicator.style.display = 'block';
+    } else {
+      indicator.style.display = 'none';
+    }
+  });
+}
+
+function createTypingIndicator() {
+  const div = document.createElement('div');
+  div.id = 'typingIndicator';
+  div.style.cssText = 'padding:5px 15px;color:#999;font-size:0.8rem;font-style:italic;';
+  document.getElementById('chatWindow').before(div);
+  return div;
+}
+
+// Вызовите в initApp():
+listenTyping();
     
     // Оптимизированное удаление
     menu.querySelectorAll('button')[2].addEventListener('click', function() {
@@ -557,6 +659,19 @@
       header.style.display = 'none';
     }
   }
+  
+  // Получение метки даты для группировки
+  function getDateLabel(timestamp) {
+  const now = new Date();
+  const msgDate = new Date(timestamp);
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today - 86400000);
+  const msgDay = new Date(msgDate.getFullYear(), msgDate.getMonth(), msgDate.getDate());
+  
+  if (msgDay.getTime() === today.getTime()) return 'Сегодня';
+  if (msgDay.getTime() === yesterday.getTime()) return 'Вчера';
+  return msgDate.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' });
+}
   
   // ============ УВЕДОМЛЕНИЯ ============
   function notify(title, body) {
