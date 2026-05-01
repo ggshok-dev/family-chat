@@ -576,26 +576,26 @@
       processedIds.delete(snap.key);
     });
     
+        // Слушаем удаление сообщений (для синхронизации между устройствами)
+    db.ref(getChatPath()).on('child_removed', function(snap) {
+      var el = document.querySelector('[data-id="' + snap.key + '"]');
+      if (el) { 
+        el.style.opacity = '0';
+        el.style.transition = '0.3s';
+        setTimeout(function() { el.remove(); }, 300);
+      }
+      processedIds.delete(snap.key);
+    });
+    
     // Слушаем изменения сообщений (для редактирования)
-    ref.on('child_changed', function(snap) {
+    db.ref(getChatPath()).on('child_changed', function(snap) {
       const msg = Object.assign({id: snap.key}, snap.val());
       var old = document.querySelector('[data-id="' + msg.id + '"]');
       if (old) old.remove();
       processedIds.delete(msg.id);
       showMessage(msg);
     });
-}
-
-  // Слушаем удаление сообщений (для синхронизации)
-ref.on('child_removed', function(snap) {
-  var el = document.querySelector('[data-id="' + snap.key + '"]');
-  if (el) { 
-    el.style.opacity = '0';
-    el.style.transition = '0.3s';
-    setTimeout(function() { el.remove(); }, 300);
   }
-  processedIds.delete(snap.key);
-});
   
   function updatePrivateHeader() {
     const header = document.getElementById('privateChatHeader');
