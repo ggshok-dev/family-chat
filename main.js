@@ -299,27 +299,27 @@
 
     // Отображение цитируемого сообщения
     let replyHTML = '';
-  if (msg.replyTo) {
-  const replySender = FAMILY[msg.replyTo.from]?.name || 'Кто-то';
-  let replyPreview = '';
-  
-  if (msg.replyTo.text && msg.replyTo.text !== '📷 Фото' && msg.replyTo.text !== '🎤 Голосовое') {
-    replyPreview = (msg.replyTo.text || '').substring(0, 100);
-  } else if (msg.replyTo.text === '📷 Фото') {
-    replyPreview = '🖼️ Фотография';
-  } else if (msg.replyTo.text === '🎤 Голосовое') {
-    replyPreview = '🎵 Голосовое сообщение';
-  } else {
-    replyPreview = 'Сообщение';
-  }
-  
-  replyHTML = `
-    <div class="reply-preview" style="border-left:3px solid #667eea;padding:8px 10px;margin-bottom:5px;background:rgba(102,126,234,0.1);border-radius:6px;font-size:0.85rem;cursor:pointer;" onclick="scrollToMessage('${msg.replyTo.id}')">
-      <div style="font-weight:600;color:#667eea;margin-bottom:3px;">↳ ${replySender}</div>
-      <div style="opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${replyPreview}</div>
-    </div>
-  `;
-}
+    if (msg.replyTo) {
+      const replySender = FAMILY[msg.replyTo.from]?.name || 'Кто-то';
+      let replyPreview = '';
+      
+      if (msg.replyTo.text && msg.replyTo.text !== '📷 Фото' && msg.replyTo.text !== '🎤 Голосовое') {
+        replyPreview = (msg.replyTo.text || '').substring(0, 100);
+      } else if (msg.replyTo.text === '📷 Фото') {
+        replyPreview = '🖼️ Фотография';
+      } else if (msg.replyTo.text === '🎤 Голосовое') {
+        replyPreview = '🎵 Голосовое сообщение';
+      } else {
+        replyPreview = 'Сообщение';
+      }
+      
+      replyHTML = `
+        <div class="reply-preview" style="border-left:3px solid #667eea;padding:8px 10px;margin-bottom:5px;background:rgba(102,126,234,0.1);border-radius:6px;font-size:0.85rem;cursor:pointer;" onclick="scrollToMessage('${msg.replyTo.id}')">
+          <div style="font-weight:600;color:#667eea;margin-bottom:3px;">↳ ${replySender}</div>
+          <div style="opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${replyPreview}</div>
+        </div>
+      `;
+    }
     
     let content = '';
     if (msg.type === 'image') {
@@ -411,11 +411,9 @@
     menu.style.cssText = 'position:fixed;left:' + left + 'px;top:' + top + 'px;z-index:9999;';
     document.body.appendChild(menu);
     
-    // Собираем все кнопки
     var allButtons = menu.querySelectorAll('button');
     var index = 0;
     
-    // Ответить
     allButtons[index].addEventListener('click', function() {
       menu.remove();
       setReply(msg);
@@ -423,7 +421,6 @@
     });
     index++;
     
-    // Копировать (только текст)
     if (isTextMessage && allButtons[index]) {
       allButtons[index].addEventListener('click', function() {
         menu.remove();
@@ -432,7 +429,6 @@
       index++;
     }
     
-    // Редактировать
     if (isTextMessage && msg.from === currentUser && allButtons[index]) {
       allButtons[index].addEventListener('click', function() {
         menu.remove();
@@ -442,7 +438,6 @@
       index++;
     }
     
-    // Удалить
     if (msg.from === currentUser && allButtons[index]) {
       allButtons[index].addEventListener('click', function() {
         menu.remove();
@@ -456,7 +451,6 @@
       index++;
     }
     
-    // Реакции — последняя кнопка
     if (allButtons[index]) {
       allButtons[index].addEventListener('click', function(e) {
         e.stopPropagation();
@@ -469,10 +463,9 @@
       var close = function(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
       document.addEventListener('click', close);
     }, 10);
-}
+  }
 
-// Новое меню реакций
-function showReactionMenu(event, msg) {
+  function showReactionMenu(event, msg) {
     const old = document.querySelector('.context-menu');
     if (old) old.remove();
     
@@ -481,17 +474,14 @@ function showReactionMenu(event, msg) {
     menu.innerHTML = `
       <div style="font-size:0.8rem;color:#999;padding:5px 10px;">Выберите реакцию:</div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:5px 8px 8px 8px;">
-    <button class="reaction-btn" data-emoji="👍">👍</button>
-    <button class="reaction-btn" data-emoji="👎">👎</button>
-    <button class="reaction-btn" data-emoji="❤️">❤️</button>
-    <button class="reaction-btn" data-emoji="😂">😂</button>
-    <button class="reaction-btn" data-emoji="😢">😢</button>
-    <button class="reaction-btn" data-emoji="😡">😡</button>
-    <button class="reaction-btn" data-emoji="🔥">🔥</button>
-    <button class="reaction-btn" data-emoji="🎉">🎉</button>
-    <button class="reaction-btn" data-emoji="💯">💯</button>
-    <button class="reaction-btn" data-emoji="✍️">✍️</button>
-    <button class="reaction-btn" data-emoji="🙏">🙏</button>
+        <button class="reaction-btn" data-emoji="👍">👍</button>
+        <button class="reaction-btn" data-emoji="❤️">❤️</button>
+        <button class="reaction-btn" data-emoji="😂">😂</button>
+        <button class="reaction-btn" data-emoji="😢">😢</button>
+        <button class="reaction-btn" data-emoji="😡">😡</button>
+        <button class="reaction-btn" data-emoji="🔥">🔥</button>
+        <button class="reaction-btn" data-emoji="🎉">🎉</button>
+        <button class="reaction-btn" data-emoji="💯">💯</button>
       </div>
     `;
     
@@ -513,7 +503,7 @@ function showReactionMenu(event, msg) {
       var close = function(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
       document.addEventListener('click', close);
     }, 10);
-}
+  }
   
   // ============ ЧАТ ============
   function getChatPath() {
@@ -548,13 +538,13 @@ function showReactionMenu(event, msg) {
       if (!processedIds.has(msg.id)) {
         showMessage(msg);
         if (msg.from !== currentUser) {
-      const sender = FAMILY[msg.from] || {name: 'Кто-то'};
-      const chatType = activeTab === 'private' ? ' [личное]' : '';
-      notify(
-         sender.emoji + ' ' + sender.name,
-         (msg.text || '📷 Фото') + chatType
-       );
-    }
+          const sender = FAMILY[msg.from] || {name: 'Кто-то'};
+          const chatType = activeTab === 'private' ? ' [личное]' : '';
+          notify(sender.emoji + ' ' + sender.name, (msg.text || '📷 Фото') + chatType);
+        }
+      }
+    });
+  }
   
   function updatePrivateHeader() {
     const header = document.getElementById('privateChatHeader');
@@ -573,14 +563,12 @@ function showReactionMenu(event, msg) {
   
   // ============ УВЕДОМЛЕНИЯ ============
   function notify(title, body) {
-    if (!state.notifEnabled && !notifEnabled) return;
+    if (!notifEnabled) return;
     
-    // Вибрация на телефоне
     if (navigator.vibrate) {
       navigator.vibrate([200, 100, 200]);
     }
     
-    // Показываем уведомление через Service Worker (работает даже когда чат закрыт)
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then(function(registration) {
         registration.showNotification(title || 'FChat', {
@@ -592,9 +580,7 @@ function showReactionMenu(event, msg) {
           renotify: true
         });
       });
-    } 
-    // Запасной вариант — обычное уведомление
-    else if ('Notification' in window && Notification.permission === 'granted') {
+    } else if ('Notification' in window && Notification.permission === 'granted') {
       new Notification(title || 'FChat', {
         body: body || 'Новое сообщение',
         icon: '/family-chat/icon-192.png',
@@ -602,7 +588,6 @@ function showReactionMenu(event, msg) {
       });
     }
     
-    // Мигание заголовка
     const header = document.querySelector('.header');
     if (header) {
       header.style.animation = 'flash 0.5s ease 3';
@@ -610,7 +595,7 @@ function showReactionMenu(event, msg) {
     }
     
     playSound();
-}
+  }
   
   function playSound() {
     if (!soundEnabled) return;
@@ -628,32 +613,21 @@ function showReactionMenu(event, msg) {
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
   }
 
-  // Запрашиваем разрешение на уведомления при первом входе
-    if ('Notification' in window && Notification.permission === 'default') {
-    Notification.requestPermission().then(function(permission) {
-    if (permission === 'granted') {
-      console.log('✅ Уведомления включены');
-    }
-  });
-}
-        
   function setReply(msg) {
     replyToMessage = msg;
-    
-    // Показываем панель цитирования
     const replyBar = document.getElementById('replyBar') || createReplyBar();
     replyBar.style.display = 'flex';
     replyBar.querySelector('.reply-text').textContent = (msg.text || '📷 Фото').substring(0, 100);
     replyBar.querySelector('.reply-author').textContent = FAMILY[msg.from]?.name || 'Кто-то';
-}
+  }
 
-function clearReply() {
+  function clearReply() {
     replyToMessage = null;
     const replyBar = document.getElementById('replyBar');
     if (replyBar) replyBar.style.display = 'none';
-}
+  }
 
-function createReplyBar() {
+  function createReplyBar() {
     const bar = document.createElement('div');
     bar.id = 'replyBar';
     bar.style.cssText = 'display:none;padding:8px 15px;background:rgba(102,126,234,0.2);border-left:3px solid #667eea;margin-bottom:5px;align-items:center;gap:10px;';
@@ -664,12 +638,11 @@ function createReplyBar() {
         </div>
         <button id="cancelReply" style="background:none;border:none;color:#ff4444;cursor:pointer;font-size:1.2rem;">✕</button>
     `;
-    
     document.getElementById('input-panel-container')?.insertBefore(bar, document.querySelector('.input-row'));
-    
     bar.querySelector('#cancelReply').addEventListener('click', clearReply);
     return bar;
-}
+  }
+  
   // ============ ОТПРАВКА ============
   function sendText(text, replyTo) {
     if (!currentUser) { alert('Сначала войдите'); return; }
@@ -682,7 +655,6 @@ function createReplyBar() {
       type: 'text' 
     };
     
-    // Добавляем информацию о цитируемом сообщении
     if (replyTo) {
       msg.replyTo = {
         id: replyTo.id,
@@ -696,10 +668,8 @@ function createReplyBar() {
     db.ref(getChatPath()).push(msg);
     const msgInput = document.getElementById('msgInput');
     if (msgInput) msgInput.value = '';
-    
-    // Сбрасываем цитирование
     clearReply();
-}
+  }
   
   // ============ ОБРАБОТЧИКИ ============
   function setupListeners() {
@@ -711,32 +681,27 @@ function createReplyBar() {
     });
     
     document.getElementById('sendBtn').addEventListener('click', function() {
-    sendText(document.getElementById('msgInput').value, replyToMessage);
-});
+      sendText(document.getElementById('msgInput').value, replyToMessage);
+    });
 
-    // Тема с названиями
-const themes = [
-  { name: 'Liquid Glass 🌊', class: '' },
-  { name: 'Тёмная тема 🌙', class: 'dark-theme' },
-  { name: 'Зелёная 🌿', class: 'green-theme' },
-  { name: 'Фиолетовая 🍇', class: 'purple-theme' }
-];
-let currentThemeIndex = 0;
+    // Переключение тем
+    const themes = [
+      { name: 'Liquid Glass 🌊', class: '' },
+      { name: 'Тёмная тема 🌙', class: 'dark-theme' },
+      { name: 'Зелёная 🌿', class: 'green-theme' },
+      { name: 'Фиолетовая 🍇', class: 'purple-theme' }
+    ];
+    let currentThemeIndex = 0;
 
-document.getElementById('themeBtn').addEventListener('click', function() {
-  currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-  const theme = themes[currentThemeIndex];
-  
-  // Убираем все темы
-  document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
-  
-  // Применяем выбранную
-  if (theme.class) document.body.classList.add(theme.class);
-  
-  this.textContent = theme.name.split(' ')[0];
-  this.title = theme.name;
-  localStorage.setItem('fc_theme', theme.class || 'light');
-});
+    document.getElementById('themeBtn').addEventListener('click', function() {
+      currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+      const theme = themes[currentThemeIndex];
+      document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
+      if (theme.class) document.body.classList.add(theme.class);
+      this.textContent = theme.name.split(' ')[0];
+      this.title = theme.name;
+      localStorage.setItem('fc_theme', theme.class || 'light');
+    });
     
     // Индикатор печати
     document.getElementById('msgInput').addEventListener('input', function() {
@@ -830,12 +795,6 @@ document.getElementById('themeBtn').addEventListener('click', function() {
     });
     
     document.getElementById('settingsBtn').addEventListener('click', function() { document.getElementById('settingsPanel').classList.toggle('show'); });
-    document.getElementById('themeBtn').addEventListener('click', function() {
-      isDarkTheme = !isDarkTheme;
-      document.body.classList.toggle('dark-theme', isDarkTheme);
-      this.textContent = isDarkTheme ? '☀️' : '🌙';
-      localStorage.setItem('fc_theme', isDarkTheme ? 'dark' : 'light');
-    });
     
     document.getElementById('notifBtn').addEventListener('click', function() {
       notifEnabled = !notifEnabled; localStorage.setItem('fc_notif', notifEnabled);
@@ -894,11 +853,8 @@ document.getElementById('themeBtn').addEventListener('click', function() {
   
   function applyStoredSettings() {
     const savedTheme = localStorage.getItem('fc_theme') || 'light';
-    
-    // Сбрасываем все темы
     document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
     
-    // Определяем индекс темы для кнопки
     if (savedTheme === 'dark-theme') {
       document.body.classList.add('dark-theme');
       isDarkTheme = true;
@@ -931,7 +887,6 @@ document.getElementById('themeBtn').addEventListener('click', function() {
     const sb = document.getElementById('soundBtn');
     if (sb) sb.textContent = soundEnabled ? '🔊' : '🔇';
     
-    // Устанавливаем иконку темы
     const themeBtn = document.getElementById('themeBtn');
     if (themeBtn) {
       if (savedTheme === 'dark-theme') themeBtn.textContent = '🌙';
@@ -939,166 +894,114 @@ document.getElementById('themeBtn').addEventListener('click', function() {
       else if (savedTheme === 'purple-theme') themeBtn.textContent = '🍇';
       else themeBtn.textContent = '🌊';
     }
-}
-  
-  // ============ ПРОСМОТРЩИК ФОТО (зум от точки касания) ============
-window.openImageViewer = function(src) {
-  const allImages = [];
-  document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
-  let currentIndex = allImages.indexOf(src);
-  const old = document.querySelector('.image-viewer');
-  if (old) old.remove();
-  
-  const viewer = document.createElement('div');
-  viewer.className = 'image-viewer';
-  viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;overflow:hidden;touch-action:none;';
-  
-  const img = document.createElement('img');
-  img.src = src;
-  img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);';
-  
-  let scale = 1;
-  let translateX = 0;
-  let translateY = 0;
-  let startX = 0;
-  let isSwiping = false;
-  let isZooming = false;
-  let lastDist = 0;
-  let lastScale = 1;
-  
-  function updateImage() {
-    img.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale})`;
   }
   
-  // Пинч-зум
-  img.addEventListener('touchstart', function(e) {
-    if (e.touches.length === 2) {
-      isZooming = true;
-      isSwiping = false;
-      lastDist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      lastScale = scale;
-    } else if (e.touches.length === 1 && scale === 1) {
-      // Свайп только при масштабе 1
-      isSwiping = true;
-      isZooming = false;
-      startX = e.touches[0].clientX;
+  // ============ ПРОСМОТРЩИК ФОТО ============
+  window.openImageViewer = function(src) {
+    const allImages = [];
+    document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
+    let currentIndex = allImages.indexOf(src);
+    const old = document.querySelector('.image-viewer');
+    if (old) old.remove();
+    
+    const viewer = document.createElement('div');
+    viewer.className = 'image-viewer';
+    viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;overflow:hidden;touch-action:none;';
+    
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);';
+    
+    let scale = 1, translateX = 0, translateY = 0;
+    let startX = 0, isSwiping = false, isZooming = false, lastDist = 0, lastScale = 1;
+    
+    function updateImage() {
+      img.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale})`;
     }
-  });
-  
-  img.addEventListener('touchmove', function(e) {
-    if (isZooming && e.touches.length === 2) {
-      e.preventDefault();
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      scale = lastScale * (dist / lastDist);
-      scale = Math.min(5, Math.max(0.5, scale));
-      updateImage();
-    } else if (isSwiping && e.touches.length === 1 && scale === 1) {
-      translateX = e.touches[0].clientX - startX;
-      updateImage();
-    }
-  });
-  
-  img.addEventListener('touchend', function(e) {
-    if (isSwiping && scale === 1) {
-      const diff = translateX;
-      if (diff < -80 && currentIndex < allImages.length - 1) {
-        currentIndex++;
-        img.src = allImages[currentIndex];
-        updateCounter();
-      } else if (diff > 80 && currentIndex > 0) {
-        currentIndex--;
-        img.src = allImages[currentIndex];
-        updateCounter();
+    
+    img.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        isZooming = true; isSwiping = false;
+        lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        lastScale = scale;
+      } else if (e.touches.length === 1 && scale === 1) {
+        isSwiping = true; isZooming = false;
+        startX = e.touches[0].clientX;
       }
-      translateX = 0;
-      updateImage();
-    }
-    isSwiping = false;
-    isZooming = false;
-  });
-  
-  // Двойной тап для зума
-  let lastTap = 0;
-  img.addEventListener('click', function(e) {
-    const now = Date.now();
-    if (now - lastTap < 300) {
-      e.preventDefault();
-      if (scale > 1) {
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-      } else {
-        scale = 2.5;
-      }
-      updateImage();
-    }
-    lastTap = now;
-  });
-  
-  viewer.appendChild(img);
-  
-  // Счётчик
-  const counter = document.createElement('div');
-  counter.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;font-size:1rem;';
-  viewer.appendChild(counter);
-  
-  function updateCounter() {
-    counter.textContent = (currentIndex + 1) + ' / ' + allImages.length;
-  }
-  updateCounter();
-  
-  // Стрелки
-  function createArrow(direction) {
-    const btn = document.createElement('button');
-    btn.innerHTML = direction === 'prev' ? '‹' : '›';
-    btn.style.cssText = `position:fixed;${direction === 'prev' ? 'left:10px' : 'right:10px'};top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;`;
-    btn.onclick = function(e) {
-      e.stopPropagation();
-      if (direction === 'prev' && currentIndex > 0) {
-        currentIndex--;
-        img.src = allImages[currentIndex];
-        updateCounter();
-        scale = 1; translateX = 0; translateY = 0;
+    });
+    
+    img.addEventListener('touchmove', function(e) {
+      if (isZooming && e.touches.length === 2) {
+        e.preventDefault();
+        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        scale = lastScale * (dist / lastDist);
+        scale = Math.min(5, Math.max(0.5, scale));
         updateImage();
-      } else if (direction === 'next' && currentIndex < allImages.length - 1) {
-        currentIndex++;
-        img.src = allImages[currentIndex];
-        updateCounter();
-        scale = 1; translateX = 0; translateY = 0;
+      } else if (isSwiping && e.touches.length === 1 && scale === 1) {
+        translateX = e.touches[0].clientX - startX;
         updateImage();
       }
-    };
-    return btn;
-  }
-  
-  if (currentIndex > 0) viewer.appendChild(createArrow('prev'));
-  if (currentIndex < allImages.length - 1) viewer.appendChild(createArrow('next'));
-  
-  // Кнопка закрыть
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '✕';
-  closeBtn.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;font-size:1.2rem;';
-  closeBtn.onclick = function() { viewer.remove(); };
-  viewer.appendChild(closeBtn);
-  
-  viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
-  document.body.appendChild(viewer);
-
-  // Закрытие по клавише Escape (для компьютера)
-  function escHandler(e) {
-    if (e.key === 'Escape') {
-      viewer.remove();
-      window.removeEventListener('keydown', escHandler);
+    });
+    
+    img.addEventListener('touchend', function() {
+      if (isSwiping && scale === 1) {
+        const diff = translateX;
+        if (diff < -80 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
+        else if (diff > 80 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
+        translateX = 0; updateImage();
+      }
+      isSwiping = false; isZooming = false;
+    });
+    
+    let lastTap = 0;
+    img.addEventListener('click', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        e.preventDefault();
+        if (scale > 1) { scale = 1; translateX = 0; translateY = 0; }
+        else { scale = 2.5; }
+        updateImage();
+      }
+      lastTap = now;
+    });
+    
+    viewer.appendChild(img);
+    
+    const counter = document.createElement('div');
+    counter.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;font-size:1rem;';
+    viewer.appendChild(counter);
+    function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
+    updateCounter();
+    
+    function createArrow(direction) {
+      const btn = document.createElement('button');
+      btn.innerHTML = direction === 'prev' ? '‹' : '›';
+      btn.style.cssText = `position:fixed;${direction === 'prev' ? 'left:10px' : 'right:10px'};top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;`;
+      btn.onclick = function(e) {
+        e.stopPropagation();
+        if (direction === 'prev' && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateImage(); }
+        else if (direction === 'next' && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateImage(); }
+      };
+      return btn;
     }
-  }
-  window.addEventListener('keydown', escHandler);
-};
+    
+    if (currentIndex > 0) viewer.appendChild(createArrow('prev'));
+    if (currentIndex < allImages.length - 1) viewer.appendChild(createArrow('next'));
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;font-size:1.2rem;';
+    closeBtn.onclick = function() { viewer.remove(); };
+    viewer.appendChild(closeBtn);
+    
+    viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
+    document.body.appendChild(viewer);
+    
+    function escHandler(e) {
+      if (e.key === 'Escape') { viewer.remove(); window.removeEventListener('keydown', escHandler); }
+    }
+    window.addEventListener('keydown', escHandler);
+  };
   
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
@@ -1148,6 +1051,13 @@ window.openImageViewer = function(src) {
     setupListeners();
     startAutoDelete();
     requestNotif();
+    
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(function(permission) {
+        if (permission === 'granted') console.log('✅ Уведомления включены');
+      });
+    }
+    
     updatePrivateHeader();
     loadPinsFromFirebase();
     const savedUser = localStorage.getItem('fc_user');
@@ -1163,17 +1073,15 @@ window.openImageViewer = function(src) {
     console.log('✅ FChat запущен');
   }
 
-    //Прокрутка к сообщению
-    function scrollToMessage(msgId) {
+  function scrollToMessage(msgId) {
     const el = document.querySelector('[data-id="' + msgId + '"]');
     if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.style.background = 'rgba(102,126,234,0.2)';
-        setTimeout(() => el.style.background = '', 2000);
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.background = 'rgba(102,126,234,0.2)';
+      setTimeout(function() { el.style.background = ''; }, 2000);
     }
-}
+  }
 
-  // Очистка кэша каждые 5 минут
   setInterval(function() { if (processedIds.size > 100) processedIds.clear(); }, 300000);
   console.log('📱 FChat готов');
 })();
