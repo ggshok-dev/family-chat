@@ -296,6 +296,19 @@
     const div = document.createElement('div');
     div.className = 'message ' + (isSent ? 'sent' : 'received');
     div.dataset.id = msg.id;
+
+    // Отображение цитируемого сообщения
+    let replyHTML = '';
+    if (msg.replyTo) {
+    const replySender = FAMILY[msg.replyTo.from]?.name || 'Кто-то';
+    const replyText = (msg.replyTo.text || '').substring(0, 100);
+    replyHTML = `
+        <div class="reply-preview" style="border-left:3px solid #667eea;padding:5px 10px;margin-bottom:5px;background:rgba(102,126,234,0.1);border-radius:4px;font-size:0.85rem;cursor:pointer;" onclick="scrollToMessage('${msg.replyTo.id}')">
+            <div style="font-weight:600;color:#667eea;">${replySender}</div>
+            <div style="opacity:0.7;">${replyText}</div>
+        </div>
+    `;
+}
     
     let content = '';
     if (msg.type === 'image') {
@@ -314,6 +327,7 @@
     const time = new Date(msg.timestamp).toLocaleTimeString('ru-RU', {hour:'2-digit', minute:'2-digit'});
     
     div.innerHTML = 
+      replyHTML +
       (!isSent ? '<div class="msg-sender"><span class="sender-avatar">' + 
         (senderAv ? '<img src="' + senderAv + '">' : '<span>' + sender.emoji + '</span>') + 
         '</span><strong>' + sender.name + '</strong></div>' : '') +
@@ -402,16 +416,13 @@
       });
     });
     
-    // Ответить
-    var buttons = menu.querySelectorAll('button:not(.reaction-btn)');
-    var btnIndex = 0;
-    
-    buttons[btnIndex].addEventListener('click', function() {
-      menu.remove();
-      document.getElementById('msgInput').value = '> ' + (msg.text || '📷 Фото') + '\n';
-      document.getElementById('msgInput').focus();
-    });
-    btnIndex++;
+    // Ответить (цитирование)
+buttons[btnIndex].addEventListener('click', function() {
+    menu.remove();
+    setReply(msg);
+    document.getElementById('msgInput').focus();
+});
+btnIndex++;
     
     // Копировать (только текст)
     if (isTextMessage) {
@@ -612,8 +623,19 @@ function createReplyBar() {
       if (document.visibilityState === 'visible') { unreadCount = 0; updateUnreadBadge(); }
     });
     
-    document.getElementById('sendBtn').addEventListener('click', function() { sendText(document.getElementById('msgInput').value); });
-    document.getElementById('msgInput').addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(this.value); } });
+    document.getElementById('sendBtn').addEventListener('click', function() {
+    sendText(document.getElementById('msgInput').value, replyToMessage);
+});
+
+    //Прокрутка к сообщению
+    function scrollToMessage(msgId) {
+    const el = document.querySelector('[data-id="' + msgId + '"]');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.background = 'rgba(102,126,234,0.2)';
+        setTimeout(() => el.style.background = '', 2000);
+    }
+}
     
     // Индикатор печати
     document.getElementById('msgInput').addEventListener('input', function() {
