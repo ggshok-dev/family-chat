@@ -684,24 +684,20 @@
       sendText(document.getElementById('msgInput').value, replyToMessage);
     });
 
-    // Переключение тем
-    const themes = [
-      { name: 'Liquid Glass 🌊', class: '' },
-      { name: 'Тёмная тема 🌙', class: 'dark-theme' },
-      { name: 'Зелёная 🌿', class: 'green-theme' },
-      { name: 'Фиолетовая 🍇', class: 'purple-theme' }
-    ];
-    let currentThemeIndex = 0;
-
-    document.getElementById('themeBtn').addEventListener('click', function() {
-      currentThemeIndex = (currentThemeIndex + 1) % themes.length;
-      const theme = themes[currentThemeIndex];
-      document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
-      if (theme.class) document.body.classList.add(theme.class);
-      this.textContent = theme.name.split(' ')[0];
-      this.title = theme.name;
-      localStorage.setItem('fc_theme', theme.class || 'light');
-    });
+    // Кнопка переключения тем (простое переключение)
+  document.getElementById('themeBtn').addEventListener('click', function() {
+  const themes = ['light', 'dark-theme', 'green-theme', 'purple-theme'];
+  const names = ['🌊', '🌙', '🌿', '🍇'];
+  const current = document.body.className.match(/dark-theme|green-theme|purple-theme/) || ['light'];
+  const currentIndex = themes.indexOf(current[0] === 'light' ? 'light' : current[0]);
+  const nextIndex = (currentIndex + 1) % themes.length;
+  
+  document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
+  if (themes[nextIndex] !== 'light') document.body.classList.add(themes[nextIndex]);
+  
+  this.textContent = names[nextIndex];
+  localStorage.setItem('fc_theme', themes[nextIndex]);
+});
     
     // Индикатор печати
     document.getElementById('msgInput').addEventListener('input', function() {
