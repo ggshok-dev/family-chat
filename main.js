@@ -886,123 +886,139 @@ window.openImageViewer = function(src) {
   viewer.className = 'image-viewer';
   viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;overflow:hidden;touch-action:none;';
   
-  const imgContainer = document.createElement('div');
-  imgContainer.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
-  
   const img = document.createElement('img');
   img.src = src;
-  img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transform-origin:0 0;';
+  img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);';
   
-  let scale = 1, translateX = 0, translateY = 0;
-  let lastDist = 0, lastScale = 1;
-  let isDragging = false, dragStartX = 0, dragStartY = 0;
-  let lastTap = 0;
+  let scale = 1;
+  let translateX = 0;
+  let translateY = 0;
+  let startX = 0;
+  let isSwiping = false;
+  let isZooming = false;
+  let lastDist = 0;
+  let lastScale = 1;
   
-  function updateTransform() {
-    img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  function updateImage() {
+    img.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale})`;
   }
   
-  // Пинч-зум от точки касания
+  // Пинч-зум
   img.addEventListener('touchstart', function(e) {
     if (e.touches.length === 2) {
-      isDragging = false;
-      lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      isZooming = true;
+      isSwiping = false;
+      lastDist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
       lastScale = scale;
-      
-      // Центр между пальцами
-      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
-      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-      
-      // Сохраняем точку зума
-      img.dataset.zoomX = cx;
-      img.dataset.zoomY = cy;
-    } else if (e.touches.length === 1 && scale > 1) {
-      isDragging = true;
-      dragStartX = e.touches[0].clientX - translateX;
-      dragStartY = e.touches[0].clientY - translateY;
+    } else if (e.touches.length === 1 && scale === 1) {
+      // Свайп только при масштабе 1
+      isSwiping = true;
+      isZooming = false;
+      startX = e.touches[0].clientX;
     }
   });
   
   img.addEventListener('touchmove', function(e) {
-    if (e.touches.length === 2) {
+    if (isZooming && e.touches.length === 2) {
       e.preventDefault();
-      const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      const newScale = lastScale * (newDist / lastDist);
-      scale = Math.min(5, Math.max(0.5, newScale));
-      updateTransform();
-    } else if (isDragging && e.touches.length === 1 && scale > 1) {
-      e.preventDefault();
-      translateX = e.touches[0].clientX - dragStartX;
-      translateY = e.touches[0].clientY - dragStartY;
-      updateTransform();
-    } else if (e.touches.length === 1 && scale === 1) {
-      // Свайп для перелистывания
-      img.style.transform = `translateX(${e.touches[0].clientX - (dragStartX + translateX)}px)`;
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      scale = lastScale * (dist / lastDist);
+      scale = Math.min(5, Math.max(0.5, scale));
+      updateImage();
+    } else if (isSwiping && e.touches.length === 1 && scale === 1) {
+      translateX = e.touches[0].clientX - startX;
+      updateImage();
     }
   });
   
   img.addEventListener('touchend', function(e) {
-    if (e.touches.length === 0) {
-      // Свайп
-      if (scale === 1) {
-        const diff = parseFloat(img.style.transform.replace('translateX(','').replace('px)','')) || 0;
-        if (diff < -100 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
-        else if (diff > 100 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
-        img.style.transform = '';
+    if (isSwiping && scale === 1) {
+      const diff = translateX;
+      if (diff < -80 && currentIndex < allImages.length - 1) {
+        currentIndex++;
+        img.src = allImages[currentIndex];
+        updateCounter();
+      } else if (diff > 80 && currentIndex > 0) {
+        currentIndex--;
+        img.src = allImages[currentIndex];
+        updateCounter();
       }
-      isDragging = false;
+      translateX = 0;
+      updateImage();
     }
+    isSwiping = false;
+    isZooming = false;
   });
   
-  // Двойной тап
+  // Двойной тап для зума
+  let lastTap = 0;
   img.addEventListener('click', function(e) {
     const now = Date.now();
     if (now - lastTap < 300) {
       e.preventDefault();
       if (scale > 1) {
-        scale = 1; translateX = 0; translateY = 0;
+        scale = 1;
+        translateX = 0;
+        translateY = 0;
       } else {
         scale = 2.5;
-        // Зум к точке тапа
-        const rect = img.getBoundingClientRect();
-        translateX = -(e.clientX - rect.left) * (scale - 1);
-        translateY = -(e.clientY - rect.top) * (scale - 1);
       }
-      updateTransform();
+      updateImage();
     }
     lastTap = now;
   });
   
-  imgContainer.appendChild(img);
-  viewer.appendChild(imgContainer);
+  viewer.appendChild(img);
   
+  // Счётчик
   const counter = document.createElement('div');
-  counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
+  counter.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;font-size:1rem;';
   viewer.appendChild(counter);
-  function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
+  
+  function updateCounter() {
+    counter.textContent = (currentIndex + 1) + ' / ' + allImages.length;
+  }
   updateCounter();
   
-  if (currentIndex > 0) {
-    const prev = document.createElement('button');
-    prev.innerHTML = '‹';
-    prev.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
-    prev.onclick = function(e) { e.stopPropagation(); currentIndex--; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateTransform(); };
-    viewer.appendChild(prev);
+  // Стрелки
+  function createArrow(direction) {
+    const btn = document.createElement('button');
+    btn.innerHTML = direction === 'prev' ? '‹' : '›';
+    btn.style.cssText = `position:fixed;${direction === 'prev' ? 'left:10px' : 'right:10px'};top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;`;
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      if (direction === 'prev' && currentIndex > 0) {
+        currentIndex--;
+        img.src = allImages[currentIndex];
+        updateCounter();
+        scale = 1; translateX = 0; translateY = 0;
+        updateImage();
+      } else if (direction === 'next' && currentIndex < allImages.length - 1) {
+        currentIndex++;
+        img.src = allImages[currentIndex];
+        updateCounter();
+        scale = 1; translateX = 0; translateY = 0;
+        updateImage();
+      }
+    };
+    return btn;
   }
   
-  if (currentIndex < allImages.length - 1) {
-    const next = document.createElement('button');
-    next.innerHTML = '›';
-    next.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
-    next.onclick = function(e) { e.stopPropagation(); currentIndex++; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateTransform(); };
-    viewer.appendChild(next);
-  }
+  if (currentIndex > 0) viewer.appendChild(createArrow('prev'));
+  if (currentIndex < allImages.length - 1) viewer.appendChild(createArrow('next'));
   
-  const close = document.createElement('button');
-  close.textContent = '✕';
-  close.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;';
-  close.onclick = function() { viewer.remove(); };
-  viewer.appendChild(close);
+  // Кнопка закрыть
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;font-size:1.2rem;';
+  closeBtn.onclick = function() { viewer.remove(); };
+  viewer.appendChild(closeBtn);
   
   viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
   document.body.appendChild(viewer);
