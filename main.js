@@ -548,12 +548,13 @@ function showReactionMenu(event, msg) {
       if (!processedIds.has(msg.id)) {
         showMessage(msg);
         if (msg.from !== currentUser) {
-          const sender = FAMILY[msg.from] || {name: 'Кто-то'};
-          notify(sender.emoji + ' ' + sender.name, (msg.text || '📷 Фото'));
-        }
-      }
-    });
-  }
+      const sender = FAMILY[msg.from] || {name: 'Кто-то'};
+      const chatType = activeTab === 'private' ? ' [личное]' : '';
+      notify(
+         sender.emoji + ' ' + sender.name,
+         (msg.text || '📷 Фото') + chatType
+       );
+    }
   
   function updatePrivateHeader() {
     const header = document.getElementById('privateChatHeader');
@@ -627,6 +628,15 @@ function showReactionMenu(event, msg) {
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
   }
 
+  // Запрашиваем разрешение на уведомления при первом входе
+    if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission().then(function(permission) {
+    if (permission === 'granted') {
+      console.log('✅ Уведомления включены');
+    }
+  });
+}
+        
   function setReply(msg) {
     replyToMessage = msg;
     
