@@ -407,7 +407,7 @@
     menu.style.cssText = 'position:fixed;left:' + left + 'px;top:' + top + 'px;z-index:9999;';
     document.body.appendChild(menu);
     
-    // Реакции
+        // Реакции
     menu.querySelectorAll('.reaction-btn').forEach(function(btn) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
@@ -416,13 +416,17 @@
       });
     });
     
+    // Остальные кнопки
+    var buttons = menu.querySelectorAll('button:not(.reaction-btn)');
+    var btnIndex = 0;
+    
     // Ответить (цитирование)
-buttons[btnIndex].addEventListener('click', function() {
-    menu.remove();
-    setReply(msg);
-    document.getElementById('msgInput').focus();
-});
-btnIndex++;
+    buttons[btnIndex].addEventListener('click', function() {
+      menu.remove();
+      setReply(msg);
+      document.getElementById('msgInput').focus();
+    });
+    btnIndex++;
     
     // Копировать (только текст)
     if (isTextMessage) {
@@ -460,12 +464,6 @@ btnIndex++;
         }
       });
     }
-    
-    setTimeout(function() {
-      var close = function(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
-      document.addEventListener('click', close);
-    }, 10);
-}
   
   // ============ ЧАТ ============
   function getChatPath() {
@@ -627,16 +625,6 @@ function createReplyBar() {
     sendText(document.getElementById('msgInput').value, replyToMessage);
 });
 
-    //Прокрутка к сообщению
-    function scrollToMessage(msgId) {
-    const el = document.querySelector('[data-id="' + msgId + '"]');
-    if (el) {
-        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        el.style.background = 'rgba(102,126,234,0.2)';
-        setTimeout(() => el.style.background = '', 2000);
-    }
-}
-    
     // Индикатор печати
     document.getElementById('msgInput').addEventListener('input', function() {
       if (!currentUser) return;
@@ -1000,7 +988,17 @@ window.openImageViewer = function(src) {
     }
     console.log('✅ FChat запущен');
   }
-  
+
+    //Прокрутка к сообщению
+    function scrollToMessage(msgId) {
+    const el = document.querySelector('[data-id="' + msgId + '"]');
+    if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.style.background = 'rgba(102,126,234,0.2)';
+        setTimeout(() => el.style.background = '', 2000);
+    }
+}
+    
   setInterval(function() { if (processedIds.size > 100) processedIds.clear(); }, 300000);
   console.log('📱 FChat готов');
 })();
