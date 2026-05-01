@@ -299,15 +299,26 @@
 
     // Отображение цитируемого сообщения
     let replyHTML = '';
-    if (msg.replyTo) {
-    const replySender = FAMILY[msg.replyTo.from]?.name || 'Кто-то';
-    const replyText = (msg.replyTo.text || '').substring(0, 100);
-    replyHTML = `
-        <div class="reply-preview" style="border-left:3px solid #667eea;padding:5px 10px;margin-bottom:5px;background:rgba(102,126,234,0.1);border-radius:4px;font-size:0.85rem;cursor:pointer;" onclick="scrollToMessage('${msg.replyTo.id}')">
-            <div style="font-weight:600;color:#667eea;">${replySender}</div>
-            <div style="opacity:0.7;">${replyText}</div>
-        </div>
-    `;
+  if (msg.replyTo) {
+  const replySender = FAMILY[msg.replyTo.from]?.name || 'Кто-то';
+  let replyPreview = '';
+  
+  if (msg.replyTo.text && msg.replyTo.text !== '📷 Фото' && msg.replyTo.text !== '🎤 Голосовое') {
+    replyPreview = (msg.replyTo.text || '').substring(0, 100);
+  } else if (msg.replyTo.text === '📷 Фото') {
+    replyPreview = '🖼️ Фотография';
+  } else if (msg.replyTo.text === '🎤 Голосовое') {
+    replyPreview = '🎵 Голосовое сообщение';
+  } else {
+    replyPreview = 'Сообщение';
+  }
+  
+  replyHTML = `
+    <div class="reply-preview" style="border-left:3px solid #667eea;padding:8px 10px;margin-bottom:5px;background:rgba(102,126,234,0.1);border-radius:6px;font-size:0.85rem;cursor:pointer;" onclick="scrollToMessage('${msg.replyTo.id}')">
+      <div style="font-weight:600;color:#667eea;margin-bottom:3px;">↳ ${replySender}</div>
+      <div style="opacity:0.8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${replyPreview}</div>
+    </div>
+  `;
 }
     
     let content = '';
@@ -377,14 +388,22 @@
     const isTextMessage = msg.type === 'text' || !msg.type;
     
     menu.innerHTML = `
-      <div style="display:flex;gap:4px;padding:8px;border-bottom:1px solid #eee;">
-        <button class="reaction-btn" data-emoji="👍">👍</button>
-        <button class="reaction-btn" data-emoji="❤️">❤️</button>
-        <button class="reaction-btn" data-emoji="😂">😂</button>
-        <button class="reaction-btn" data-emoji="😢">😢</button>
-        <button class="reaction-btn" data-emoji="😡">😡</button>
-        <button class="reaction-btn" data-emoji="🔥">🔥</button>
-      </div>
+      <div style="padding:8px;border-bottom:1px solid #eee;">
+  <div style="font-size:0.8rem;color:#999;margin-bottom:5px;">Реакции:</div>
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
+    <button class="reaction-btn" data-emoji="👍">👍</button>
+    <button class="reaction-btn" data-emoji="👎">👎</button>
+    <button class="reaction-btn" data-emoji="❤️">❤️</button>
+    <button class="reaction-btn" data-emoji="😂">😂</button>
+    <button class="reaction-btn" data-emoji="😢">😢</button>
+    <button class="reaction-btn" data-emoji="😡">😡</button>
+    <button class="reaction-btn" data-emoji="🔥">🔥</button>
+    <button class="reaction-btn" data-emoji="🎉">🎉</button>
+    <button class="reaction-btn" data-emoji="💯">💯</button>
+    <button class="reaction-btn" data-emoji="✍️">✍️</button>
+    <button class="reaction-btn" data-emoji="🙏">🙏</button>
+  </div>
+</div>
       <button>💬 Ответить</button>
       ${isTextMessage ? '<button>📋 Копировать текст</button>' : ''}
       ${isTextMessage && msg.from === currentUser ? '<button>✏️ Редактировать</button>' : ''}
@@ -628,6 +647,30 @@ function createReplyBar() {
     sendText(document.getElementById('msgInput').value, replyToMessage);
 });
 
+    // Тема с названиями
+const themes = [
+  { name: 'Liquid Glass 🌊', class: '' },
+  { name: 'Тёмная тема 🌙', class: 'dark-theme' },
+  { name: 'Зелёная 🌿', class: 'green-theme' },
+  { name: 'Фиолетовая 🍇', class: 'purple-theme' }
+];
+let currentThemeIndex = 0;
+
+document.getElementById('themeBtn').addEventListener('click', function() {
+  currentThemeIndex = (currentThemeIndex + 1) % themes.length;
+  const theme = themes[currentThemeIndex];
+  
+  // Убираем все темы
+  document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
+  
+  // Применяем выбранную
+  if (theme.class) document.body.classList.add(theme.class);
+  
+  this.textContent = theme.name.split(' ')[0];
+  this.title = theme.name;
+  localStorage.setItem('fc_theme', theme.class || 'light');
+});
+    
     // Индикатор печати
     document.getElementById('msgInput').addEventListener('input', function() {
       if (!currentUser) return;
