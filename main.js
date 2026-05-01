@@ -945,219 +945,106 @@ document.querySelectorAll('.tab').forEach(function(tab) {
   
   // ============ ПРОСМОТРЩИК ФОТО ============
   window.openImageViewer = function(src) {
-    const allImages = [];
-    document.querySelectorAll('.media-img').forEach(function(img) {
-      if (img.src) allImages.push(img.src);
-    });
+  const allImages = [];
+  document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
+  
+  let currentIndex = allImages.indexOf(src);
+  
+  const old = document.querySelector('.image-viewer');
+  if (old) old.remove();
+  
+  const viewer = document.createElement('div');
+  viewer.className = 'image-viewer';
+  viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;display:flex;align-items:center;justify-content:center;overflow:hidden;';
+  
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.3s;';
+  
+  // Свайп
+  let startX = 0;
+  let isSwiping = false;
+  
+  viewer.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].clientX;
+    isSwiping = true;
+  });
+  
+  viewer.addEventListener('touchmove', function(e) {
+    if (!isSwiping) return;
+    const diff = e.touches[0].clientX - startX;
+    img.style.transform = 'translateX(' + diff + 'px)';
+  });
+  
+  viewer.addEventListener('touchend', function(e) {
+    if (!isSwiping) return;
+    isSwiping = false;
     
-    const currentIndex = allImages.indexOf(src);
+    const diff = parseFloat(img.style.transform.replace('translateX(', '').replace('px)', '')) || 0;
     
-    const old = document.querySelector('.image-viewer');
-    if (old) old.remove();
-    
-    const viewer = document.createElement('div');
-    viewer.className = 'image-viewer';
-    viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);display:flex;align-items:center;justify-content:center;z-index:10000;overflow:hidden;';
-    
-    const imgContainer = document.createElement('div');
-    imgContainer.style.cssText = 'position:relative;width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
-    
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;cursor:grab;user-select:none;-webkit-user-select:none;';
-    
-    let scale = 1;
-    let translateX = 0;
-    let translateY = 0;
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startTranslateX = 0;
-    let startTranslateY = 0;
-    
-    function updateTransform() {
-      img.style.transform = 'translate(' + translateX + 'px, ' + translateY + 'px) scale(' + scale + ')';
-      img.style.cursor = scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'zoom-in';
+    if (diff < -100 && currentIndex < allImages.length - 1) {
+      // Свайп влево — следующее фото
+      currentIndex++;
+      img.src = allImages[currentIndex];
+      updateCounter();
+    } else if (diff > 100 && currentIndex > 0) {
+      // Свайп вправо — предыдущее фото
+      currentIndex--;
+      img.src = allImages[currentIndex];
+      updateCounter();
     }
     
-    img.addEventListener('mousedown', function(e) {
-      if (scale > 1) {
-        isDragging = true;
-        startX = e.clientX;
-        startY = e.clientY;
-        startTranslateX = translateX;
-        startTranslateY = translateY;
-        img.style.cursor = 'grabbing';
-        e.preventDefault();
-      }
-    });
-    
-    window.addEventListener('mousemove', function(e) {
-      if (isDragging) {
-        translateX = startTranslateX + (e.clientX - startX);
-        translateY = startTranslateY + (e.clientY - startY);
-        updateTransform();
-      }
-    });
-    
-    window.addEventListener('mouseup', function() {
-      isDragging = false;
-      img.style.cursor = scale > 1 ? 'grab' : 'zoom-in';
-    });
-    
-    img.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 1 && scale > 1) {
-        isDragging = true;
-        startX = e.touches[0].clientX;
-        startY = e.touches[0].clientY;
-        startTranslateX = translateX;
-        startTranslateY = translateY;
-      }
-    });
-    
-    img.addEventListener('touchmove', function(e) {
-      if (isDragging && e.touches.length === 1 && scale > 1) {
-        e.preventDefault();
-        translateX = startTranslateX + (e.touches[0].clientX - startX);
-        translateY = startTranslateY + (e.touches[0].clientY - startY);
-        updateTransform();
-      }
-    });
-    
-    img.addEventListener('touchend', function() {
-      isDragging = false;
-    });
-    
-    let lastDistance = 0;
-    let pinchStartScale = 1;
-    
-    img.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 2) {
-        isDragging = false;
-        lastDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        pinchStartScale = scale;
-      }
-    });
-    
-    img.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const newDistance = Math.hypot(
-          e.touches[0].clientX - e.touches[1].clientX,
-          e.touches[0].clientY - e.touches[1].clientY
-        );
-        scale = pinchStartScale * (newDistance / lastDistance);
-        scale = Math.min(Math.max(0.5, scale), 5);
-        updateTransform();
-      }
-    });
-    
-    viewer.addEventListener('wheel', function(e) {
-      e.preventDefault();
-      const delta = e.deltaY > 0 ? 0.9 : 1.1;
-      scale *= delta;
-      scale = Math.min(Math.max(0.5, scale), 5);
-      updateTransform();
-    });
-    
-    img.addEventListener('dblclick', function(e) {
-      e.preventDefault();
-      if (scale > 1) {
-        scale = 1;
-        translateX = 0;
-        translateY = 0;
-      } else {
-        scale = 2.5;
-      }
-      updateTransform();
-    });
-    
-    let lastTap = 0;
-    img.addEventListener('click', function(e) {
-      const now = Date.now();
-      if (now - lastTap < 300) {
-        e.preventDefault();
-        if (scale > 1) {
-          scale = 1;
-          translateX = 0;
-          translateY = 0;
-        } else {
-          scale = 2.5;
-        }
-        updateTransform();
-      }
-      lastTap = now;
-    });
-    
-    imgContainer.appendChild(img);
-    viewer.appendChild(imgContainer);
-    
-    if (allImages.length > 1) {
-      const counter = document.createElement('div');
-      counter.textContent = (currentIndex + 1) + ' / ' + allImages.length;
-      counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;font-size:1rem;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
-      viewer.appendChild(counter);
-      
-      if (currentIndex > 0) {
-        const prevBtn = document.createElement('button');
-        prevBtn.innerHTML = '‹';
-        prevBtn.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;';
-        prevBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); window.openImageViewer(allImages[currentIndex - 1]); };
-        viewer.appendChild(prevBtn);
-      }
-      
-      if (currentIndex < allImages.length - 1) {
-        const nextBtn = document.createElement('button');
-        nextBtn.innerHTML = '›';
-        nextBtn.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;display:flex;align-items:center;justify-content:center;';
-        nextBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); window.openImageViewer(allImages[currentIndex + 1]); };
-        viewer.appendChild(nextBtn);
-      }
-    }
-    
-    const controls = document.createElement('div');
-    controls.style.cssText = 'position:absolute;bottom:30px;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10001;';
-    
-    const buttons = [
-      { text: '💾', action: function() { const a = document.createElement('a'); a.href = src; a.download = 'photo_' + Date.now() + '.jpg'; a.click(); } },
-      { text: '🔍+', action: function() { scale = Math.min(5, scale + 0.5); updateTransform(); } },
-      { text: '🔍-', action: function() { scale = Math.max(0.5, scale - 0.5); updateTransform(); } },
-      { text: '↺', action: function() { scale = 1; translateX = 0; translateY = 0; updateTransform(); } }
-    ];
-    
-    buttons.forEach(function(btn) {
-      const button = document.createElement('button');
-      button.textContent = btn.text;
-      button.style.cssText = 'padding:12px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;cursor:pointer;font-size:1.2rem;width:45px;height:45px;display:flex;align-items:center;justify-content:center;';
-      button.onclick = function(e) { e.stopPropagation(); btn.action(); };
-      controls.appendChild(button);
-    });
-    
-    viewer.appendChild(controls);
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;font-size:1.2rem;z-index:10001;';
-    closeBtn.onclick = function(e) { e.stopPropagation(); viewer.remove(); };
-    viewer.appendChild(closeBtn);
-    
-    viewer.addEventListener('click', function(e) {
-      if (e.target === viewer) viewer.remove();
-    });
-    
-    document.body.appendChild(viewer);
-    
-    function escHandler(e) {
-      if (e.key === 'Escape') {
-        viewer.remove();
-        window.removeEventListener('keydown', escHandler);
-      }
-    }
-    window.addEventListener('keydown', escHandler);
-  };
+    img.style.transform = 'translateX(0)';
+  });
+  
+  // Зум колёсиком
+  let scale = 1;
+  img.addEventListener('wheel', function(e) {
+    e.preventDefault();
+    scale += e.deltaY * -0.01;
+    scale = Math.min(5, Math.max(0.5, scale));
+    img.style.transform = 'scale(' + scale + ')';
+  });
+  
+  viewer.appendChild(img);
+  
+  // Счётчик
+  const counter = document.createElement('div');
+  counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;font-size:1rem;';
+  viewer.appendChild(counter);
+  
+  function updateCounter() {
+    counter.textContent = (currentIndex + 1) + ' / ' + allImages.length;
+  }
+  updateCounter();
+  
+  // Кнопки
+  if (currentIndex > 0) {
+    const prev = document.createElement('button');
+    prev.innerHTML = '‹';
+    prev.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
+    prev.onclick = function(e) { e.stopPropagation(); currentIndex--; img.src = allImages[currentIndex]; updateCounter(); };
+    viewer.appendChild(prev);
+  }
+  
+  if (currentIndex < allImages.length - 1) {
+    const next = document.createElement('button');
+    next.innerHTML = '›';
+    next.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
+    next.onclick = function(e) { e.stopPropagation(); currentIndex++; img.src = allImages[currentIndex]; updateCounter(); };
+    viewer.appendChild(next);
+  }
+  
+  // Закрыть
+  const close = document.createElement('button');
+  close.textContent = '✕';
+  close.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;';
+  close.onclick = function(e) { e.stopPropagation(); viewer.remove(); };
+  viewer.appendChild(close);
+  
+  viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
+  document.body.appendChild(viewer);
+};
 
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
