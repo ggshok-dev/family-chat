@@ -985,110 +985,138 @@ ref.on('child_removed', function(snap) {
   
   // ============ ПРОСМОТРЩИК ФОТО ============
   window.openImageViewer = function(src) {
-    const allImages = [];
-    document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
-    let currentIndex = allImages.indexOf(src);
-    const old = document.querySelector('.image-viewer');
-    if (old) old.remove();
-    
-    const viewer = document.createElement('div');
-    viewer.className = 'image-viewer';
-    viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;overflow:hidden;touch-action:none;';
-    
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);';
-    
-    let scale = 1, translateX = 0, translateY = 0;
-    let startX = 0, isSwiping = false, isZooming = false, lastDist = 0, lastScale = 1;
-    
-    function updateImage() {
-      img.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale})`;
+  const allImages = [];
+  document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
+  let currentIndex = allImages.indexOf(src);
+  const old = document.querySelector('.image-viewer');
+  if (old) old.remove();
+  
+  const viewer = document.createElement('div');
+  viewer.className = 'image-viewer';
+  viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;overflow:hidden;touch-action:none;';
+  
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);';
+  
+  let scale = 1;
+  let panX = 0, panY = 0;
+  let isPanning = false, panStartX = 0, panStartY = 0, panStartPanX = 0, panStartPanY = 0;
+  let isZooming = false, lastDist = 0, lastScale = 1;
+  let isSwiping = false, swipeStartX = 0;
+  
+  function updateImage() {
+    img.style.transform = `translate(calc(-50% + ${panX}px), calc(-50% + ${panY}px)) scale(${scale})`;
+  }
+  
+  // Обработчики касаний
+  img.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      // Начало зума
+      isZooming = true; isPanning = false; isSwiping = false;
+      lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      lastScale = scale;
+    } else if (e.touches.length === 1) {
+      if (scale > 1) {
+        // Начало перемещения (увеличенное фото)
+        isPanning = true; isZooming = false; isSwiping = false;
+        panStartX = e.touches[0].clientX;
+        panStartY = e.touches[0].clientY;
+        panStartPanX = panX;
+        panStartPanY = panY;
+      } else {
+        // Начало свайпа
+        isSwiping = true; isZooming = false; isPanning = false;
+        swipeStartX = e.touches[0].clientX;
+      }
     }
-    
-    img.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 2) {
-        isZooming = true; isSwiping = false;
-        lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        lastScale = scale;
-      } else if (e.touches.length === 1 && scale === 1) {
-        isSwiping = true; isZooming = false;
-        startX = e.touches[0].clientX;
-      }
-    });
-    
-    img.addEventListener('touchmove', function(e) {
-      if (isZooming && e.touches.length === 2) {
-        e.preventDefault();
-        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        scale = lastScale * (dist / lastDist);
-        scale = Math.min(5, Math.max(0.5, scale));
-        updateImage();
-      } else if (isSwiping && e.touches.length === 1 && scale === 1) {
-        translateX = e.touches[0].clientX - startX;
-        updateImage();
-      }
-    });
-    
-    img.addEventListener('touchend', function() {
-      if (isSwiping && scale === 1) {
-        const diff = translateX;
-        if (diff < -80 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
-        else if (diff > 80 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
-        translateX = 0; updateImage();
-      }
-      isSwiping = false; isZooming = false;
-    });
-    
-    let lastTap = 0;
-    img.addEventListener('click', function(e) {
-      const now = Date.now();
-      if (now - lastTap < 300) {
-        e.preventDefault();
-        if (scale > 1) { scale = 1; translateX = 0; translateY = 0; }
-        else { scale = 2.5; }
-        updateImage();
-      }
-      lastTap = now;
-    });
-    
-    viewer.appendChild(img);
-    
-    const counter = document.createElement('div');
-    counter.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;font-size:1rem;';
-    viewer.appendChild(counter);
-    function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
-    updateCounter();
-    
-    function createArrow(direction) {
-      const btn = document.createElement('button');
-      btn.innerHTML = direction === 'prev' ? '‹' : '›';
-      btn.style.cssText = `position:fixed;${direction === 'prev' ? 'left:10px' : 'right:10px'};top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;`;
-      btn.onclick = function(e) {
-        e.stopPropagation();
-        if (direction === 'prev' && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateImage(); }
-        else if (direction === 'next' && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateImage(); }
-      };
-      return btn;
+  });
+  
+  img.addEventListener('touchmove', function(e) {
+    e.preventDefault();
+    if (isZooming && e.touches.length === 2) {
+      // Зум
+      const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      scale = lastScale * (dist / lastDist);
+      scale = Math.min(5, Math.max(0.5, scale));
+      updateImage();
+    } else if (isPanning && e.touches.length === 1 && scale > 1) {
+      // Перемещение увеличенного фото
+      panX = panStartPanX + (e.touches[0].clientX - panStartX);
+      panY = panStartPanY + (e.touches[0].clientY - panStartY);
+      updateImage();
+    } else if (isSwiping && e.touches.length === 1 && scale === 1) {
+      // Свайп для перелистывания
+      panX = e.touches[0].clientX - swipeStartX;
+      updateImage();
     }
-    
-    if (currentIndex > 0) viewer.appendChild(createArrow('prev'));
-    if (currentIndex < allImages.length - 1) viewer.appendChild(createArrow('next'));
-    
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '✕';
-    closeBtn.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;font-size:1.2rem;';
-    closeBtn.onclick = function() { viewer.remove(); };
-    viewer.appendChild(closeBtn);
-    
-    viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
-    document.body.appendChild(viewer);
-    
-    function escHandler(e) {
-      if (e.key === 'Escape') { viewer.remove(); window.removeEventListener('keydown', escHandler); }
+  });
+  
+  img.addEventListener('touchend', function() {
+    if (isSwiping && scale === 1) {
+      // Завершение свайпа
+      const diff = panX;
+      if (diff < -80 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
+      else if (diff > 80 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
+      panX = 0; panY = 0;
+      updateImage();
     }
-    window.addEventListener('keydown', escHandler);
-  };
+    isSwiping = false; isPanning = false; isZooming = false;
+  });
+  
+  // Двойной тап для зума
+  let lastTap = 0;
+  img.addEventListener('click', function(e) {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      e.preventDefault();
+      if (scale > 1) { scale = 1; panX = 0; panY = 0; }
+      else { scale = 2.5; }
+      updateImage();
+    }
+    lastTap = now;
+  });
+  
+  viewer.appendChild(img);
+  
+  // Счётчик
+  const counter = document.createElement('div');
+  counter.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;font-size:1rem;';
+  viewer.appendChild(counter);
+  function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
+  updateCounter();
+  
+  // Стрелки
+  function createArrow(direction) {
+    const btn = document.createElement('button');
+    btn.innerHTML = direction === 'prev' ? '‹' : '›';
+    btn.style.cssText = `position:fixed;${direction === 'prev' ? 'left:10px' : 'right:10px'};top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.15);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;`;
+    btn.onclick = function(e) {
+      e.stopPropagation();
+      if (direction === 'prev' && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); scale = 1; panX = 0; panY = 0; updateImage(); }
+      else if (direction === 'next' && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); scale = 1; panX = 0; panY = 0; updateImage(); }
+    };
+    return btn;
+  }
+  
+  if (currentIndex > 0) viewer.appendChild(createArrow('prev'));
+  if (currentIndex < allImages.length - 1) viewer.appendChild(createArrow('next'));
+  
+  // Кнопка закрыть
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '✕';
+  closeBtn.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;font-size:1.2rem;';
+  closeBtn.onclick = function() { viewer.remove(); };
+  viewer.appendChild(closeBtn);
+  
+  viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
+  document.body.appendChild(viewer);
+  
+  function escHandler(e) {
+    if (e.key === 'Escape') { viewer.remove(); window.removeEventListener('keydown', escHandler); }
+  }
+  window.addEventListener('keydown', escHandler);
+};
   
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
