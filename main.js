@@ -826,17 +826,53 @@ document.getElementById('themeBtn').addEventListener('click', function() {
   }
   
   function applyStoredSettings() {
-    isDarkTheme = localStorage.getItem('fc_theme') === 'dark';
-    if (isDarkTheme) document.body.classList.add('dark-theme');
-    const themeBtn = document.getElementById('themeBtn'); if (themeBtn) themeBtn.textContent = isDarkTheme ? '☀️' : '🌙';
+    const savedTheme = localStorage.getItem('fc_theme') || 'light';
+    
+    // Сбрасываем все темы
+    document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
+    
+    // Определяем индекс темы для кнопки
+    if (savedTheme === 'dark-theme') {
+      document.body.classList.add('dark-theme');
+      isDarkTheme = true;
+    } else if (savedTheme === 'green-theme') {
+      document.body.classList.add('green-theme');
+      isDarkTheme = false;
+    } else if (savedTheme === 'purple-theme') {
+      document.body.classList.add('purple-theme');
+      isDarkTheme = false;
+    } else {
+      isDarkTheme = false;
+    }
+    
     document.documentElement.style.setProperty('--font-scale', fontSize / 100);
-    const fv = document.getElementById('fontValue'); if (fv) fv.textContent = fontSize + '%';
-    const nt = document.getElementById('notifToggle'); if (nt) nt.checked = notifEnabled;
-    const st = document.getElementById('soundToggle'); if (st) st.checked = soundEnabled;
-    const ad = document.getElementById('autoDelete'); if (ad) ad.value = autoDeleteHours;
-    document.getElementById('notifBtn').textContent = notifEnabled ? '🔔' : '🔕';
-    document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
-  }
+    const fv = document.getElementById('fontValue');
+    if (fv) fv.textContent = fontSize + '%';
+    
+    const nt = document.getElementById('notifToggle');
+    if (nt) nt.checked = notifEnabled;
+    
+    const st = document.getElementById('soundToggle');
+    if (st) st.checked = soundEnabled;
+    
+    const ad = document.getElementById('autoDelete');
+    if (ad) ad.value = autoDeleteHours;
+    
+    const nb = document.getElementById('notifBtn');
+    if (nb) nb.textContent = notifEnabled ? '🔔' : '🔕';
+    
+    const sb = document.getElementById('soundBtn');
+    if (sb) sb.textContent = soundEnabled ? '🔊' : '🔇';
+    
+    // Устанавливаем иконку темы
+    const themeBtn = document.getElementById('themeBtn');
+    if (themeBtn) {
+      if (savedTheme === 'dark-theme') themeBtn.textContent = '🌙';
+      else if (savedTheme === 'green-theme') themeBtn.textContent = '🌿';
+      else if (savedTheme === 'purple-theme') themeBtn.textContent = '🍇';
+      else themeBtn.textContent = '🌊';
+    }
+}
   
   // ============ ПРОСМОТРЩИК ФОТО (зум от точки касания) ============
 window.openImageViewer = function(src) {
