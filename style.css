@@ -629,17 +629,23 @@ body.dark-theme .date-separator::after { background: #2a3a5c; }
 }
 
 .reaction-btn {
-  padding: 4px 8px;
+  padding: 6px 10px;
   background: #f0f0f0;
   border: none;
-  border-radius: 12px;
+  border-radius: 20px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 1rem;
   transition: 0.2s;
 }
 
 .reaction-btn:hover {
   background: #667eea;
-  color: white;
-  transform: scale(1.1);
+  transform: scale(1.2);
+}
+
+body.dark-theme .reaction-btn {
+  background: #2a2a4a;
+}
+body.dark-theme .reaction-btn:hover {
+  background: #667eea;
 }
