@@ -76,7 +76,7 @@
       const sender = FAMILY[msg.from] || {name: 'Кто-то'};
       lastMessagePreview = sender.name + ': ' + (msg.text || '📷 Фото');
     }
-    document.title = unreadCount > 0 ? '(' + unreadCount + ') ' + lastMessagePreview : 'FChat — Семейный мессенджер';
+    document.title = unreadCount > 0 ? '(' + unreadCount + ') ' + lastMessagePreview : 'FChat';
   }
   
   function showPinDialog(userId) {
@@ -207,8 +207,7 @@
         const isLocked = pins[m.id] && m.id !== currentUser;
         
         return `
-          <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" 
-               data-user="${m.id}">
+          <div class="user-avatar ${isActive ? 'active' : ''} ${isLocked ? 'locked' : ''}" data-user="${m.id}">
             <div class="avatar-circle" style="background:${av ? '#f0f0f0' : m.color + '20'};">
               ${av ? '<img src="' + av + '" alt="' + m.name + '">' : '<span class="default-emoji">' + m.emoji + '</span>'}
               ${isActive ? '<div class="online-dot"></div>' : ''}
@@ -281,8 +280,12 @@
     
     // Разделитель дат
     const dateLabel = getDateLabel(msg.timestamp);
-    const lastLabel = chat.querySelector('.date-separator:last-child');
-    if (!lastLabel || lastLabel.textContent !== dateLabel) {
+    const separators = chat.querySelectorAll('.date-separator');
+    let lastLabel = '';
+    if (separators.length > 0) {
+      lastLabel = separators[separators.length - 1].textContent;
+    }
+    if (lastLabel !== dateLabel) {
       const separator = document.createElement('div');
       separator.className = 'date-separator';
       separator.textContent = dateLabel;
@@ -298,6 +301,11 @@
       content = `<img src="${msg.data}" class="media-img" alt="Фото" loading="lazy" onclick="window.openImageViewer('${msg.data.replace(/'/g, "\\'")}')">`;
     } else if (msg.type === 'voice') {
       content = `<audio controls class="media-audio" src="${msg.data}"></audio>`;
+    } else if (msg.type === 'file') {
+      content = `<div style="display:flex;align-items:center;gap:8px;padding:8px;background:rgba(255,255,255,0.1);border-radius:8px;">
+        <span style="font-size:1.5rem;">📎</span>
+        <a href="${msg.data}" download="${msg.fileName}" style="color:#667eea;text-decoration:none;" target="_blank">${msg.fileName || 'Файл'}</a>
+      </div>`;
     } else {
       content = msg.text || '';
     }
@@ -310,7 +318,7 @@
         '</span><strong>' + sender.name + '</strong></div>' : '') +
       '<div class="bubble">' + content + 
         '<div class="msg-time"><span>' + time + '</span>' + 
-        (isSent ? '<span class="msg-menu-btn">⋮</span>' : '') + 
+        '<span class="msg-menu-btn" style="cursor:pointer;opacity:0.5;padding:2px 6px;">⋮</span>' + 
       '</div></div>';
     
     // Реакции
@@ -321,14 +329,12 @@
       div.querySelector('.bubble').appendChild(reactionsDiv);
     }
     
-    if (isSent) {
-      const menuBtn = div.querySelector('.msg-menu-btn');
-      if (menuBtn) {
-        menuBtn.addEventListener('click', function(e) {
-          e.stopPropagation();
-          showMenu(e, msg);
-        });
-      }
+    const menuBtn = div.querySelector('.msg-menu-btn');
+    if (menuBtn) {
+      menuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        showMenu(e, msg);
+      });
     }
     
     if (fragment) fragment.appendChild(div);
@@ -352,43 +358,67 @@
     
     const menu = document.createElement('div');
     menu.className = 'context-menu';
+    
+    const isTextMessage = msg.type === 'text' || !msg.type;
+    const editButton = isTextMessage ? '<button>✏️ Редактировать</button>' : '';
+    
     menu.innerHTML = `
       <button>👍</button>
       <button>❤️</button>
       <button>😂</button>
       <button>💬 Ответить</button>
       <button>📋 Копировать</button>
-      <button>✏️ Редактировать</button>
+      ${editButton}
       <button class="danger-btn">🗑️ Удалить</button>
     `;
     
     const x = event.clientX || (event.touches && event.touches[0].clientX) || 100;
     const y = event.clientY || (event.touches && event.touches[0].clientY) || 100;
-    menu.style.cssText = 'position:fixed;left:' + Math.min(x, window.innerWidth - 200) + 'px;top:' + Math.min(y, window.innerHeight - 200) + 'px;z-index:9999;';
+    
+    // Умное позиционирование
+    const menuWidth = 200;
+    const menuHeight = isTextMessage ? 280 : 240;
+    let left = x;
+    let top = y;
+    
+    if (x + menuWidth > window.innerWidth) left = window.innerWidth - menuWidth - 10;
+    if (y + menuHeight > window.innerHeight) top = y - menuHeight;
+    if (left < 10) left = 10;
+    if (top < 10) top = 10;
+    
+    menu.style.cssText = 'position:fixed;left:' + left + 'px;top:' + top + 'px;z-index:9999;';
     document.body.appendChild(menu);
     
+    // Реакции
     menu.querySelectorAll('button')[0].addEventListener('click', () => { addReaction(msg, '👍'); menu.remove(); });
     menu.querySelectorAll('button')[1].addEventListener('click', () => { addReaction(msg, '❤️'); menu.remove(); });
     menu.querySelectorAll('button')[2].addEventListener('click', () => { addReaction(msg, '😂'); menu.remove(); });
     
+    // Ответить
     menu.querySelectorAll('button')[3].addEventListener('click', () => {
       menu.remove();
       document.getElementById('msgInput').value = '> ' + (msg.text || '📷 Фото') + '\n';
       document.getElementById('msgInput').focus();
     });
     
+    // Копировать
     menu.querySelectorAll('button')[4].addEventListener('click', () => {
       menu.remove();
       navigator.clipboard?.writeText(msg.text || '');
     });
     
-    menu.querySelectorAll('button')[5].addEventListener('click', () => {
-      menu.remove();
-      const newText = prompt('Редактировать:', msg.text || '');
-      if (newText && newText !== msg.text) db.ref(getChatPath() + '/' + msg.id).update({text: newText, edited: true});
-    });
+    // Редактировать (только текст)
+    if (isTextMessage) {
+      menu.querySelectorAll('button')[5].addEventListener('click', () => {
+        menu.remove();
+        const newText = prompt('Редактировать:', msg.text || '');
+        if (newText && newText !== msg.text) db.ref(getChatPath() + '/' + msg.id).update({text: newText, edited: true});
+      });
+    }
     
-    menu.querySelectorAll('button')[6].addEventListener('click', () => {
+    // Удалить
+    const delIndex = isTextMessage ? 6 : 5;
+    menu.querySelectorAll('button')[delIndex].addEventListener('click', () => {
       menu.remove();
       if (confirm('Удалить?')) {
         db.ref(getChatPath() + '/' + msg.id).set(null);
@@ -419,7 +449,7 @@
     if (messageListener) db.ref(getChatPath()).off('child_added', messageListener);
     const ref = db.ref(getChatPath());
     const chatWindow = document.getElementById('chatWindow');
-    if (chatWindow) chatWindow.innerHTML = '<div class="empty-chat"><div class="empty-icon">💬</div><p>Загрузка...</p></div>';
+    if (chatWindow) chatWindow.innerHTML = '';
     processedIds.clear();
     
     ref.orderByChild('timestamp').limitToLast(100).once('value', function(snap) {
@@ -498,12 +528,19 @@
     if (msgInput) msgInput.value = '';
   }
   
-  function sendMedia(type, dataUrl) {
+  function sendMedia(type, dataUrl, fileName, fileType) {
     if (!currentUser) { alert('Сначала войдите'); return; }
+    
     if (type === 'voice') {
       db.ref(getChatPath()).push({ from: currentUser, type: 'voice', data: dataUrl, timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое' });
       return;
     }
+    
+    if (type === 'file') {
+      db.ref(getChatPath()).push({ from: currentUser, type: 'file', data: dataUrl, fileName: fileName, fileType: fileType, timestamp: firebase.database.ServerValue.TIMESTAMP, text: '📎 ' + fileName });
+      return;
+    }
+    
     const img = new Image();
     img.onload = function() {
       const canvas = document.createElement('canvas');
@@ -557,8 +594,18 @@
     
     document.getElementById('attachBtn').addEventListener('click', function() { if (!currentUser) { alert('Войдите'); return; } document.getElementById('fileInput').click(); });
     document.getElementById('fileInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file && file.type.startsWith('image/')) { const r = new FileReader(); r.onload = function(ev) { sendMedia('image', ev.target.result); }; r.readAsDataURL(file); }
+      const files = e.target.files;
+      if (!files.length) return;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const reader = new FileReader();
+        if (file.type.startsWith('image/')) {
+          reader.onload = function(ev) { sendMedia('image', ev.target.result); };
+        } else {
+          reader.onload = function(ev) { sendMedia('file', ev.target.result, file.name, file.type); };
+        }
+        reader.readAsDataURL(file);
+      }
       e.target.value = '';
     });
     
@@ -599,10 +646,8 @@
             const saved = localStorage.getItem('fc_private_' + currentUser);
             privateWith = (saved && FAMILY[saved]) ? saved : Object.values(FAMILY).filter(function(m) { return m.id !== currentUser; })[0]?.id || null;
           }
-          const ps = document.getElementById('privateSel'); if (ps) ps.style.display = 'block';
         } else {
           privateWith = null;
-          const ps = document.getElementById('privateSel'); if (ps) ps.style.display = 'none';
         }
         activeTab = newTab;
         updatePrivate();
@@ -689,35 +734,95 @@
   
   // ============ ПРОСМОТРЩИК ФОТО ============
   window.openImageViewer = function(src) {
-    const allImages = []; document.querySelectorAll('.media-img').forEach(function(img) { if (img.src) allImages.push(img.src); });
+    const allImages = [];
+    document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
     let currentIndex = allImages.indexOf(src);
-    const old = document.querySelector('.image-viewer'); if (old) old.remove();
-    const viewer = document.createElement('div'); viewer.className = 'image-viewer';
-    viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;display:flex;align-items:center;justify-content:center;overflow:hidden;';
-    const img = document.createElement('img'); img.src = src;
-    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.3s;';
+    const old = document.querySelector('.image-viewer');
+    if (old) old.remove();
     
-    let startX = 0, isSwiping = false;
-    viewer.addEventListener('touchstart', function(e) { startX = e.touches[0].clientX; isSwiping = true; });
-    viewer.addEventListener('touchmove', function(e) { if (!isSwiping) return; img.style.transform = 'translateX(' + (e.touches[0].clientX - startX) + 'px)'; });
+    const viewer = document.createElement('div');
+    viewer.className = 'image-viewer';
+    viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;display:flex;align-items:center;justify-content:center;overflow:hidden;';
+    
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;';
+    
+    let scale = 1, startDist = 0, startX = 0, isSwiping = false;
+    
+    // Пинч-зум
+    viewer.addEventListener('touchstart', function(e) {
+      if (e.touches.length === 2) {
+        startDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      } else if (e.touches.length === 1 && scale === 1) {
+        startX = e.touches[0].clientX;
+        isSwiping = true;
+      }
+    });
+    
+    viewer.addEventListener('touchmove', function(e) {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        scale *= dist / startDist;
+        scale = Math.min(5, Math.max(0.5, scale));
+        img.style.transform = 'scale(' + scale + ')';
+        startDist = dist;
+      } else if (isSwiping && scale === 1) {
+        img.style.transform = 'translateX(' + (e.touches[0].clientX - startX) + 'px)';
+      }
+    });
+    
     viewer.addEventListener('touchend', function() {
-      if (!isSwiping) return; isSwiping = false;
+      if (!isSwiping) return;
+      isSwiping = false;
       const diff = parseFloat(img.style.transform.replace('translateX(','').replace('px)','')) || 0;
       if (diff < -100 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
       else if (diff > 100 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
-      img.style.transform = 'translateX(0)';
+      img.style.transform = scale > 1 ? 'scale(' + scale + ')' : '';
+    });
+    
+    // Двойной тап
+    let lastTap = 0;
+    img.addEventListener('click', function(e) {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        scale = scale > 1 ? 1 : 2.5;
+        img.style.transform = 'scale(' + scale + ')';
+      }
+      lastTap = now;
     });
     
     viewer.appendChild(img);
+    
     const counter = document.createElement('div');
     counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
     viewer.appendChild(counter);
     function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
     updateCounter();
     
-    if (currentIndex > 0) { const b = document.createElement('button'); b.innerHTML = '‹'; b.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;'; b.onclick = function(e) { e.stopPropagation(); currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }; viewer.appendChild(b); }
-    if (currentIndex < allImages.length - 1) { const b = document.createElement('button'); b.innerHTML = '›'; b.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;'; b.onclick = function(e) { e.stopPropagation(); currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }; viewer.appendChild(b); }
-    const close = document.createElement('button'); close.textContent = '✕'; close.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;'; close.onclick = function() { viewer.remove(); }; viewer.appendChild(close);
+    if (currentIndex > 0) {
+      const prev = document.createElement('button');
+      prev.innerHTML = '‹';
+      prev.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
+      prev.onclick = function(e) { e.stopPropagation(); currentIndex--; img.src = allImages[currentIndex]; updateCounter(); };
+      viewer.appendChild(prev);
+    }
+    
+    if (currentIndex < allImages.length - 1) {
+      const next = document.createElement('button');
+      next.innerHTML = '›';
+      next.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
+      next.onclick = function(e) { e.stopPropagation(); currentIndex++; img.src = allImages[currentIndex]; updateCounter(); };
+      viewer.appendChild(next);
+    }
+    
+    const close = document.createElement('button');
+    close.textContent = '✕';
+    close.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;';
+    close.onclick = function() { viewer.remove(); };
+    viewer.appendChild(close);
+    
     viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
     document.body.appendChild(viewer);
   };
