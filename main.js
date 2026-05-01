@@ -572,15 +572,44 @@ function showReactionMenu(event, msg) {
   
   // ============ УВЕДОМЛЕНИЯ ============
   function notify(title, body) {
-    if (!notifEnabled) return;
-    if (navigator.vibrate) navigator.vibrate([200, 100, 200]);
-    if (document.visibilityState !== 'visible') {
-      if ('Notification' in window && Notification.permission === 'granted') {
-        new Notification(title, { body: body, icon: 'icon-192.png', tag: 'fchat', vibrate: [200, 100, 200] });
-      }
+    if (!state.notifEnabled && !notifEnabled) return;
+    
+    // Вибрация на телефоне
+    if (navigator.vibrate) {
+      navigator.vibrate([200, 100, 200]);
     }
+    
+    // Показываем уведомление через Service Worker (работает даже когда чат закрыт)
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(function(registration) {
+        registration.showNotification(title || 'FChat', {
+          body: body || 'Новое сообщение',
+          icon: '/family-chat/icon-192.png',
+          badge: '/family-chat/icon-192.png',
+          vibrate: [200, 100, 200, 100, 200],
+          tag: 'fchat-msg',
+          renotify: true
+        });
+      });
+    } 
+    // Запасной вариант — обычное уведомление
+    else if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification(title || 'FChat', {
+        body: body || 'Новое сообщение',
+        icon: '/family-chat/icon-192.png',
+        vibrate: [200, 100, 200]
+      });
+    }
+    
+    // Мигание заголовка
+    const header = document.querySelector('.header');
+    if (header) {
+      header.style.animation = 'flash 0.5s ease 3';
+      setTimeout(function() { header.style.animation = ''; }, 1500);
+    }
+    
     playSound();
-  }
+}
   
   function playSound() {
     if (!soundEnabled) return;
