@@ -416,34 +416,31 @@
       });
     });
     
-    // Остальные кнопки
+        // Остальные кнопки
     var buttons = menu.querySelectorAll('button:not(.reaction-btn)');
     var btnIndex = 0;
     
-    // Ответить (цитирование)
-    buttons[btnIndex].addEventListener('click', function() {
-      menu.remove();
-      setReply(msg);
-      document.getElementById('msgInput').focus();
-    });
+    // Ответить (цитирование) — всегда доступно
+    if (buttons[btnIndex]) {
+      buttons[btnIndex].addEventListener('click', function() {
+        menu.remove();
+        setReply(msg);
+        document.getElementById('msgInput').focus();
+      });
+    }
     btnIndex++;
     
     // Копировать (только текст)
-    if (isTextMessage) {
+    if (isTextMessage && buttons[btnIndex]) {
       buttons[btnIndex].addEventListener('click', function() {
         menu.remove();
         navigator.clipboard?.writeText(msg.text || '');
-        const toast = document.createElement('div');
-        toast.textContent = '✅ Скопировано!';
-        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 20px;border-radius:20px;z-index:9999;';
-        document.body.appendChild(toast);
-        setTimeout(function() { toast.remove(); }, 1500);
       });
       btnIndex++;
     }
     
     // Редактировать (только свой текст)
-    if (isTextMessage && msg.from === currentUser) {
+    if (isTextMessage && msg.from === currentUser && buttons[btnIndex]) {
       buttons[btnIndex].addEventListener('click', function() {
         menu.remove();
         var newText = prompt('Редактировать:', msg.text || '');
@@ -453,7 +450,7 @@
     }
     
     // Удалить (только свои сообщения)
-    if (msg.from === currentUser) {
+    if (msg.from === currentUser && buttons[btnIndex]) {
       buttons[btnIndex].addEventListener('click', function() {
         menu.remove();
         if (confirm('Удалить сообщение?')) {
@@ -464,6 +461,12 @@
         }
       });
     }
+    
+    setTimeout(function() {
+      var close = function(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
+      document.addEventListener('click', close);
+    }, 10);
+}
   
   // ============ ЧАТ ============
   function getChatPath() {
