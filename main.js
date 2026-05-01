@@ -44,6 +44,7 @@
   let unreadCount = 0;
   let lastMessagePreview = '';
   let typingTimer = null;
+  let replyToMessage = null;
   
   if (!localStorage.getItem('fc_theme')) {
     localStorage.setItem('fc_theme', 'light');
@@ -537,42 +538,70 @@
   function requestNotif() {
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
   }
-  
+
+  function setReply(msg) {
+    replyToMessage = msg;
+    
+    // Показываем панель цитирования
+    const replyBar = document.getElementById('replyBar') || createReplyBar();
+    replyBar.style.display = 'flex';
+    replyBar.querySelector('.reply-text').textContent = (msg.text || '📷 Фото').substring(0, 100);
+    replyBar.querySelector('.reply-author').textContent = FAMILY[msg.from]?.name || 'Кто-то';
+}
+
+function clearReply() {
+    replyToMessage = null;
+    const replyBar = document.getElementById('replyBar');
+    if (replyBar) replyBar.style.display = 'none';
+}
+
+function createReplyBar() {
+    const bar = document.createElement('div');
+    bar.id = 'replyBar';
+    bar.style.cssText = 'display:none;padding:8px 15px;background:rgba(102,126,234,0.2);border-left:3px solid #667eea;margin-bottom:5px;align-items:center;gap:10px;';
+    bar.innerHTML = `
+        <div style="flex:1;">
+            <div class="reply-author" style="font-weight:600;font-size:0.85rem;color:#667eea;"></div>
+            <div class="reply-text" style="font-size:0.8rem;opacity:0.7;"></div>
+        </div>
+        <button id="cancelReply" style="background:none;border:none;color:#ff4444;cursor:pointer;font-size:1.2rem;">✕</button>
+    `;
+    
+    document.getElementById('input-panel-container')?.insertBefore(bar, document.querySelector('.input-row'));
+    
+    bar.querySelector('#cancelReply').addEventListener('click', clearReply);
+    return bar;
+}
   // ============ ОТПРАВКА ============
-  function sendText(text) {
+  function sendText(text, replyTo) {
     if (!currentUser) { alert('Сначала войдите'); return; }
     if (!text.trim()) return;
-    const msg = { from: currentUser, text: text.trim(), timestamp: firebase.database.ServerValue.TIMESTAMP, type: 'text' };
+    
+    const msg = { 
+      from: currentUser, 
+      text: text.trim(), 
+      timestamp: firebase.database.ServerValue.TIMESTAMP, 
+      type: 'text' 
+    };
+    
+    // Добавляем информацию о цитируемом сообщении
+    if (replyTo) {
+      msg.replyTo = {
+        id: replyTo.id,
+        text: replyTo.text || '📷 Фото',
+        from: replyTo.from,
+        fromName: FAMILY[replyTo.from]?.name || 'Кто-то'
+      };
+    }
+    
     if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
     db.ref(getChatPath()).push(msg);
     const msgInput = document.getElementById('msgInput');
     if (msgInput) msgInput.value = '';
-  }
-  
-  function sendMedia(type, dataUrl, fileName, fileType) {
-    if (!currentUser) { alert('Сначала войдите'); return; }
     
-    if (type === 'voice') {
-      db.ref(getChatPath()).push({ from: currentUser, type: 'voice', data: dataUrl, timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое' });
-      return;
-    }
-    
-    if (type === 'file') {
-      db.ref(getChatPath()).push({ from: currentUser, type: 'file', data: dataUrl, fileName: fileName, fileType: fileType, timestamp: firebase.database.ServerValue.TIMESTAMP, text: '📎 ' + fileName });
-      return;
-    }
-    
-    const img = new Image();
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      let w = img.width, h = img.height;
-      if (w > 1200) { h = h * 1200 / w; w = 1200; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      db.ref(getChatPath()).push({ from: currentUser, type: 'image', data: canvas.toDataURL('image/jpeg', 0.7), timestamp: firebase.database.ServerValue.TIMESTAMP, text: '📷 Фото' });
-    };
-    img.src = dataUrl;
-  }
+    // Сбрасываем цитирование
+    clearReply();
+}
   
   // ============ ОБРАБОТЧИКИ ============
   function setupListeners() {
@@ -753,7 +782,6 @@
     document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
   }
   
-  // ============ ПРОСМОТРЩИК ФОТО ============
   // ============ ПРОСМОТРЩИК ФОТО (зум от точки касания) ============
 window.openImageViewer = function(src) {
   const allImages = [];
