@@ -259,7 +259,7 @@ body.purple-theme .send-btn {
 }
 
 .secret-dialog {
-  background: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.85) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -268,45 +268,33 @@ body.purple-theme .send-btn {
   box-shadow: 0 20px 60px rgba(0,0,0,0.2);
 }
 
-body.dark-theme .secret-dialog {
-  background: rgba(30, 42, 68, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
 .secret-dialog h2 { color: #333; margin-bottom: 10px; font-size: 1.5rem; }
 .secret-dialog .icon { font-size: 50px; margin-bottom: 15px; }
 .secret-dialog p { color: #555; margin-bottom: 20px; font-size: 0.9rem; }
 
-body.dark-theme .secret-dialog h2 { color: #e8e8e8; }
-body.dark-theme .secret-dialog p { color: #aaa; }
-
 .secret-input {
-  width: 100%; padding: 12px; border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 12px; font-size: 1.1rem; text-align: center;
+  width: 100%; padding: 15px; border: 2px solid rgba(102, 126, 234, 0.5);
+  border-radius: 12px; font-size: 1.2rem; text-align: center;
   margin-bottom: 15px; outline: none; letter-spacing: 3px;
-  background: rgba(255,255,255,0.4); color: #333;
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  background: rgba(255, 255, 255, 0.9); color: #333;
+  display: block;
 }
 
-body.dark-theme .secret-input {
-  background: rgba(22, 33, 62, 0.6); color: white;
-  border: 1px solid rgba(255,255,255,0.1);
+.secret-input:focus { 
+  border-color: #667eea; 
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
-
-.secret-input:focus { border-color: #667eea; }
 
 .secret-btn {
-  width: 100%; padding: 12px; border: none; border-radius: 12px;
-  background: rgba(102, 126, 234, 0.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  color: white; font-size: 1rem; font-weight: 600; cursor: pointer;
+  width: 100%; padding: 15px; border: none; border-radius: 12px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white; font-size: 1.1rem; font-weight: 600; cursor: pointer;
+  transition: 0.2s;
 }
 
-.secret-btn:hover { transform: scale(1.02); }
-.error-msg { color: #ff4444; font-size: 0.85rem; margin-top: 10px; display: none; }
-.error-msg.show { display: block; }
+.secret-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4); }
+.secret-btn:active { transform: translateY(0); }
 
 /* ===== ПИН-КОД ===== */
 .pin-overlay {
