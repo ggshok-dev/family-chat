@@ -8,7 +8,7 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #ff6b6b 100%);
   background-size: 400% 400%;
-  animation: gradientShift 10s ease infinite;
+  /* animation: gradientShift 10s ease infinite; */
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -17,11 +17,11 @@ body {
   transition: background 0.3s;
 }
 
-@keyframes gradientShift {
+/* @keyframes gradientShift {
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
-}
+} */
 
 /* ============================================ */
 /*  ТЕМА 2: ТЁМНАЯ (Dark Night)                */
@@ -29,13 +29,13 @@ body {
 body.dark-theme {
   background: linear-gradient(135deg, #0a0a1a 0%, #1a1a3e 50%, #0d0d2b 100%);
   background-size: 400% 400%;
-  animation: darkPulse 8s ease infinite;
+  /* animation: darkPulse 8s ease infinite; */
 }
 
-@keyframes darkPulse {
+/* @keyframes darkPulse {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-}
+} */
 
 /* ============================================ */
 /*  ТЕМА 3: ЗЕЛЁНАЯ (Forest Emerald)            */
@@ -43,13 +43,13 @@ body.dark-theme {
 body.green-theme {
   background: linear-gradient(135deg, #0a2a0a 0%, #1a5a2a 50%, #0d3d0d 100%);
   background-size: 400% 400%;
-  animation: forestGlow 12s ease infinite;
+  /* animation: forestGlow 12s ease infinite; */
 }
 
-@keyframes forestGlow {
+/* @keyframes forestGlow {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-}
+} */
 
 /* ============================================ */
 /*  ТЕМА 4: ФИОЛЕТОВАЯ (Royal Purple)           */
@@ -57,13 +57,13 @@ body.green-theme {
 body.purple-theme {
   background: linear-gradient(135deg, #1a0030 0%, #3d1060 50%, #2a0050 100%);
   background-size: 400% 400%;
-  animation: royalShimmer 9s ease infinite;
+  /* animation: royalShimmer 9s ease infinite; */
 }
 
-@keyframes royalShimmer {
+/* @keyframes royalShimmer {
   0%, 100% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
-}
+} */
 
 /* ===== ОСНОВНОЙ КОНТЕЙНЕР (Liquid Glass) ===== */
 .app {
