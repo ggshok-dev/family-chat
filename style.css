@@ -859,3 +859,8 @@ body, .app, .header, .chat-window, .input-panel, .bubble {
 .chat-window {
   scroll-behavior: smooth;
 }
+
+@keyframes flash {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
