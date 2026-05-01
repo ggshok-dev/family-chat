@@ -374,9 +374,16 @@
   
   function addReaction(msg, emoji) {
     const reactions = msg.reactions || {};
-    reactions[currentUser] = emoji;
+    
+    // Если уже есть такая реакция от этого пользователя — удаляем её
+    if (reactions[currentUser] === emoji) {
+      delete reactions[currentUser];
+    } else {
+      reactions[currentUser] = emoji;
+    }
+    
     db.ref(getChatPath() + '/' + msg.id + '/reactions').set(reactions);
-  }
+}
   
   function showMenu(event, msg) {
     const old = document.querySelector('.context-menu');
@@ -644,6 +651,31 @@
   }
   
   // ============ ОТПРАВКА ============
+  function sendMedia(type, dataUrl, fileName, fileType) {
+    if (!currentUser) { alert('Сначала войдите'); return; }
+    
+    if (type === 'voice') {
+      db.ref(getChatPath()).push({ from: currentUser, type: 'voice', data: dataUrl, timestamp: firebase.database.ServerValue.TIMESTAMP, text: '🎤 Голосовое' });
+      return;
+    }
+    
+    if (type === 'file') {
+      db.ref(getChatPath()).push({ from: currentUser, type: 'file', data: dataUrl, fileName: fileName, fileType: fileType, timestamp: firebase.database.ServerValue.TIMESTAMP, text: '📎 ' + fileName });
+      return;
+    }
+    
+    const img = new Image();
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > 1200) { h = h * 1200 / w; w = 1200; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      db.ref(getChatPath()).push({ from: currentUser, type: 'image', data: canvas.toDataURL('image/jpeg', 0.7), timestamp: firebase.database.ServerValue.TIMESTAMP, text: '📷 Фото' });
+    };
+    img.src = dataUrl;
+}
+  
   function sendText(text, replyTo) {
     if (!currentUser) { alert('Сначала войдите'); return; }
     if (!text.trim()) return;
@@ -752,22 +784,37 @@
     });
     
     document.getElementById('micBtn').addEventListener('click', function() {
-      if (!currentUser) { alert('Войдите'); return; }
-      const btn = document.getElementById('micBtn');
-      if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); btn.classList.remove('recording'); btn.textContent = '🎤'; return; }
-      navigator.mediaDevices.getUserMedia({audio: true}).then(function(stream) {
-        mediaRecorder = new MediaRecorder(stream);
-        audioChunks = [];
-        mediaRecorder.ondataavailable = function(e) { audioChunks.push(e.data); };
-        mediaRecorder.onstop = function() {
-          const blob = new Blob(audioChunks, {type: 'audio/webm'});
-          const r = new FileReader(); r.onload = function(ev) { sendMedia('voice', ev.target.result); }; r.readAsDataURL(blob);
-          stream.getTracks().forEach(function(t) { t.stop(); });
-        };
-        mediaRecorder.start(); btn.classList.add('recording'); btn.textContent = '⏹️';
-        setTimeout(function() { if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); btn.classList.remove('recording'); btn.textContent = '🎤'; } }, 30000);
-      }).catch(function() { alert('Нет микрофона'); });
-    });
+  if (!currentUser) { alert('Войдите'); return; }
+  const btn = document.getElementById('micBtn');
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    btn.classList.remove('recording');
+    btn.textContent = '🎤';
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({audio: true}).then(function(stream) {
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    mediaRecorder.ondataavailable = function(e) { audioChunks.push(e.data); };
+    mediaRecorder.onstop = function() {
+      const blob = new Blob(audioChunks, {type: 'audio/webm'});
+      const reader = new FileReader();
+      reader.onload = function(ev) { sendMedia('voice', ev.target.result); };
+      reader.readAsDataURL(blob);
+      stream.getTracks().forEach(function(t) { t.stop(); });
+    };
+    mediaRecorder.start();
+    btn.classList.add('recording');
+    btn.textContent = '⏹️';
+    setTimeout(function() {
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        btn.classList.remove('recording');
+        btn.textContent = '🎤';
+      }
+    }, 30000);
+  }).catch(function() { alert('Нет доступа к микрофону'); });
+});
     
     // Вкладки
     document.querySelectorAll('.tab').forEach(function(tab) {
