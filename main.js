@@ -388,33 +388,18 @@
     const isTextMessage = msg.type === 'text' || !msg.type;
     
     menu.innerHTML = `
-      <div style="padding:8px;border-bottom:1px solid #eee;">
-  <div style="font-size:0.8rem;color:#999;margin-bottom:5px;">Реакции:</div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;">
-    <button class="reaction-btn" data-emoji="👍">👍</button>
-    <button class="reaction-btn" data-emoji="👎">👎</button>
-    <button class="reaction-btn" data-emoji="❤️">❤️</button>
-    <button class="reaction-btn" data-emoji="😂">😂</button>
-    <button class="reaction-btn" data-emoji="😢">😢</button>
-    <button class="reaction-btn" data-emoji="😡">😡</button>
-    <button class="reaction-btn" data-emoji="🔥">🔥</button>
-    <button class="reaction-btn" data-emoji="🎉">🎉</button>
-    <button class="reaction-btn" data-emoji="💯">💯</button>
-    <button class="reaction-btn" data-emoji="✍️">✍️</button>
-    <button class="reaction-btn" data-emoji="🙏">🙏</button>
-  </div>
-</div>
       <button>💬 Ответить</button>
-      ${isTextMessage ? '<button>📋 Копировать текст</button>' : ''}
+      ${isTextMessage ? '<button>📋 Копировать</button>' : ''}
       ${isTextMessage && msg.from === currentUser ? '<button>✏️ Редактировать</button>' : ''}
       ${msg.from === currentUser ? '<button class="danger-btn">🗑️ Удалить</button>' : ''}
+      <button style="border-top:1px solid #eee;margin-top:4px;padding-top:8px;">😊 Реакции</button>
     `;
     
     const x = event.clientX || (event.touches && event.touches[0].clientX) || 100;
     const y = event.clientY || (event.touches && event.touches[0].clientY) || 100;
     
-    const menuWidth = 220;
-    const menuHeight = 300;
+    const menuWidth = 200;
+    const menuHeight = 250;
     let left = x;
     let top = y;
     
@@ -426,51 +411,40 @@
     menu.style.cssText = 'position:fixed;left:' + left + 'px;top:' + top + 'px;z-index:9999;';
     document.body.appendChild(menu);
     
-        // Реакции
-    menu.querySelectorAll('.reaction-btn').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        addReaction(msg, btn.dataset.emoji);
-        menu.remove();
-      });
+    // Собираем все кнопки
+    var allButtons = menu.querySelectorAll('button');
+    var index = 0;
+    
+    // Ответить
+    allButtons[index].addEventListener('click', function() {
+      menu.remove();
+      setReply(msg);
+      document.getElementById('msgInput').focus();
     });
-    
-        // Остальные кнопки
-    var buttons = menu.querySelectorAll('button:not(.reaction-btn)');
-    var btnIndex = 0;
-    
-    // Ответить (цитирование) — всегда доступно
-    if (buttons[btnIndex]) {
-      buttons[btnIndex].addEventListener('click', function() {
-        menu.remove();
-        setReply(msg);
-        document.getElementById('msgInput').focus();
-      });
-    }
-    btnIndex++;
+    index++;
     
     // Копировать (только текст)
-    if (isTextMessage && buttons[btnIndex]) {
-      buttons[btnIndex].addEventListener('click', function() {
+    if (isTextMessage && allButtons[index]) {
+      allButtons[index].addEventListener('click', function() {
         menu.remove();
         navigator.clipboard?.writeText(msg.text || '');
       });
-      btnIndex++;
+      index++;
     }
     
-    // Редактировать (только свой текст)
-    if (isTextMessage && msg.from === currentUser && buttons[btnIndex]) {
-      buttons[btnIndex].addEventListener('click', function() {
+    // Редактировать
+    if (isTextMessage && msg.from === currentUser && allButtons[index]) {
+      allButtons[index].addEventListener('click', function() {
         menu.remove();
         var newText = prompt('Редактировать:', msg.text || '');
         if (newText && newText !== msg.text) db.ref(getChatPath() + '/' + msg.id).update({text: newText, edited: true});
       });
-      btnIndex++;
+      index++;
     }
     
-    // Удалить (только свои сообщения)
-    if (msg.from === currentUser && buttons[btnIndex]) {
-      buttons[btnIndex].addEventListener('click', function() {
+    // Удалить
+    if (msg.from === currentUser && allButtons[index]) {
+      allButtons[index].addEventListener('click', function() {
         menu.remove();
         if (confirm('Удалить сообщение?')) {
           db.ref(getChatPath() + '/' + msg.id).set(null);
@@ -479,7 +453,61 @@
           processedIds.delete(msg.id);
         }
       });
+      index++;
     }
+    
+    // Реакции — последняя кнопка
+    if (allButtons[index]) {
+      allButtons[index].addEventListener('click', function(e) {
+        e.stopPropagation();
+        menu.remove();
+        showReactionMenu(event, msg);
+      });
+    }
+    
+    setTimeout(function() {
+      var close = function(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
+      document.addEventListener('click', close);
+    }, 10);
+}
+
+// Новое меню реакций
+function showReactionMenu(event, msg) {
+    const old = document.querySelector('.context-menu');
+    if (old) old.remove();
+    
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.innerHTML = `
+      <div style="font-size:0.8rem;color:#999;padding:5px 10px;">Выберите реакцию:</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:5px 8px 8px 8px;">
+    <button class="reaction-btn" data-emoji="👍">👍</button>
+    <button class="reaction-btn" data-emoji="👎">👎</button>
+    <button class="reaction-btn" data-emoji="❤️">❤️</button>
+    <button class="reaction-btn" data-emoji="😂">😂</button>
+    <button class="reaction-btn" data-emoji="😢">😢</button>
+    <button class="reaction-btn" data-emoji="😡">😡</button>
+    <button class="reaction-btn" data-emoji="🔥">🔥</button>
+    <button class="reaction-btn" data-emoji="🎉">🎉</button>
+    <button class="reaction-btn" data-emoji="💯">💯</button>
+    <button class="reaction-btn" data-emoji="✍️">✍️</button>
+    <button class="reaction-btn" data-emoji="🙏">🙏</button>
+      </div>
+    `;
+    
+    const x = event.clientX || (event.touches && event.touches[0].clientX) || 100;
+    const y = event.clientY || (event.touches && event.touches[0].clientY) || 100;
+    
+    menu.style.cssText = 'position:fixed;left:' + Math.min(x, window.innerWidth - 200) + 'px;top:' + Math.min(y, window.innerHeight - 200) + 'px;z-index:10000;';
+    document.body.appendChild(menu);
+    
+    menu.querySelectorAll('.reaction-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        addReaction(msg, btn.dataset.emoji);
+        menu.remove();
+      });
+    });
     
     setTimeout(function() {
       var close = function(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
