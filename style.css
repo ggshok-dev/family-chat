@@ -572,3 +572,74 @@ body.dark-theme .settings-panel {
       body { padding: 0; }
       .emoji-grid { grid-template-columns: repeat(6, 1fr); }
     }
+
+/* Разделитель дат */
+.date-separator {
+  text-align: center;
+  color: #999;
+  font-size: 0.8rem;
+  margin: 15px 0;
+  position: relative;
+}
+
+.date-separator::before,
+.date-separator::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 30%;
+  height: 1px;
+  background: #ddd;
+}
+
+.date-separator::before { left: 0; }
+.date-separator::after { right: 0; }
+
+body.dark-theme .date-separator { color: #888; }
+body.dark-theme .date-separator::before,
+body.dark-theme .date-separator::after { background: #2a3a5c; }
+
+/* Онлайн-точка */
+.online-dot {
+  width: 10px;
+  height: 10px;
+  background: #4CAF50;
+  border-radius: 50%;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  border: 2px solid white;
+}
+
+/* Индикатор печати */
+.typing-indicator {
+  padding: 5px 15px;
+  color: #999;
+  font-size: 0.8rem;
+  font-style: italic;
+  animation: fadeIn 0.3s;
+}
+
+/* Реакции */
+.reactions {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 0.9rem;
+}
+
+.reaction-btn {
+  padding: 4px 8px;
+  background: #f0f0f0;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: 0.2s;
+}
+
+.reaction-btn:hover {
+  background: #667eea;
+  color: white;
+  transform: scale(1.1);
+}
