@@ -1,5 +1,5 @@
 // Service Worker для оффлайн + push
-const CACHE_NAME = 'fchat-v4';
+const CACHE_NAME = 'fchat-v4.1';
 const urlsToCache = [
   '/family-chat/',
   '/family-chat/index.html',
