@@ -605,20 +605,33 @@
   
   // ============ ОТПРАВКА ============
   function sendText(text) {
-    if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
+    if (!state.currentUser) { alert('Сначала войдите под своей ролью'); return; }
     if (!text.trim()) return;
     
     const msg = {
-      from: currentUser,
+      from: state.currentUser,
       text: text.trim(),
       timestamp: firebase.database.ServerValue.TIMESTAMP,
       type: 'text'
     };
-    if (autoDeleteHours > 0) msg.deleteAt = Date.now() + autoDeleteHours * 3600000;
+    if (state.autoDeleteHours > 0) msg.deleteAt = Date.now() + state.autoDeleteHours * 3600000;
     db.ref(getChatPath()).push(msg);
+    
+    // Отправка уведомления
+    if (state.notifEnabled && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(function(reg) {
+        reg.showNotification('👨‍👩‍👧‍👦 FChat', {
+          body: 'Новое сообщение от ' + FAMILY[state.currentUser].name,
+          icon: '/family-chat/icon-192.png',
+          vibrate: [200, 100, 200],
+          tag: 'fchat'
+        });
+      });
+    }
+    
     const msgInput = document.getElementById('msgInput');
     if (msgInput) msgInput.value = '';
-  }
+}
   
   function sendMedia(type, dataUrl) {
     if (!currentUser) { alert('Сначала войдите под своей ролью'); return; }
