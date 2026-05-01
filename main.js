@@ -360,24 +360,27 @@
     menu.className = 'context-menu';
     
     const isTextMessage = msg.type === 'text' || !msg.type;
-    const editButton = isTextMessage ? '<button>✏️ Редактировать</button>' : '';
     
     menu.innerHTML = `
-      <button>👍</button>
-      <button>❤️</button>
-      <button>😂</button>
+      <div style="display:flex;gap:4px;padding:8px;border-bottom:1px solid #eee;">
+        <button class="reaction-btn" data-emoji="👍">👍</button>
+        <button class="reaction-btn" data-emoji="❤️">❤️</button>
+        <button class="reaction-btn" data-emoji="😂">😂</button>
+        <button class="reaction-btn" data-emoji="😢">😢</button>
+        <button class="reaction-btn" data-emoji="😡">😡</button>
+        <button class="reaction-btn" data-emoji="🔥">🔥</button>
+      </div>
       <button>💬 Ответить</button>
-      <button>📋 Копировать</button>
-      ${editButton}
-      <button class="danger-btn">🗑️ Удалить</button>
+      ${isTextMessage ? '<button>📋 Копировать текст</button>' : ''}
+      ${isTextMessage && msg.from === currentUser ? '<button>✏️ Редактировать</button>' : ''}
+      ${msg.from === currentUser ? '<button class="danger-btn">🗑️ Удалить</button>' : ''}
     `;
     
     const x = event.clientX || (event.touches && event.touches[0].clientX) || 100;
     const y = event.clientY || (event.touches && event.touches[0].clientY) || 100;
     
-    // Умное позиционирование
-    const menuWidth = 200;
-    const menuHeight = isTextMessage ? 280 : 240;
+    const menuWidth = 220;
+    const menuHeight = 300;
     let left = x;
     let top = y;
     
@@ -390,49 +393,67 @@
     document.body.appendChild(menu);
     
     // Реакции
-    menu.querySelectorAll('button')[0].addEventListener('click', () => { addReaction(msg, '👍'); menu.remove(); });
-    menu.querySelectorAll('button')[1].addEventListener('click', () => { addReaction(msg, '❤️'); menu.remove(); });
-    menu.querySelectorAll('button')[2].addEventListener('click', () => { addReaction(msg, '😂'); menu.remove(); });
+    menu.querySelectorAll('.reaction-btn').forEach(function(btn) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        addReaction(msg, btn.dataset.emoji);
+        menu.remove();
+      });
+    });
     
     // Ответить
-    menu.querySelectorAll('button')[3].addEventListener('click', () => {
+    var buttons = menu.querySelectorAll('button:not(.reaction-btn)');
+    var btnIndex = 0;
+    
+    buttons[btnIndex].addEventListener('click', function() {
       menu.remove();
       document.getElementById('msgInput').value = '> ' + (msg.text || '📷 Фото') + '\n';
       document.getElementById('msgInput').focus();
     });
+    btnIndex++;
     
-    // Копировать
-    menu.querySelectorAll('button')[4].addEventListener('click', () => {
-      menu.remove();
-      navigator.clipboard?.writeText(msg.text || '');
-    });
-    
-    // Редактировать (только текст)
+    // Копировать (только текст)
     if (isTextMessage) {
-      menu.querySelectorAll('button')[5].addEventListener('click', () => {
+      buttons[btnIndex].addEventListener('click', function() {
         menu.remove();
-        const newText = prompt('Редактировать:', msg.text || '');
+        navigator.clipboard?.writeText(msg.text || '');
+        const toast = document.createElement('div');
+        toast.textContent = '✅ Скопировано!';
+        toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:white;padding:10px 20px;border-radius:20px;z-index:9999;';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 1500);
+      });
+      btnIndex++;
+    }
+    
+    // Редактировать (только свой текст)
+    if (isTextMessage && msg.from === currentUser) {
+      buttons[btnIndex].addEventListener('click', function() {
+        menu.remove();
+        var newText = prompt('Редактировать:', msg.text || '');
         if (newText && newText !== msg.text) db.ref(getChatPath() + '/' + msg.id).update({text: newText, edited: true});
+      });
+      btnIndex++;
+    }
+    
+    // Удалить (только свои сообщения)
+    if (msg.from === currentUser) {
+      buttons[btnIndex].addEventListener('click', function() {
+        menu.remove();
+        if (confirm('Удалить сообщение?')) {
+          db.ref(getChatPath() + '/' + msg.id).set(null);
+          var el = document.querySelector('[data-id="' + msg.id + '"]');
+          if (el) { el.style.opacity = '0'; el.style.transition = '0.3s'; setTimeout(function() { el.remove(); }, 300); }
+          processedIds.delete(msg.id);
+        }
       });
     }
     
-    // Удалить
-    const delIndex = isTextMessage ? 6 : 5;
-    menu.querySelectorAll('button')[delIndex].addEventListener('click', () => {
-      menu.remove();
-      if (confirm('Удалить?')) {
-        db.ref(getChatPath() + '/' + msg.id).set(null);
-        const el = document.querySelector('[data-id="' + msg.id + '"]');
-        if (el) { el.style.opacity = '0'; el.style.transition = '0.3s'; setTimeout(() => el.remove(), 300); }
-        processedIds.delete(msg.id);
-      }
-    });
-    
-    setTimeout(() => {
-      const close = e => { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
+    setTimeout(function() {
+      var close = function(e) { if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); } };
       document.addEventListener('click', close);
     }, 10);
-  }
+}
   
   // ============ ЧАТ ============
   function getChatPath() {
@@ -733,99 +754,139 @@
   }
   
   // ============ ПРОСМОТРЩИК ФОТО ============
-  window.openImageViewer = function(src) {
-    const allImages = [];
-    document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
-    let currentIndex = allImages.indexOf(src);
-    const old = document.querySelector('.image-viewer');
-    if (old) old.remove();
-    
-    const viewer = document.createElement('div');
-    viewer.className = 'image-viewer';
-    viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;display:flex;align-items:center;justify-content:center;overflow:hidden;';
-    
-    const img = document.createElement('img');
-    img.src = src;
-    img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transition:transform 0.1s;';
-    
-    let scale = 1, startDist = 0, startX = 0, isSwiping = false;
-    
-    // Пинч-зум
-    viewer.addEventListener('touchstart', function(e) {
-      if (e.touches.length === 2) {
-        startDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-      } else if (e.touches.length === 1 && scale === 1) {
-        startX = e.touches[0].clientX;
-        isSwiping = true;
-      }
-    });
-    
-    viewer.addEventListener('touchmove', function(e) {
-      if (e.touches.length === 2) {
-        e.preventDefault();
-        const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-        scale *= dist / startDist;
-        scale = Math.min(5, Math.max(0.5, scale));
-        img.style.transform = 'scale(' + scale + ')';
-        startDist = dist;
-      } else if (isSwiping && scale === 1) {
-        img.style.transform = 'translateX(' + (e.touches[0].clientX - startX) + 'px)';
-      }
-    });
-    
-    viewer.addEventListener('touchend', function() {
-      if (!isSwiping) return;
-      isSwiping = false;
-      const diff = parseFloat(img.style.transform.replace('translateX(','').replace('px)','')) || 0;
-      if (diff < -100 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
-      else if (diff > 100 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
-      img.style.transform = scale > 1 ? 'scale(' + scale + ')' : '';
-    });
-    
-    // Двойной тап
-    let lastTap = 0;
-    img.addEventListener('click', function(e) {
-      const now = Date.now();
-      if (now - lastTap < 300) {
-        scale = scale > 1 ? 1 : 2.5;
-        img.style.transform = 'scale(' + scale + ')';
-      }
-      lastTap = now;
-    });
-    
-    viewer.appendChild(img);
-    
-    const counter = document.createElement('div');
-    counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
-    viewer.appendChild(counter);
-    function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
-    updateCounter();
-    
-    if (currentIndex > 0) {
-      const prev = document.createElement('button');
-      prev.innerHTML = '‹';
-      prev.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
-      prev.onclick = function(e) { e.stopPropagation(); currentIndex--; img.src = allImages[currentIndex]; updateCounter(); };
-      viewer.appendChild(prev);
+  // ============ ПРОСМОТРЩИК ФОТО (зум от точки касания) ============
+window.openImageViewer = function(src) {
+  const allImages = [];
+  document.querySelectorAll('.media-img').forEach(img => { if (img.src) allImages.push(img.src); });
+  let currentIndex = allImages.indexOf(src);
+  const old = document.querySelector('.image-viewer');
+  if (old) old.remove();
+  
+  const viewer = document.createElement('div');
+  viewer.className = 'image-viewer';
+  viewer.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.95);z-index:10000;overflow:hidden;touch-action:none;';
+  
+  const imgContainer = document.createElement('div');
+  imgContainer.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;';
+  
+  const img = document.createElement('img');
+  img.src = src;
+  img.style.cssText = 'max-width:90%;max-height:90%;object-fit:contain;transform-origin:0 0;';
+  
+  let scale = 1, translateX = 0, translateY = 0;
+  let lastDist = 0, lastScale = 1;
+  let isDragging = false, dragStartX = 0, dragStartY = 0;
+  let lastTap = 0;
+  
+  function updateTransform() {
+    img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  }
+  
+  // Пинч-зум от точки касания
+  img.addEventListener('touchstart', function(e) {
+    if (e.touches.length === 2) {
+      isDragging = false;
+      lastDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      lastScale = scale;
+      
+      // Центр между пальцами
+      const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      
+      // Сохраняем точку зума
+      img.dataset.zoomX = cx;
+      img.dataset.zoomY = cy;
+    } else if (e.touches.length === 1 && scale > 1) {
+      isDragging = true;
+      dragStartX = e.touches[0].clientX - translateX;
+      dragStartY = e.touches[0].clientY - translateY;
     }
-    
-    if (currentIndex < allImages.length - 1) {
-      const next = document.createElement('button');
-      next.innerHTML = '›';
-      next.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
-      next.onclick = function(e) { e.stopPropagation(); currentIndex++; img.src = allImages[currentIndex]; updateCounter(); };
-      viewer.appendChild(next);
+  });
+  
+  img.addEventListener('touchmove', function(e) {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const newDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+      const newScale = lastScale * (newDist / lastDist);
+      scale = Math.min(5, Math.max(0.5, newScale));
+      updateTransform();
+    } else if (isDragging && e.touches.length === 1 && scale > 1) {
+      e.preventDefault();
+      translateX = e.touches[0].clientX - dragStartX;
+      translateY = e.touches[0].clientY - dragStartY;
+      updateTransform();
+    } else if (e.touches.length === 1 && scale === 1) {
+      // Свайп для перелистывания
+      img.style.transform = `translateX(${e.touches[0].clientX - (dragStartX + translateX)}px)`;
     }
-    
-    const close = document.createElement('button');
-    close.textContent = '✕';
-    close.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;';
-    close.onclick = function() { viewer.remove(); };
-    viewer.appendChild(close);
-    
-    viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
-    document.body.appendChild(viewer);
-  };
+  });
+  
+  img.addEventListener('touchend', function(e) {
+    if (e.touches.length === 0) {
+      // Свайп
+      if (scale === 1) {
+        const diff = parseFloat(img.style.transform.replace('translateX(','').replace('px)','')) || 0;
+        if (diff < -100 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
+        else if (diff > 100 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
+        img.style.transform = '';
+      }
+      isDragging = false;
+    }
+  });
+  
+  // Двойной тап
+  img.addEventListener('click', function(e) {
+    const now = Date.now();
+    if (now - lastTap < 300) {
+      e.preventDefault();
+      if (scale > 1) {
+        scale = 1; translateX = 0; translateY = 0;
+      } else {
+        scale = 2.5;
+        // Зум к точке тапа
+        const rect = img.getBoundingClientRect();
+        translateX = -(e.clientX - rect.left) * (scale - 1);
+        translateY = -(e.clientY - rect.top) * (scale - 1);
+      }
+      updateTransform();
+    }
+    lastTap = now;
+  });
+  
+  imgContainer.appendChild(img);
+  viewer.appendChild(imgContainer);
+  
+  const counter = document.createElement('div');
+  counter.style.cssText = 'position:absolute;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;';
+  viewer.appendChild(counter);
+  function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
+  updateCounter();
+  
+  if (currentIndex > 0) {
+    const prev = document.createElement('button');
+    prev.innerHTML = '‹';
+    prev.style.cssText = 'position:absolute;left:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
+    prev.onclick = function(e) { e.stopPropagation(); currentIndex--; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateTransform(); };
+    viewer.appendChild(prev);
+  }
+  
+  if (currentIndex < allImages.length - 1) {
+    const next = document.createElement('button');
+    next.innerHTML = '›';
+    next.style.cssText = 'position:absolute;right:10px;top:50%;transform:translateY(-50%);color:white;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:50px;height:50px;font-size:2rem;cursor:pointer;z-index:10001;';
+    next.onclick = function(e) { e.stopPropagation(); currentIndex++; img.src = allImages[currentIndex]; updateCounter(); scale = 1; translateX = 0; translateY = 0; updateTransform(); };
+    viewer.appendChild(next);
+  }
+  
+  const close = document.createElement('button');
+  close.textContent = '✕';
+  close.style.cssText = 'position:absolute;top:20px;right:20px;padding:10px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;';
+  close.onclick = function() { viewer.remove(); };
+  viewer.appendChild(close);
+  
+  viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
+  document.body.appendChild(viewer);
+};
   
   // ============ АВТОУДАЛЕНИЕ ============
   function startAutoDelete() {
