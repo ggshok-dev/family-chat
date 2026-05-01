@@ -709,3 +709,153 @@ body.purple-theme .action-btn.primary { background: linear-gradient(135deg, rgba
   body { padding: 0; }
   .emoji-grid { grid-template-columns: repeat(6, 1fr); }
 }
+
+/* Анимация появления сообщений */
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.message {
+  animation: messageIn 0.3s ease-out;
+}
+
+/* Анимация для отправленных сообщений */
+.message.sent {
+  animation: messageIn 0.3s ease-out;
+  transform-origin: bottom right;
+}
+
+/* Анимация для полученных сообщений */
+.message.received {
+  animation: messageIn 0.3s ease-out;
+  transform-origin: bottom left;
+}
+
+/* Пульсация кнопки отправки при наведении */
+.send-btn {
+  transition: transform 0.2s ease;
+}
+
+.send-btn:hover {
+  animation: sendPulse 0.6s ease infinite;
+}
+
+@keyframes sendPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+/* Эффект нажатия */
+.send-btn:active {
+  transform: scale(0.9);
+}
+
+/* Плавное появление панели эмодзи */
+.emoji-picker-wrapper {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.emoji-picker-wrapper.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Анимация переключения вкладок */
+.tab {
+  transition: all 0.3s ease;
+}
+
+.tab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.tab:active {
+  transform: scale(0.95);
+}
+
+/* Эффект ripple для кнопок */
+.icon-btn, .action-btn, .send-btn, .tab, .reaction-btn {
+  position: relative;
+  overflow: hidden;
+}
+
+.icon-btn::after, .action-btn::after, .send-btn::after, .tab::after, .reaction-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.icon-btn:active::after, .action-btn:active::after, .send-btn:active::after, 
+.tab:active::after, .reaction-btn:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* Плавное переключение тем */
+body, .app, .header, .chat-window, .input-panel, .bubble {
+  transition: background 0.5s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Улучшенная анимация контекстного меню */
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: scale(0.8) translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.context-menu {
+  animation: menuIn 0.2s ease-out;
+  transform-origin: top left;
+}
+
+/* Анимация появления реакций */
+.reaction-btn:hover {
+  animation: reactionPop 0.3s ease;
+}
+
+@keyframes reactionPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4); }
+  100% { transform: scale(1.2); }
+}
+
+/* Анимация индикатора печати */
+@keyframes typingDots {
+  0%, 20% { opacity: 0; }
+  50% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.typing-indicator span {
+  animation: typingDots 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+/* Плавный скролл */
+.chat-window {
+  scroll-behavior: smooth;
+}
