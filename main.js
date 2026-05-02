@@ -527,13 +527,17 @@
   
   // ============ ЧАТ ============
   function getChatPath() {
-    if (!currentUser) return 'general';
+    // Берем секретный код из localStorage (тот самый 'family2026' или новый)
+    const familyCode = localStorage.getItem('fc_code') || 'default';
+    
     if (activeTab === 'private' && privateWith) {
-      const users = [currentUser, privateWith].sort();
-      return 'private/' + users[0] + '_' + users[1];
+        let pair = [currentUser, privateWith].sort();
+        // Приватные сообщения тоже прячем внутри ветки этого кода
+        return 'rooms/' + familyCode + '/privates/' + pair[0] + '_' + pair[1];
     }
-    return 'general';
-  }
+    // Общий чат теперь будет у каждой семьи свой
+    return 'rooms/' + familyCode + '/general';
+}
   
   function loadMessages() {
     if (!currentUser) return;
