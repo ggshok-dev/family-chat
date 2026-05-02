@@ -1,19 +1,17 @@
 // ============ АУТЕНТИФИКАЦИЯ FChat ============
 
 // Состояние авторизации
-let currentUser = null;        // UID пользователя
-let currentUserData = null;    // { name, emoji, role, familyId }
-let currentFamilyId = null;    // ID семьи пользователя
-let currentFamilyData = null;  // { name, inviteCode, members }
+let currentUser = null;
+let currentUserData = null;
+let currentFamilyId = null;
+let currentFamilyData = null;
 
 // ============ РЕГИСТРАЦИЯ ============
 async function registerUser(email, password, name, roleId, emoji) {
   try {
-    // 1. Создаём аккаунт в Firebase Auth
     const userCredential = await auth.createUserWithEmailAndPassword(email, password);
     const userId = userCredential.user.uid;
     
-    // 2. Сохраняем данные пользователя в базе
     await db.ref('users/' + userId).set({
       name: name,
       email: email,
@@ -55,42 +53,34 @@ async function logoutUser() {
 // ============ СЛУШАТЕЛЬ АВТОРИЗАЦИИ ============
 auth.onAuthStateChanged(async function(user) {
   if (user) {
-    // Пользователь вошёл
     currentUser = user.uid;
     
-    // Загружаем данные пользователя
     const userSnap = await db.ref('users/' + user.uid).once('value');
     currentUserData = userSnap.val();
     
     if (!currentUserData) {
-      // Новый пользователь (не должно случаться, но обработаем)
       console.error('Данные пользователя не найдены');
       return;
     }
     
-    // Загружаем данные семьи
     if (currentUserData.familyId) {
       const familySnap = await db.ref('families/' + currentUserData.familyId).once('value');
       currentFamilyData = familySnap.val();
       currentFamilyId = currentUserData.familyId;
     }
     
-    // Показываем приложение
     document.getElementById('secretOverlay').style.display = 'none';
     document.getElementById('mainApp').style.display = 'flex';
     
-    // Инициализируем приложение
     initApp();
     
     console.log('✅ Вошёл как ' + currentUserData.name);
   } else {
-    // Пользователь вышел
     currentUser = null;
     currentUserData = null;
     currentFamilyId = null;
     currentFamilyData = null;
     
-    // Показываем экран входа
     document.getElementById('secretOverlay').style.display = 'flex';
     document.getElementById('mainApp').style.display = 'none';
     
@@ -139,6 +129,9 @@ function initAuthForms() {
     document.getElementById('registerForm').style.display = 'block';
     document.getElementById('loginTitle').textContent = 'Регистрация в FChat';
     document.getElementById('errorMsg').classList.remove('show');
+    
+    // Сбрасываем на первый шаг
+    nextRegStep(1);
   });
   
   document.getElementById('showLogin').addEventListener('click', function(e) {
@@ -182,10 +175,9 @@ function initAuthForms() {
     if (!result.success) {
       showAuthError(result.error);
     }
-    // При успехе сработает onAuthStateChanged
   });
   
-  // Кнопка Выйти (в настройках)
+  // Кнопка Выйти
   document.getElementById('logoutBtn').addEventListener('click', async function() {
     if (confirm('Выйти из аккаунта?')) {
       await logoutUser();
@@ -222,7 +214,7 @@ function showAuthError(msg) {
   setTimeout(function() { el.classList.remove('show'); }, 5000);
 }
 
-// ============ ЭМОДЗИ-СЕЛЕКТОР ДЛЯ РЕГИСТРАЦИИ ============
+// ============ ЭМОДЗИ-СЕЛЕКТОР ============
 let selectedRegEmoji = '👤';
 
 function initEmojiSelector() {
@@ -246,46 +238,6 @@ function getSelectedEmoji() {
   return selectedRegEmoji;
 }
 
-// Инициализация при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-  initAuthForms();
-  initEmojiSelector();
-});
-
-console.log('✅ auth.js загружен');
-
-// Переключение шагов регистрации
-function nextRegStep(step) {
-  // Скрываем все шаги
-  document.querySelectorAll('.auth-step').forEach(function(el) {
-    el.style.display = 'none';
-  });
-  
-  // Показываем нужный шаг
-  var stepEl = document.getElementById('regStep' + step);
-  if (stepEl) {
-    stepEl.style.display = 'block';
-    stepEl.classList.add('active');
-    
-    // Анимация появления
-    stepEl.style.animation = 'none';
-    stepEl.offsetHeight; // trigger reflow
-    stepEl.style.animation = 'dialogSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
-  }
-}
-
-// Сброс шагов при переключении на логин
-document.getElementById('showRegister').addEventListener('click', function(e) {
-  e.preventDefault();
-  document.getElementById('loginForm').style.display = 'none';
-  document.getElementById('registerForm').style.display = 'block';
-  document.getElementById('loginTitle').textContent = 'Регистрация в FChat';
-  document.getElementById('errorMsg').classList.remove('show');
-  
-  // Сбрасываем на первый шаг
-  nextRegStep(1);
-});
-
 // ============ ПЕРЕКЛЮЧЕНИЕ ШАГОВ РЕГИСТРАЦИИ ============
 function nextRegStep(step) {
   // Скрываем все шаги
@@ -299,6 +251,11 @@ function nextRegStep(step) {
   if (stepEl) {
     stepEl.style.display = 'block';
     stepEl.classList.add('active');
+    
+    // Анимация появления
+    stepEl.style.animation = 'none';
+    stepEl.offsetHeight;
+    stepEl.style.animation = 'dialogSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
   }
   
   // Обновляем индикатор
@@ -308,5 +265,11 @@ function nextRegStep(step) {
     if (index + 1 === step) dot.classList.add('active');
   });
 }
+
+// Инициализация при загрузке
+document.addEventListener('DOMContentLoaded', function() {
+  initAuthForms();
+  initEmojiSelector();
+});
 
 console.log('✅ auth.js загружен');
