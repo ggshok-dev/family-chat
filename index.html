@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>FChat — Семейный мессенджер</title>
+  
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#667eea">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="FChat">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <!-- Стили -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+</head>
+<body>
+  <!-- ========== ЭКРАН ВХОДА / РЕГИСТРАЦИЯ ========== -->
+  <div class="secret-overlay" id="secretOverlay">
+    <div class="secret-dialog" id="loginDialog">
+      <div class="icon">👨‍👩‍👧‍👦</div>
+      <h2 id="loginTitle">Вход в FChat</h2>
+      
+      <!-- Форма входа -->
+      <div id="loginForm">
+        <input type="email" class="secret-input" id="loginEmail" placeholder="Email" autocomplete="email">
+        <input type="password" class="secret-input" id="loginPassword" placeholder="Пароль">
+        <button class="secret-btn" id="loginBtn">Войти</button>
+        <p style="margin-top:10px;font-size:0.9rem;">
+          <a href="#" id="showRegister" style="color:#667eea;">Нет аккаунта? Зарегистрироваться</a>
+        </p>
+      </div>
+      
+      <!-- Форма регистрации -->
+      <div id="registerForm" style="display:none;">
+        <input type="text" class="secret-input" id="regName" placeholder="Ваше имя" maxlength="20">
+        
+        <div style="margin-bottom:15px;">
+          <label style="font-size:0.9rem;color:#555;display:block;margin-bottom:5px;">Выберите эмодзи:</label>
+          <div id="emojiSelector" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;max-height:120px;overflow-y:auto;padding:5px;background:rgba(0,0,0,0.03);border-radius:8px;"></div>
+        </div>
+        
+        <div style="margin-bottom:15px;">
+          <label style="font-size:0.9rem;color:#555;display:block;margin-bottom:5px;">Кто вы в семье?</label>
+          <select id="regRole" class="secret-input" style="text-align:left;padding:10px;">
+            <optgroup label="Родители (создатели)">
+              <option value="dad">👨 Папа</option>
+              <option value="mom">👩 Мама</option>
+            </optgroup>
+            <optgroup label="Старшие родственники">
+              <option value="grandma">👵 Бабушка</option>
+              <option value="grandpa">👴 Дедушка</option>
+            </optgroup>
+            <optgroup label="Дети">
+              <option value="son">👦 Сын</option>
+              <option value="daughter">👧 Дочь</option>
+              <option value="brother">👦 Брат</option>
+              <option value="sister">👧 Сестра</option>
+            </optgroup>
+            <optgroup label="Дальние родственники">
+              <option value="aunt">👩‍🦰 Тётя</option>
+              <option value="uncle">👨‍🦱 Дядя</option>
+              <option value="nephew">🧒 Племянник</option>
+              <option value="niece">👧 Племянница</option>
+            </optgroup>
+            <optgroup label="Друзья">
+              <option value="friend">🤝 Друг</option>
+              <option value="friend_f">👭 Подруга</option>
+            </optgroup>
+          </select>
+        </div>
+        
+        <input type="email" class="secret-input" id="regEmail" placeholder="Email" autocomplete="email">
+        <input type="password" class="secret-input" id="regPassword" placeholder="Пароль (минимум 6 символов)">
+        <button class="secret-btn" id="registerBtn">Зарегистрироваться</button>
+        <p style="margin-top:10px;font-size:0.9rem;">
+          <a href="#" id="showLogin" style="color:#667eea;">Уже есть аккаунт? Войти</a>
+        </p>
+      </div>
+      
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+  </div>
+
+  <!-- ========== ПИН-КОД (после входа) ========== -->
+  <div class="pin-overlay" id="pinOverlay">
+    <div class="pin-dialog">
+      <div class="user-icon" id="pinUserIcon">👤</div>
+      <h2 id="pinTitle">Создайте ПИН-код</h2>
+      <p>Для дополнительной защиты вашей роли</p>
+      <input type="password" class="pin-input" id="pinInput" placeholder="••••" maxlength="4" inputmode="numeric">
+      <button class="pin-btn" id="pinBtn">Подтвердить</button>
+      <div class="error-msg" id="pinError"></div>
+    </div>
+  </div>
+
+  <!-- ========== ОСНОВНОЕ ПРИЛОЖЕНИЕ ========== -->
+  <div class="app" id="mainApp" style="display:none;">
+    <!-- Заголовок -->
+    <div class="header">
+      <span class="header-logo">👨‍👩‍👧‍👦</span>
+      <span class="header-title">FChat</span>
+      <div class="header-actions">
+        <button class="header-btn" id="notifBtn">🔔</button>
+        <button class="header-btn" id="soundBtn">🔊</button>
+        <button class="header-btn" id="themeBtn">🌊</button>
+        <button class="header-btn" id="settingsBtn">⚙️</button>
+      </div>
+    </div>
+
+    <!-- Панель настроек -->
+    <div class="settings-panel" id="settingsPanel">
+      <h3>⚙️ Настройки</h3>
+      
+      <div class="setting-item">
+        <span class="setting-label">🖼️ Аватар</span>
+        <div style="display:flex;gap:8px;">
+          <button class="action-btn primary" id="avatarBtn">Загрузить</button>
+          <button class="action-btn warning" id="avatarResetBtn">По умолчанию</button>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🔑 Сменить ПИН-код</span>
+        <button class="action-btn primary" id="changePinBtn">Изменить</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">👥 Пригласить в семью</span>
+        <button class="action-btn primary" id="inviteMemberBtn">Пригласить</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">📋 Код приглашения</span>
+        <button class="action-btn primary" id="showInviteCodeBtn">Показать</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🔔 Уведомления</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="notifToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🔊 Звук</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="soundToggle" checked>
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">📝 Шрифт</span>
+        <div class="font-size-controls">
+          <button class="font-size-btn" id="fontDown">A−</button>
+          <span class="font-size-value" id="fontValue">100%</span>
+          <button class="font-size-btn" id="fontUp">A+</button>
+        </div>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🗑️ Автоудаление</span>
+        <select id="autoDelete">
+            <option value="0">Выключено</option>
+            <option value="24">24 часа</option>
+            <option value="72">3 дня</option>
+            <option value="168" selected>7 дней</option>
+            <option value="720">Месяц</option>
+        </select>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🔑 Сменить пароль</span>
+        <button class="action-btn primary" id="changePasswordBtn">Изменить</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🚪 Выйти из аккаунта</span>
+        <button class="action-btn danger" id="logoutBtn">Выйти</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🔄 Кэш</span>
+        <button class="action-btn warning" id="cacheBtn">Сбросить</button>
+      </div>
+      
+      <div class="setting-item">
+        <span class="setting-label">🗑️ Очистить чат</span>
+        <button class="action-btn danger" id="clearBtn">Удалить всё</button>
+      </div>
+    </div>
+
+    <!-- Аватарки пользователей -->
+    <div class="users-avatars" id="usersAvatars"></div>
+
+    <!-- Вкладки чатов -->
+    <div class="tabs">
+      <button class="tab active" data-tab="general">💬 Общий</button>
+      <button class="tab" data-tab="private">🔒 Личный</button>
+    </div>
+
+    <!-- Заголовок личного чата -->
+    <div class="private-chat-header" id="privateChatHeader">
+      <span>🔒 Личный чат с</span>
+      <strong class="partner-name"></strong>
+    </div>
+
+    <!-- Окно чата -->
+    <div class="chat-window" id="chatWindow">
+      <div class="empty-chat">
+        <div class="empty-icon">💬</div>
+        <p>Загрузка...</p>
+      </div>
+    </div>
+
+    <!-- Панель ввода -->
+    <div class="input-panel">
+      <div id="input-panel-container">
+        <div class="emoji-picker-wrapper" id="emojiPicker">
+          <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+        <div class="input-row">
+          <button class="icon-btn" id="emojiBtn">😊</button>
+          <button class="icon-btn" id="micBtn">🎤</button>
+          <button class="icon-btn" id="attachBtn">📎</button>
+          <textarea class="msg-input" id="msgInput" rows="1" placeholder="Сообщение..."></textarea>
+          <button class="send-btn" id="sendBtn">➤</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Скрытые поля -->
+  <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt,.zip" multiple style="display:none">
+  <input type="file" id="avatarInput" accept="image/*" style="display:none">
+
+  <!-- ========== СКРИПТЫ (модульная структура) ========== -->
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/family.js"></script>
+  <script src="js/chat.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/ai-assistant.js"></script>
+  <script src="js/main.js"></script>
+  
+  <!-- Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/family-chat/sw.js')
+        .then(function(reg) {
+          console.log('✅ Service Worker зарегистрирован');
+          
+          if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+          }
+        })
+        .catch(function(err) {
+          console.log('SW error:', err);
+        });
+    }
+  </script>
+</body>
+</html>
