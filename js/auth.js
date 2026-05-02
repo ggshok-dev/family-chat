@@ -285,3 +285,28 @@ document.getElementById('showRegister').addEventListener('click', function(e) {
   // Сбрасываем на первый шаг
   nextRegStep(1);
 });
+
+// ============ ПЕРЕКЛЮЧЕНИЕ ШАГОВ РЕГИСТРАЦИИ ============
+function nextRegStep(step) {
+  // Скрываем все шаги
+  document.querySelectorAll('.auth-step').forEach(function(el) {
+    el.style.display = 'none';
+    el.classList.remove('active');
+  });
+  
+  // Показываем нужный шаг
+  var stepEl = document.getElementById('regStep' + step);
+  if (stepEl) {
+    stepEl.style.display = 'block';
+    stepEl.classList.add('active');
+  }
+  
+  // Обновляем индикатор
+  document.querySelectorAll('.step-dot').forEach(function(dot, index) {
+    dot.classList.remove('active', 'completed');
+    if (index + 1 < step) dot.classList.add('completed');
+    if (index + 1 === step) dot.classList.add('active');
+  });
+}
+
+console.log('✅ auth.js загружен');
