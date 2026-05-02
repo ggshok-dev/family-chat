@@ -253,3 +253,35 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 console.log('✅ auth.js загружен');
+
+// Переключение шагов регистрации
+function nextRegStep(step) {
+  // Скрываем все шаги
+  document.querySelectorAll('.auth-step').forEach(function(el) {
+    el.style.display = 'none';
+  });
+  
+  // Показываем нужный шаг
+  var stepEl = document.getElementById('regStep' + step);
+  if (stepEl) {
+    stepEl.style.display = 'block';
+    stepEl.classList.add('active');
+    
+    // Анимация появления
+    stepEl.style.animation = 'none';
+    stepEl.offsetHeight; // trigger reflow
+    stepEl.style.animation = 'dialogSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1)';
+  }
+}
+
+// Сброс шагов при переключении на логин
+document.getElementById('showRegister').addEventListener('click', function(e) {
+  e.preventDefault();
+  document.getElementById('loginForm').style.display = 'none';
+  document.getElementById('registerForm').style.display = 'block';
+  document.getElementById('loginTitle').textContent = 'Регистрация в FChat';
+  document.getElementById('errorMsg').classList.remove('show');
+  
+  // Сбрасываем на первый шаг
+  nextRegStep(1);
+});
