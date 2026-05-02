@@ -111,7 +111,7 @@ body.purple-theme .app {
 
 /* ===== СЕКРЕТНЫЙ КОД (ВСЕ ТЕМЫ) ===== */
 /* ============================================ */
-/*  ОКНО ВХОДА / РЕГИСТРАЦИИ (Liquid Glass Premium) */
+/*  ОКНО ВХОДА / РЕГИСТРАЦИИ (Premium Glass)    */
 /* ============================================ */
 
 .secret-overlay {
@@ -121,11 +121,11 @@ body.purple-theme .app {
   width: 100%;
   height: 100%;
   background: linear-gradient(135deg, 
-    rgba(102, 126, 234, 0.95) 0%, 
-    rgba(118, 75, 162, 0.95) 50%, 
-    rgba(255, 107, 107, 0.95) 100%);
+    rgba(102, 126, 234, 0.97) 0%, 
+    rgba(118, 75, 162, 0.97) 50%, 
+    rgba(255, 107, 107, 0.97) 100%);
   background-size: 400% 400%;
-  animation: gradientShift 15s ease infinite;
+  animation: gradientShift 12s ease infinite;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -140,25 +140,26 @@ body.purple-theme .app {
 }
 
 .secret-dialog {
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(30px) saturate(180%);
-  -webkit-backdrop-filter: blur(30px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 24px;
-  padding: 35px 30px;
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(35px) saturate(180%);
+  -webkit-backdrop-filter: blur(35px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  padding: 40px 30px;
   text-align: center;
-  max-width: 380px;
+  max-width: 400px;
   width: 100%;
   box-shadow: 
-    0 20px 60px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  animation: dialogSlideIn 0.5s ease-out;
+    0 25px 70px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset,
+    0 0 100px rgba(102, 126, 234, 0.15);
+  animation: dialogSlideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes dialogSlideIn {
   from {
     opacity: 0;
-    transform: translateY(30px) scale(0.95);
+    transform: translateY(40px) scale(0.93);
   }
   to {
     opacity: 1;
@@ -167,139 +168,158 @@ body.purple-theme .app {
 }
 
 .secret-dialog .icon {
-  font-size: 60px;
-  margin-bottom: 10px;
+  font-size: 65px;
+  margin-bottom: 12px;
   animation: iconFloat 3s ease-in-out infinite;
   display: inline-block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
 @keyframes iconFloat {
   0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  50% { transform: translateY(-12px); }
 }
 
 .secret-dialog h2 {
   color: white;
-  margin-bottom: 8px;
-  font-size: 1.6rem;
+  margin-bottom: 6px;
+  font-size: 1.7rem;
   font-weight: 700;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
+  letter-spacing: -0.3px;
 }
 
 .secret-dialog p {
-  color: rgba(255, 255, 255, 0.85);
-  margin-bottom: 25px;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 28px;
   font-size: 0.95rem;
+  line-height: 1.4;
 }
 
 /* Поля ввода */
 .secret-input {
   width: 100%;
-  padding: 14px 18px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 14px;
+  padding: 15px 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
   font-size: 1rem;
   text-align: left;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   outline: none;
   letter-spacing: 0.3px;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   display: block;
-  transition: all 0.3s ease;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
+  box-sizing: border-box;
 }
 
 .secret-input::placeholder {
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.secret-input:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .secret-input:focus {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.7);
   background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
-  transform: translateY(-1px);
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.08);
+  transform: translateY(-2px);
+  outline: none;
 }
 
 /* Кнопка */
 .secret-btn {
   width: 100%;
-  padding: 15px;
+  padding: 16px;
   border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
-  color: #667eea;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75));
+  color: #5a4bd1;
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 5px;
-  letter-spacing: 0.5px;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: 8px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .secret-btn:hover {
   background: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #4a3ab0;
 }
 
 .secret-btn:active {
-  transform: translateY(0);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 /* Ссылки */
 .secret-dialog a {
-  color: rgba(255, 255, 255, 0.9);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   font-weight: 600;
-  transition: all 0.2s;
-  border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+  transition: all 0.25s;
+  border-bottom: 1.5px dashed rgba(255, 255, 255, 0.35);
   padding-bottom: 2px;
 }
 
 .secret-dialog a:hover {
   color: white;
   border-bottom-color: white;
+  border-bottom-style: solid;
 }
 
 /* Сообщение об ошибке */
 .error-msg {
   color: #ff6b6b;
   font-size: 0.9rem;
-  margin-top: 12px;
+  margin-top: 14px;
   display: none;
-  background: rgba(255, 107, 107, 0.15);
-  padding: 10px 15px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 107, 107, 0.3);
+  background: rgba(255, 107, 107, 0.12);
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 107, 107, 0.25);
+  font-weight: 500;
 }
 
 .error-msg.show {
   display: block;
-  animation: errorShake 0.4s ease;
+  animation: errorShake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
 }
 
 @keyframes errorShake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-5px); }
-  75% { transform: translateX(5px); }
+  10%, 90% { transform: translateX(-4px); }
+  30%, 70% { transform: translateX(4px); }
+  50% { transform: translateX(-2px); }
 }
 
 /* Селектор эмодзи */
 #emojiSelector {
-  background: rgba(255, 255, 255, 0.08) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06) !important;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 8px;
 }
 
 .emoji-select-btn {
   transition: all 0.2s ease;
-  border-radius: 8px;
+  border-radius: 10px;
+  font-size: 1.4rem;
+  padding: 6px;
 }
 
 .emoji-select-btn:hover {
   background: rgba(255, 255, 255, 0.2) !important;
-  transform: scale(1.2);
+  transform: scale(1.25);
 }
 
 /* Селект роли */
@@ -309,24 +329,36 @@ select.secret-input {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 15px center;
-  padding-right: 40px;
+  padding-right: 45px;
   cursor: pointer;
 }
 
 select.secret-input option {
-  background: #667eea;
+  background: #5a4bd1;
   color: white;
+  padding: 10px;
 }
 
 select.secret-input optgroup {
-  background: rgba(102, 126, 234, 0.8);
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(90, 75, 209, 0.85);
+  color: rgba(255, 255, 255, 0.75);
   font-style: normal;
   font-weight: 600;
+  font-size: 0.85rem;
+}
+
+/* Метки */
+.secret-dialog label {
+  display: block;
+  text-align: left;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  font-weight: 500;
 }
 
 /* ============================================ */
-/*  ПИН-КОД (такой же стиль) */
+/*  ПИН-КОД (Premium Glass)                    */
 /* ============================================ */
 .pin-overlay {
   position: fixed;
@@ -334,9 +366,9 @@ select.secret-input optgroup {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(15px);
-  -webkit-backdrop-filter: blur(15px);
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   display: none;
   justify-content: center;
   align-items: center;
@@ -345,91 +377,133 @@ select.secret-input optgroup {
 }
 
 .pin-dialog {
-  background: rgba(255, 255, 255, 0.15) !important;
-  backdrop-filter: blur(30px);
-  -webkit-backdrop-filter: blur(30px);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 24px;
-  padding: 35px 30px;
+  background: rgba(255, 255, 255, 0.12) !important;
+  backdrop-filter: blur(35px) saturate(180%);
+  -webkit-backdrop-filter: blur(35px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 28px;
+  padding: 40px 30px;
   text-align: center;
-  max-width: 380px;
+  max-width: 400px;
   width: 100%;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  animation: dialogSlideIn 0.4s ease-out;
+  box-shadow: 
+    0 25px 70px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  animation: dialogSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .pin-dialog .user-icon {
-  font-size: 70px;
+  font-size: 75px;
   margin-bottom: 15px;
+  display: inline-block;
+  animation: iconFloat 3s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
 }
 
 .pin-dialog h2 {
   color: white;
   margin-bottom: 8px;
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 700;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.25);
 }
 
 .pin-dialog p {
-  color: rgba(255, 255, 255, 0.8);
-  margin-bottom: 20px;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 25px;
   font-size: 0.95rem;
 }
 
 .pin-input {
   width: 100%;
-  padding: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
-  border-radius: 14px;
-  font-size: 1.4rem;
+  padding: 18px;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  font-size: 1.5rem;
   text-align: center;
-  letter-spacing: 12px;
-  background: rgba(255, 255, 255, 0.12);
+  letter-spacing: 14px;
+  background: rgba(255, 255, 255, 0.1);
   color: white;
   display: block;
-  margin-bottom: 15px;
+  margin-bottom: 18px;
   outline: none;
-  transition: all 0.3s;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+  font-family: monospace;
+}
+
+.pin-input:hover {
+  border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .pin-input:focus {
-  border-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.7);
   background: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.1);
+  box-shadow: 0 0 0 5px rgba(255, 255, 255, 0.08);
+  outline: none;
 }
 
 .pin-btn {
   width: 100%;
-  padding: 15px;
+  padding: 16px;
   border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
-  color: #667eea;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.75));
+  color: #5a4bd1;
   font-size: 1.1rem;
   font-weight: 700;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.3px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .pin-btn:hover {
   background: white;
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  color: #4a3ab0;
 }
 
-/* Адаптивность */
+.pin-btn:active {
+  transform: translateY(-1px);
+}
+
+/* ============================================ */
+/*  АДАПТИВНОСТЬ                               */
+/* ============================================ */
 @media (max-width: 480px) {
-  .secret-dialog, .pin-dialog {
-    padding: 25px 20px;
-    border-radius: 20px;
+  .secret-dialog,
+  .pin-dialog {
+    padding: 30px 22px;
+    border-radius: 24px;
+    max-width: 100%;
   }
   
   .secret-dialog .icon {
-    font-size: 45px;
+    font-size: 50px;
   }
   
   .secret-dialog h2 {
+    font-size: 1.4rem;
+  }
+  
+  .secret-input {
+    padding: 13px 15px;
+    font-size: 0.95rem;
+  }
+  
+  .secret-btn,
+  .pin-btn {
+    padding: 14px;
+    font-size: 1rem;
+  }
+  
+  .pin-input {
     font-size: 1.3rem;
+    letter-spacing: 10px;
+    padding: 16px;
   }
 }
 
