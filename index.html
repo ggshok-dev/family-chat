@@ -39,52 +39,74 @@
         </p>
       </div>
       
-      <!-- Форма регистрации -->
-      <div id="registerForm" style="display:none;">
-        <input type="text" class="secret-input" id="regName" placeholder="Ваше имя" maxlength="20">
-        
-        <div style="margin-bottom:15px;">
-          <label style="font-size:0.9rem;color:#555;display:block;margin-bottom:5px;">Выберите эмодзи:</label>
-          <div id="emojiSelector" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;max-height:120px;overflow-y:auto;padding:5px;background:rgba(0,0,0,0.03);border-radius:8px;"></div>
-        </div>
-        
-        <div style="margin-bottom:15px;">
-          <label style="font-size:0.9rem;color:#555;display:block;margin-bottom:5px;">Кто вы в семье?</label>
-          <select id="regRole" class="secret-input" style="text-align:left;padding:10px;">
-            <optgroup label="Родители (создатели)">
-              <option value="dad">👨 Папа</option>
-              <option value="mom">👩 Мама</option>
-            </optgroup>
-            <optgroup label="Старшие родственники">
-              <option value="grandma">👵 Бабушка</option>
-              <option value="grandpa">👴 Дедушка</option>
-            </optgroup>
-            <optgroup label="Дети">
-              <option value="son">👦 Сын</option>
-              <option value="daughter">👧 Дочь</option>
-              <option value="brother">👦 Брат</option>
-              <option value="sister">👧 Сестра</option>
-            </optgroup>
-            <optgroup label="Дальние родственники">
-              <option value="aunt">👩‍🦰 Тётя</option>
-              <option value="uncle">👨‍🦱 Дядя</option>
-              <option value="nephew">🧒 Племянник</option>
-              <option value="niece">👧 Племянница</option>
-            </optgroup>
-            <optgroup label="Друзья">
-              <option value="friend">🤝 Друг</option>
-              <option value="friend_f">👭 Подруга</option>
-            </optgroup>
-          </select>
-        </div>
-        
-        <input type="email" class="secret-input" id="regEmail" placeholder="Email" autocomplete="email">
-        <input type="password" class="secret-input" id="regPassword" placeholder="Пароль (минимум 6 символов)">
-        <button class="secret-btn" id="registerBtn">Зарегистрироваться</button>
-        <p style="margin-top:10px;font-size:0.9rem;">
-          <a href="#" id="showLogin" style="color:#667eea;">Уже есть аккаунт? Войти</a>
-        </p>
-      </div>
+      <!-- Форма регистрации (пошаговая) -->
+<div id="registerForm" style="display:none;">
+  <!-- Шаг 1: Выбор роли -->
+  <div class="auth-step active" id="regStep1">
+    <h2 style="color:white;margin-bottom:8px;font-size:1.4rem;">👋 Кто вы в семье?</h2>
+    <p style="color:rgba(255,255,255,0.8);margin-bottom:20px;font-size:0.9rem;">Выберите вашу роль</p>
+    
+    <div style="margin-bottom:18px;">
+      <select id="regRole" class="secret-input" style="text-align:left;padding:14px 18px;">
+        <optgroup label="Родители (создатели)">
+          <option value="dad">👨 Папа</option>
+          <option value="mom">👩 Мама</option>
+        </optgroup>
+        <optgroup label="Старшие родственники">
+          <option value="grandma">👵 Бабушка</option>
+          <option value="grandpa">👴 Дедушка</option>
+        </optgroup>
+        <optgroup label="Дети">
+          <option value="son">👦 Сын</option>
+          <option value="daughter">👧 Дочь</option>
+          <option value="brother">👦 Брат</option>
+          <option value="sister">👧 Сестра</option>
+        </optgroup>
+        <optgroup label="Дальние родственники">
+          <option value="aunt">👩‍🦰 Тётя</option>
+          <option value="uncle">👨‍🦱 Дядя</option>
+          <option value="nephew">🧒 Племянник</option>
+          <option value="niece">👧 Племянница</option>
+        </optgroup>
+        <optgroup label="Друзья">
+          <option value="friend">🤝 Друг</option>
+          <option value="friend_f">👭 Подруга</option>
+        </optgroup>
+      </select>
+    </div>
+    <button class="secret-btn" onclick="nextRegStep(2)">Далее ➤</button>
+  </div>
+
+  <!-- Шаг 2: Имя и эмодзи -->
+  <div class="auth-step" id="regStep2" style="display:none;">
+    <h2 style="color:white;margin-bottom:8px;font-size:1.4rem;">😊 Ваше имя и аватар</h2>
+    <p style="color:rgba(255,255,255,0.8);margin-bottom:20px;font-size:0.9rem;">Как вас будут видеть в чате</p>
+    
+    <input type="text" class="secret-input" id="regName" placeholder="Ваше имя" maxlength="20" style="margin-bottom:15px;">
+    
+    <div style="margin-bottom:15px;">
+      <label style="display:block;text-align:left;color:rgba(255,255,255,0.8);font-size:0.85rem;margin-bottom:6px;">Выберите эмодзи:</label>
+      <div id="emojiSelector" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;max-height:120px;overflow-y:auto;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;"></div>
+    </div>
+    
+    <button class="secret-btn" onclick="nextRegStep(3)">Далее ➤</button>
+  </div>
+
+  <!-- Шаг 3: Email и пароль -->
+  <div class="auth-step" id="regStep3" style="display:none;">
+    <h2 style="color:white;margin-bottom:8px;font-size:1.4rem;">🔐 Данные для входа</h2>
+    <p style="color:rgba(255,255,255,0.8);margin-bottom:20px;font-size:0.9rem;">Email и пароль для входа в чат</p>
+    
+    <input type="email" class="secret-input" id="regEmail" placeholder="Email" autocomplete="email" style="margin-bottom:12px;">
+    <input type="password" class="secret-input" id="regPassword" placeholder="Пароль (мин 6 символов)" style="margin-bottom:18px;">
+    
+    <button class="secret-btn" id="registerBtn">🎉 Зарегистрироваться!</button>
+  </div>
+  
+  <p style="margin-top:18px;font-size:0.9rem;">
+    <a href="#" id="showLogin" style="color:rgba(255,255,255,0.85);">← Уже есть аккаунт? Войти</a>
+  </p>
+</div>
       
       <div class="error-msg" id="errorMsg"></div>
     </div>
