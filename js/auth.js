@@ -95,73 +95,105 @@ function getAuthErrorMessage(code) {
 }
 
 function initAuthForms() {
-  document.getElementById('showRegister').addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'block';
-    document.getElementById('loginTitle').textContent = 'Регистрация в FChat';
-    document.getElementById('errorMsg').classList.remove('show');
-    nextRegStep(1);
-  });
-
-    const showLoginInRegBtn = document.getElementById('showLoginInReg');
-  if (showLoginInRegBtn) {
-    showLoginInRegBtn.addEventListener('click', function(e) {
+  // Безопасное получение элемента
+  function safeGet(id) {
+    const el = document.getElementById(id);
+    if (!el) console.warn('⚠️ Элемент #' + id + ' не найден в HTML');
+    return el;
+  }
+  
+  // showRegister
+  const showRegisterBtn = safeGet('showRegister');
+  if (showRegisterBtn) {
+    showRegisterBtn.addEventListener('click', function(e) {
       e.preventDefault();
-      document.getElementById('registerForm').style.display = 'none';
-      document.getElementById('loginForm').style.display = 'block';
-      document.getElementById('loginTitle').textContent = 'Вход в FChat';
-      document.getElementById('errorMsg').classList.remove('show');
+      safeGet('loginForm').style.display = 'none';
+      safeGet('registerForm').style.display = 'block';
+      safeGet('loginTitle').textContent = 'Регистрация в FChat';
+      safeGet('errorMsg').classList.remove('show');
+      nextRegStep(1);
     });
   }
   
-  document.getElementById('showLogin').addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('loginTitle').textContent = 'Вход в FChat';
-    document.getElementById('errorMsg').classList.remove('show');
-  });
+  // showLogin
+  const showLoginBtn = safeGet('showLogin');
+  if (showLoginBtn) {
+    showLoginBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      safeGet('registerForm').style.display = 'none';
+      safeGet('loginForm').style.display = 'block';
+      safeGet('loginTitle').textContent = 'Вход в FChat';
+      safeGet('errorMsg').classList.remove('show');
+    });
+  }
   
-  document.getElementById('loginBtn').addEventListener('click', async function() {
-    const email = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    if (!email || !password) { showAuthError('Введите email и пароль'); return; }
-    const result = await loginUser(email, password);
-    if (!result.success) { showAuthError(result.error); }
-  });
+  // showLoginInReg
+  const showLoginInRegBtn = safeGet('showLoginInReg');
+  if (showLoginInRegBtn) {
+    showLoginInRegBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      safeGet('registerForm').style.display = 'none';
+      safeGet('loginForm').style.display = 'block';
+      safeGet('loginTitle').textContent = 'Вход в FChat';
+      safeGet('errorMsg').classList.remove('show');
+    });
+  }
   
-  document.getElementById('registerBtn').addEventListener('click', async function() {
-    const name = document.getElementById('regName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-    const roleId = document.getElementById('regRole').value;
-    const emoji = getSelectedEmoji ? getSelectedEmoji() : '👤';
-    if (!name) { showAuthError('Введите имя'); return; }
-    if (!email) { showAuthError('Введите email'); return; }
-    if (!password || password.length < 6) { showAuthError('Пароль должен быть минимум 6 символов'); return; }
-    if (!roleId) { showAuthError('Выберите роль в семье'); return; }
-    const result = await registerUser(email, password, name, roleId, emoji);
-    if (!result.success) { showAuthError(result.error); }
-  });
+  // loginBtn
+  const loginBtn = safeGet('loginBtn');
+  if (loginBtn) {
+    loginBtn.addEventListener('click', async function() {
+      const email = safeGet('loginEmail').value.trim();
+      const password = safeGet('loginPassword').value;
+      if (!email || !password) { showAuthError('Введите email и пароль'); return; }
+      const result = await loginUser(email, password);
+      if (!result.success) { showAuthError(result.error); }
+    });
+  }
   
-  document.getElementById('logoutBtn').addEventListener('click', async function() {
-    if (confirm('Выйти из аккаунта?')) { await logoutUser(); }
-  });
+  // registerBtn
+  const registerBtn = safeGet('registerBtn');
+  if (registerBtn) {
+    registerBtn.addEventListener('click', async function() {
+      const name = safeGet('regName').value.trim();
+      const email = safeGet('regEmail').value.trim();
+      const password = safeGet('regPassword').value;
+      const roleId = safeGet('regRole').value;
+      const emoji = getSelectedEmoji ? getSelectedEmoji() : '👤';
+      if (!name) { showAuthError('Введите имя'); return; }
+      if (!email) { showAuthError('Введите email'); return; }
+      if (!password || password.length < 6) { showAuthError('Пароль минимум 6 символов'); return; }
+      if (!roleId) { showAuthError('Выберите роль'); return; }
+      const result = await registerUser(email, password, name, roleId, emoji);
+      if (!result.success) { showAuthError(result.error); }
+    });
+  }
   
-  document.getElementById('changePasswordBtn').addEventListener('click', async function() {
-    const oldPassword = prompt('Текущий пароль:');
-    if (!oldPassword) return;
-    const newPassword = prompt('Новый пароль (мин 6):');
-    if (!newPassword || newPassword.length < 6) { alert('Минимум 6 символов'); return; }
-    try {
-      const user = auth.currentUser;
-      const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPassword);
-      await user.reauthenticateWithCredential(credential);
-      await user.updatePassword(newPassword);
-      alert('✅ Пароль изменён!');
-    } catch (error) { alert('Ошибка: ' + getAuthErrorMessage(error.code)); }
-  });
+  // logoutBtn
+  const logoutBtn = safeGet('logoutBtn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async function() {
+      if (confirm('Выйти из аккаунта?')) { await logoutUser(); }
+    });
+  }
+  
+  // changePasswordBtn
+  const changePasswordBtn = safeGet('changePasswordBtn');
+  if (changePasswordBtn) {
+    changePasswordBtn.addEventListener('click', async function() {
+      const oldPassword = prompt('Текущий пароль:');
+      if (!oldPassword) return;
+      const newPassword = prompt('Новый пароль (мин 6):');
+      if (!newPassword || newPassword.length < 6) { alert('Минимум 6 символов'); return; }
+      try {
+        const user = auth.currentUser;
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, oldPassword);
+        await user.reauthenticateWithCredential(credential);
+        await user.updatePassword(newPassword);
+        alert('✅ Пароль изменён!');
+      } catch (error) { alert('Ошибка: ' + getAuthErrorMessage(error.code)); }
+    });
+  }
 }
 
 function showAuthError(msg) {
