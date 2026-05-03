@@ -281,9 +281,30 @@ function setupUIListeners() {
   }
   
   // Аватар
-  document.getElementById('avatarBtn').addEventListener('click', function() { document.getElementById('avatarInput').click(); });
-  document.getElementById('avatarInput').addEventListener('change', function(e) { const file = e.target.files[0]; if (file && file.type.startsWith('image/')) { const reader = new FileReader(); reader.onload = function(ev) { saveAvatar(currentUser, ev.target.result); }; reader.readAsDataURL(file); } e.target.value = ''; });
-  document.getElementById('avatarResetBtn').addEventListener('click', function() { if (confirm('Сбросить аватар?')) resetAvatar(currentUser); });
+const avatarBtn = document.getElementById('avatarBtn');
+if (avatarBtn) {
+  avatarBtn.addEventListener('click', function() { document.getElementById('avatarInput').click(); });
+}
+
+const avatarInput = document.getElementById('avatarInput');
+if (avatarInput) {
+  avatarInput.addEventListener('change', function(e) { 
+    const file = e.target.files[0]; 
+    if (file && file.type.startsWith('image/')) { 
+      const reader = new FileReader(); 
+      reader.onload = function(ev) { saveAvatar(currentUser, ev.target.result); }; 
+      reader.readAsDataURL(file); 
+    } 
+    e.target.value = ''; 
+  });
+}
+
+const avatarResetBtn = document.getElementById('avatarResetBtn');
+if (avatarResetBtn) {
+  avatarResetBtn.addEventListener('click', function() { 
+    if (confirm('Сбросить аватар?')) resetAvatar(currentUser); 
+  });
+}
   
   // Микрофон
   document.getElementById('micBtn').addEventListener('click', function() {
