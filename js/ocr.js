@@ -84,6 +84,38 @@ async function processImageWithOCR(file) {
   });
 }
 
+// Распознавание PDF (через онлайн-сервис)
+async function extractTextFromPDF(file) {
+  try {
+    const reader = new FileReader();
+    
+    return new Promise(function(resolve) {
+      reader.onload = async function(ev) {
+        const pdfData = ev.target.result;
+        
+        // Отправляем PDF на бесплатный OCR-сервис
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('language', 'rus+eng');
+        
+        const response = await fetch('https://api.ocr.space/parse/image', {
+          method: 'POST',
+          headers: { 'apikey': 'helloworld' }, // бесплатный ключ
+          body: formData
+        });
+        
+        const data = await response.json();
+        const text = data.ParsedResults?.[0]?.ParsedText || '';
+        resolve(text.trim());
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  } catch (error) {
+    console.error('PDF OCR error:', error);
+    return null;
+  }
+}
+
 // Встроенное распознавание (без отправки фото)
 async function quickOCR(file) {
   return new Promise(function(resolve) {
