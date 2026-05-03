@@ -116,7 +116,7 @@ function initAuthForms() {
   }
   
   // showLogin
-  const showLoginBtn = safeGet('showLogin');
+  const showLoginBtn = safeGet('showLoginInReg');
   if (showLoginBtn) {
     showLoginBtn.addEventListener('click', function(e) {
       e.preventDefault();
