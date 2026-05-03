@@ -112,14 +112,6 @@ function initAuthForms() {
     document.getElementById('errorMsg').classList.remove('show');
   });
   
-  document.getElementById('showLoginInReg').addEventListener('click', function(e) {
-    e.preventDefault();
-    document.getElementById('registerForm').style.display = 'none';
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('loginTitle').textContent = 'Вход в FChat';
-    document.getElementById('errorMsg').classList.remove('show');
-  });
-  
   document.getElementById('loginBtn').addEventListener('click', async function() {
     const email = document.getElementById('loginEmail').value.trim();
     const password = document.getElementById('loginPassword').value;
