@@ -356,6 +356,19 @@ function setupUIListeners() {
   document.getElementById('settingsBtn').addEventListener('click', function() {
     document.getElementById('settingsPanel').classList.toggle('show');
   });
+
+  // Синхронизация ползунков с кнопками
+document.getElementById('notifToggle').addEventListener('change', function() {
+  notifEnabled = this.checked;
+  localStorage.setItem('fc_notif', notifEnabled);
+  document.getElementById('notifBtn').textContent = notifEnabled ? '🔔' : '🔕';
+});
+
+document.getElementById('soundToggle').addEventListener('change', function() {
+  soundEnabled = this.checked;
+  localStorage.setItem('fc_sound', soundEnabled);
+  document.getElementById('soundBtn').textContent = soundEnabled ? '🔊' : '🔇';
+});
   
   // Тема
   document.getElementById('themeBtn').addEventListener('click', switchTheme);
