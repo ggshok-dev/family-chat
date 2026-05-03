@@ -34,6 +34,34 @@ function initApp() {
   console.log('✅ FChat запущен');
 }
 
+function nextStep(step) {
+    // Переключаем шаги
+    document.querySelectorAll('.auth-step').forEach(el => el.classList.remove('active'));
+    document.getElementById(`step-${step}`).classList.add('active');
+    
+    // Двигаем прогресс-бар
+    const progress = (step / 3) * 100;
+    document.getElementById('progress-fill').style.width = `${progress}%`;
+}
+
+function finishRegistration() {
+    // Собираем данные
+    const familyData = {
+        familyName: document.getElementById('family-input').value,
+        userName: document.getElementById('name-input').value,
+        pin: document.getElementById('pin-input').value
+    };
+    
+    console.log("Данные для Firebase:", familyData);
+    
+    // Эффектное исчезновение формы
+    document.getElementById('auth-container').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('auth-container').style.display = 'none';
+        // Здесь вызывай свою функцию инициализации чата
+    }, 500);
+}
+
 // ============ НАСТРОЙКА СЕМЬИ ============
 function showFamilySetup() {
   const chatWindow = document.getElementById('chatWindow');
