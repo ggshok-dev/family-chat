@@ -17,9 +17,9 @@ function initApp() {
     switchToGeneralChat();
     
     // AI Ассистент
-    if (currentFamilyId) {
-    setupAIAssistant();
-}
+    // if (currentFamilyId) { //
+    // setupAIAssistant(); //
+// } //
 
     // Слушаем индикатор печати
     listenTyping();
