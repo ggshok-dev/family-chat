@@ -182,6 +182,41 @@ function setupUIListeners() {
   document.getElementById('settingsBtn').addEventListener('click', function() { document.getElementById('settingsPanel').classList.toggle('show'); });
   document.getElementById('themeBtn').addEventListener('click', switchTheme);
   
+  // Вкладки
+  document.querySelectorAll('.tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+    tab.classList.add('active');
+    
+    if (tab.dataset.tab === 'general') {
+      switchToGeneralChat();
+    } else {
+      // Проверяем, есть ли сохранённый собеседник
+      if (!privateWith) {
+        const saved = localStorage.getItem('fc_private_' + currentUser);
+        if (saved) {
+          privateWith = saved;
+        }
+      }
+      
+      // Если собеседник всё ещё не выбран — выбираем первого доступного
+      if (!privateWith && currentFamilyData) {
+        const members = currentFamilyData.members || {};
+        const others = Object.keys(members).filter(function(id) { 
+          return id !== currentUser; 
+        });
+        if (others.length > 0) {
+          privateWith = others[0];
+        }
+      }
+      
+      if (privateWith) {
+        switchToPrivateChat(privateWith);
+      }
+    }
+  });
+});
+  
   // Кнопка уведомлений
   document.getElementById('notifBtn').addEventListener('click', function() {
     notifEnabled = !notifEnabled; localStorage.setItem('fc_notif', notifEnabled);
