@@ -245,10 +245,10 @@ function setupUIListeners() {
   document.getElementById('fontUp').addEventListener('click', function() { if (fontSize < 150) { fontSize += 10; updateFontSize(); } });
   document.getElementById('fontDown').addEventListener('click', function() { if (fontSize > 80) { fontSize -= 10; updateFontSize(); } });
   
-  // Файлы (с OCR)
+  // Файлы (отправка без OCR)
   document.getElementById('attachBtn').addEventListener('click', function() {
   document.getElementById('fileInput').click();
-  });
+});
 
   document.getElementById('fileInput').addEventListener('change', function(e) {
   const files = e.target.files;
@@ -256,22 +256,66 @@ function setupUIListeners() {
   
   for (let i = 0; i < files.length; i++) {
     const file = files[i];
+    const reader = new FileReader();
     
     if (file.type.startsWith('image/')) {
-      // Для фото — распознаём текст И отправляем фото
-      processImageWithOCR(file);
+      reader.onload = function(ev) { sendMedia('image', ev.target.result); };
     } else {
-      // Для других файлов — отправляем как обычно
-      const reader = new FileReader();
-      reader.onload = function(ev) { 
-        sendMedia('file', ev.target.result, file.name, file.type); 
-      };
-      reader.readAsDataURL(file);
+      reader.onload = function(ev) { sendMedia('file', ev.target.result, file.name, file.type); };
     }
+    reader.readAsDataURL(file);
   }
   
   e.target.value = '';
+});
+
+// Кнопка "Распознать текст" — только OCR
+const ocrBtn = document.getElementById('ocrBtn');
+if (ocrBtn) {
+  ocrBtn.addEventListener('click', function() {
+    document.getElementById('ocrFileInput').click();
   });
+}
+
+// Отдельный input для OCR
+const ocrFileInput = document.getElementById('ocrFileInput');
+if (ocrFileInput) {
+  ocrFileInput.addEventListener('change', async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    showToast('🔍 Распознаю текст...');
+    
+    if (file.type.startsWith('image/')) {
+      // Распознаём текст с фото
+      const reader = new FileReader();
+      reader.onload = async function(ev) {
+        const text = await extractTextFromImage(ev.target.result);
+        if (text) {
+          document.getElementById('msgInput').value = text;
+          document.getElementById('msgInput').focus();
+          showToast('✅ Текст распознан и вставлен');
+        } else {
+          showToast('❌ Текст не найден');
+        }
+      };
+      reader.readAsDataURL(file);
+    } else if (file.name.endsWith('.pdf')) {
+      // PDF распознавание
+      showToast('📄 Распознаю PDF...');
+      const text = await extractTextFromPDF(file);
+      if (text) {
+        document.getElementById('msgInput').value = text;
+        document.getElementById('msgInput').focus();
+        showToast('✅ Текст из PDF вставлен');
+      }
+    } else {
+      showToast('❌ Поддерживаются только фото и PDF');
+    }
+    
+    e.target.value = '';
+  });
+}
   
   // Аватар
   document.getElementById('avatarBtn').addEventListener('click', function() { document.getElementById('avatarInput').click(); });
