@@ -35,31 +35,50 @@ function initApp() {
 }
 
 function nextStep(step) {
-    // Переключаем шаги
+    // Определяем, какое поле нужно проверить перед уходом с текущего шага
+    const currentStep = step - 1; 
+    let inputToValidate;
+    
+    if (currentStep === 1) inputToValidate = document.getElementById('family-input');
+    if (currentStep === 2) inputToValidate = document.getElementById('name-input');
+
+    // Если мы идем вперед (step > currentStep) и поле пустое
+    if (inputToValidate && inputToValidate.value.trim() === "") {
+        showInputError(inputToValidate);
+        return; // Прерываем выполнение функции, дальше не идем
+    }
+
+    // Если проверка прошла — переключаем шаг
     document.querySelectorAll('.auth-step').forEach(el => el.classList.remove('active'));
     document.getElementById(`step-${step}`).classList.add('active');
     
-    // Двигаем прогресс-бар
+    // Обновляем прогресс-бар
     const progress = (step / 3) * 100;
     document.getElementById('progress-fill').style.width = `${progress}%`;
 }
 
-function finishRegistration() {
-    // Собираем данные
-    const familyData = {
-        familyName: document.getElementById('family-input').value,
-        userName: document.getElementById('name-input').value,
-        pin: document.getElementById('pin-input').value
-    };
+// Функция для визуальной ошибки
+function showInputError(inputElement) {
+    inputElement.classList.add('input-error');
+    inputElement.style.border = "2px solid #ff4b2b";
     
-    console.log("Данные для Firebase:", familyData);
-    
-    // Эффектное исчезновение формы
-    document.getElementById('auth-container').style.opacity = '0';
+    // Убираем эффект через 500мс, чтобы можно было повторить
     setTimeout(() => {
-        document.getElementById('auth-container').style.display = 'none';
-        // Здесь вызывай свою функцию инициализации чата
+        inputElement.classList.remove('input-error');
+        inputElement.style.border = "none";
     }, 500);
+}
+
+// В функции финиша тоже добавим проверку для ПИН-кода
+function finishRegistration() {
+    const pinInput = document.getElementById('pin-input');
+    if (pinInput.value.length < 4) {
+        showInputError(pinInput);
+        alert("ПИН-код должен состоять из 4 цифр");
+        return;
+    }
+    
+    // ... остальной код сохранения (из предыдущего ответа)
 }
 
 // ============ НАСТРОЙКА СЕМЬИ ============
