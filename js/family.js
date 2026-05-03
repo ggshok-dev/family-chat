@@ -1,5 +1,3 @@
-// ============ УПРАВЛЕНИЕ СЕМЬЁЙ FChat ============
-
 // ============ СОЗДАНИЕ СЕМЬИ ============
 async function createFamily(name) {
   try {
@@ -41,6 +39,9 @@ async function createFamily(name) {
     // Обновляем локальные данные
     currentFamilyId = familyId;
     currentFamilyData = familyData;
+    
+    // ВОТ ЗДЕСЬ — после того, как currentFamilyId установлен
+    await registerAIAssistant();
     
     return { 
       success: true, 
