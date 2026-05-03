@@ -50,40 +50,55 @@ const TRIGGERS = [
 // ============ ОТПРАВКА ЗАПРОСА К GigaChat ============
 async function askAIAssistant(prompt, messageHistory) {
   try {
+    const requestBody = {
+      model: 'GigaChat',
+      messages: [
+        {
+          role: 'system',
+          content: 'Ты — дружелюбный семейный ассистент FChat. Отвечай кратко, по-русски, с эмодзи. Не используй markdown.'
+        },
+        {
+          role: 'user',
+          content: messageHistory 
+            ? `История чата:\n${messageHistory}\n\nНовый вопрос: ${prompt}` 
+            : prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 300
+    };
+
+    console.log('📤 Отправляю запрос к GigaChat...');
+    
     const response = await fetch(GIGACHAT_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ' + GIGACHAT_TOKEN
       },
-      body: JSON.stringify({
-        model: 'GigaChat',
-        messages: [
-          {
-            role: 'system',
-            content: 'Ты — дружелюбный семейный ассистент в чате FChat. Твоё имя — Ассистент. Ты помогаешь семье с вопросами, даёшь советы, шутишь и поддерживаешь беседу. Правила: 1) Отвечай кратко и по-русски 2) Будь вежливым и доброжелательным 3) Не используй markdown, только обычный текст 4) Если вопрос не по теме — вежливо откажись отвечать 5) Помни, что ты общаешься с семьёй — будь как добрый родственник 6) Используй эмодзи в ответах'
-          },
-          {
-            role: 'user',
-            content: `Предыдущие сообщения в чате:\n${messageHistory || 'Нет сообщений'}\n\nНовое сообщение от пользователя: ${prompt}\n\nОтветь на это сообщение.`
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 300
-      })
+      body: JSON.stringify(requestBody)
     });
     
     const data = await response.json();
     
+    // ЛОГИРУЕМ ОТВЕТ ДЛЯ ОТЛАДКИ
+    console.log('📥 Ответ GigaChat:', data);
+    
     if (data.error) {
-      console.error('GigaChat API error:', data.error);
-      return '🤖 Извините, произошла ошибка. Попробуйте позже.';
+      console.error('❌ Ошибка GigaChat:', data.error);
+      return '🤖 Ошибка: ' + (data.error.message || data.error.code || 'неизвестная ошибка');
     }
     
-    return data.choices?.[0]?.message?.content || '🤖 Я не понял вопрос. Можете перефразировать?';
+    if (!data.choices || !data.choices[0]) {
+      console.error('❌ Неожиданный формат ответа:', data);
+      return '🤖 Получен некорректный ответ от API.';
+    }
+    
+    return data.choices[0].message?.content || '🤖 Пустой ответ от API.';
+    
   } catch (error) {
-    console.error('GigaChat error:', error);
-    return '🤖 Я временно недоступен. Попробуйте через минуту.';
+    console.error('❌ Сетевая ошибка:', error);
+    return '🤖 Сетевая ошибка: ' + error.message;
   }
 }
 
