@@ -103,6 +103,17 @@ function initAuthForms() {
     document.getElementById('errorMsg').classList.remove('show');
     nextRegStep(1);
   });
+
+    const showLoginInRegBtn = document.getElementById('showLoginInReg');
+  if (showLoginInRegBtn) {
+    showLoginInRegBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      document.getElementById('registerForm').style.display = 'none';
+      document.getElementById('loginForm').style.display = 'block';
+      document.getElementById('loginTitle').textContent = 'Вход в FChat';
+      document.getElementById('errorMsg').classList.remove('show');
+    });
+  }
   
   document.getElementById('showLogin').addEventListener('click', function(e) {
     e.preventDefault();
