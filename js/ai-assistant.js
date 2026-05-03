@@ -10,6 +10,10 @@
 // Бесплатные лимиты:
 // - Достаточно для семейного чата
 // - Токен нужно обновлять раз в сутки (автоматически)
+// ============ AI-АССИСТЕНТ FChat (GigaChat от Сбера) ============
+//
+// Автоматическое обновление токена каждые 25 минут
+// CORS-прокси для обхода ограничений браузера
 
 // Данные авторизации
 const AUTH_KEY = 'MDE5ZGVlYzktZTg1Ni03OTNhLTlmZGYtMGRiOWQwM2NkZjVhOjBjNDgzMTJiLTI4OWItNDZmOC04YmUxLTMxNGUzNTIyNzMwYw==';
