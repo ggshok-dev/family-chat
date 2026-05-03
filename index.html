@@ -23,6 +23,48 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 </head>
 <body>
+  <div id="auth-container" class="auth-overlay">
+    <div class="auth-card">
+        <!-- Индикатор прогресса -->
+        <div class="progress-bar"><div id="progress-fill"></div></div>
+        
+        <div class="auth-steps-container">
+            <!-- Шаг 1 -->
+            <div class="auth-step active" id="step-1">
+                <div class="icon">🏠</div>
+                <h2>Создать семью</h2>
+                <p>Введите фамилию или ID группы</p>
+                <input type="text" id="family-input" placeholder="Например: Ивановы">
+                <button class="primary-btn" onclick="nextStep(2)">Продолжить</button>
+            </div>
+
+            <!-- Шаг 2 -->
+            <div class="auth-step" id="step-2">
+                <div class="icon">👤</div>
+                <h2>Ваше имя</h2>
+                <p>Как вас будут видеть в чате?</p>
+                <input type="text" id="name-input" placeholder="Например: Папа">
+                <div class="btn-group">
+                    <button class="secondary-btn" onclick="nextStep(1)">Назад</button>
+                    <button class="primary-btn" onclick="nextStep(3)">Далее</button>
+                </div>
+            </div>
+
+            <!-- Шаг 3 -->
+            <div class="auth-step" id="step-3">
+                <div class="icon">🔐</div>
+                <h2>Личный ПИН</h2>
+                <p>Для защиты вашего профиля</p>
+                <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="0 0 0 0">
+                <div class="btn-group">
+                    <button class="secondary-btn" onclick="nextStep(2)">Назад</button>
+                    <button class="primary-btn" onclick="finishRegistration()">Войти в чат</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
   <!-- ========== ЭКРАН ВХОДА / РЕГИСТРАЦИЯ ========== -->
   <div class="secret-overlay" id="secretOverlay">
     <div class="secret-dialog" id="loginDialog">
