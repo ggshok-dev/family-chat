@@ -273,6 +273,13 @@ function setupUIListeners() {
   
   document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') { document.title = 'FChat'; } });
 }
+  // OCR кнопка
+  const ocrBtn = document.getElementById('ocrBtn');
+  if (ocrBtn) {
+    ocrBtn.addEventListener('click', function() {
+      document.getElementById('fileInput').click();
+    });
+  }
 
 function updateFontSize() { document.documentElement.style.setProperty('--font-scale', fontSize / 100); document.getElementById('fontValue').textContent = fontSize + '%'; localStorage.setItem('fc_font', fontSize); }
 function playSound() { if (!soundEnabled) return; try { const ctx = new (window.AudioContext || window.webkitAudioContext)(); const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.frequency.value = 800; gain.gain.value = 0.1; osc.start(); gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3); osc.stop(ctx.currentTime + 0.3); } catch(e) {} }
