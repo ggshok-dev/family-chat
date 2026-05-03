@@ -4,7 +4,13 @@ const urlsToCache = [
   '/family-chat/',
   '/family-chat/index.html',
   '/family-chat/style.css',
-  '/family-chat/main.js',
+  '/family-chat/css/auth.css',
+  '/family-chat/js/config.js',
+  '/family-chat/js/auth.js',
+  '/family-chat/js/family.js',
+  '/family-chat/js/chat.js',
+  '/family-chat/js/ui.js',
+  '/family-chat/js/main.js',
   '/family-chat/manifest.json',
   '/family-chat/icon-192.png'
 ];
