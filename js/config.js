@@ -1,6 +1,5 @@
 // ============ КОНФИГУРАЦИЯ FChat ============
 
-// Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAGqZPNEL2eihYYxr0ZJoE-Tedg1cO5cVo",
   authDomain: "fchat-d6879.firebaseapp.com",
@@ -11,10 +10,11 @@ const firebaseConfig = {
   appId: "1:1049514912319:web:2ec9ca065eca5ac5da668a"
 };
 
-// Инициализация Firebase
 if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const auth = firebase.auth();
+const messaging = firebase.messaging();
+const VAPID_KEY = 'BLKvnbhPFUahBZkQEf4EMvO5SLklOR5eSV7TIpwdkEK3okDBTYX7CpTrneF4FOsYRgex7qdBKzZlS6bWYGzXQg';
 
 // ============ РОЛИ ПОЛЬЗОВАТЕЛЕЙ ============
 const ROLES = {
