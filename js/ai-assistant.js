@@ -42,7 +42,7 @@ async function getNewToken() {
   try {
     console.log('🔄 Запрашиваю новый токен GigaChat...');
     
-    const response = await fetch(CORS_PROXY + encodeURIComponent(TOKEN_API), {
+    const response = await fetch(TOKEN_API, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -50,14 +50,15 @@ async function getNewToken() {
         'RqUID': (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
         'Authorization': 'Basic ' + AUTH_KEY
       },
-      body: 'scope=GIGACHAT_API_PERS'
+      body: 'scope=GIGACHAT_API_PERS',
+      mode: 'cors'
     });
     
     const data = await response.json();
     
     if (data.access_token) {
       GIGACHAT_TOKEN = data.access_token;
-      console.log('✅ Новый токен GigaChat получен (действует 30 минут)');
+      console.log('✅ Новый токен GigaChat получен');
       return true;
     } else {
       console.error('❌ Ошибка получения токена:', data);
@@ -101,14 +102,14 @@ async function askAIAssistant(prompt, messageHistory) {
 
     console.log('📤 Отправляю запрос к GigaChat...');
     
-    const response = await fetch(CORS_PROXY + encodeURIComponent(GIGACHAT_API), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + GIGACHAT_TOKEN
-      },
-      body: JSON.stringify(requestBody)
-    });
+    const response = await fetch(GIGACHAT_API, {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer ' + GIGACHAT_TOKEN
+  },
+  body: JSON.stringify(requestBody)
+});
     
     const data = await response.json();
     
