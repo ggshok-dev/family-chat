@@ -1,87 +1,22 @@
 // ============ ГЛАВНЫЙ МОДУЛЬ FChat ============
 
-// ============ ЗАПУСК ПРИЛОЖЕНИЯ ============
 function initApp() {
-  // Применяем сохранённые настройки
   applyStoredSettings();
-  
-  // Инициализируем интерфейс
   renderEmojiPicker();
   setupUIListeners();
   
-  // Загружаем данные, если пользователь в семье
   if (currentFamilyId) {
     renderUsers();
-    
-    // Показываем общий чат по умолчанию
     switchToGeneralChat();
-    
-    // AI Ассистент
-    // if (currentFamilyId) { //
-    // setupAIAssistant(); //
-// } //
-
-    // Слушаем индикатор печати
     listenTyping();
-    
-    // Запускаем автоудаление
     startAutoDelete();
   } else {
-    // Пользователь не в семье — показываем приглашение
     showFamilySetup();
   }
   
   console.log('✅ FChat запущен');
 }
 
-function nextStep(step) {
-    // Определяем, какое поле нужно проверить перед уходом с текущего шага
-    const currentStep = step - 1; 
-    let inputToValidate;
-    
-    if (currentStep === 1) inputToValidate = document.getElementById('family-input');
-    if (currentStep === 2) inputToValidate = document.getElementById('name-input');
-
-    // Если мы идем вперед (step > currentStep) и поле пустое
-    if (inputToValidate && inputToValidate.value.trim() === "") {
-        showInputError(inputToValidate);
-        return; // Прерываем выполнение функции, дальше не идем
-    }
-
-    // Если проверка прошла — переключаем шаг
-    document.querySelectorAll('.auth-step').forEach(el => el.classList.remove('active'));
-    document.getElementById(`step-${step}`).classList.add('active');
-    
-    // Обновляем прогресс-бар
-    const progress = (step / 3) * 100;
-    document.getElementById('progress-fill').style.width = `${progress}%`;
-}
-
-// Функция для визуальной ошибки
-function showInputError(inputElement) {
-    inputElement.classList.add('input-error');
-    inputElement.style.border = "2px solid #ff4b2b";
-    
-    // Убираем эффект через 500мс, чтобы можно было повторить
-    setTimeout(() => {
-        inputElement.classList.remove('input-error');
-        inputElement.style.border = "none";
-    }, 500);
-}
-
-// В функции финиша тоже добавим проверку для ПИН-кода
-function finishRegistration() {
-    const pinInput = document.getElementById('pin-input');
-    if (pinInput.value.length < 4) {
-        showInputError(pinInput);
-        alert("ПИН-код должен состоять из 4 цифр");
-        return;
-    }
-    
-    // ... остальной код сохранения (из предыдущего ответа)
-}
-
-// ============ НАСТРОЙКА СЕМЬИ ============
 function showFamilySetup() {
   const chatWindow = document.getElementById('chatWindow');
   if (!chatWindow) return;
@@ -110,16 +45,14 @@ function showFamilySetup() {
     </div>
   `;
   
-  // Обработчик создания семьи
   const createBtn = document.getElementById('createFamilyBtn');
   if (createBtn) {
     createBtn.addEventListener('click', async function() {
       const familyName = prompt('Введите название семьи (например: Ивановы):');
       if (!familyName) return;
-      
       const result = await createFamily(familyName);
       if (result.success) {
-        alert('✅ Семья создана! Код приглашения: ' + result.inviteCode + '\n\nСообщите этот код родственникам.');
+        alert('✅ Семья создана! Код приглашения: ' + result.inviteCode);
         renderUsers();
         switchToGeneralChat();
       } else {
@@ -128,13 +61,11 @@ function showFamilySetup() {
     });
   }
   
-  // Обработчик присоединения
   const joinBtn = document.getElementById('joinFamilyBtn');
   if (joinBtn) {
     joinBtn.addEventListener('click', async function() {
       const code = document.getElementById('inviteCodeInput').value.trim();
       if (!code) { alert('Введите код приглашения'); return; }
-      
       const result = await joinFamily(code);
       if (result.success) {
         alert('✅ Вы присоединились к семье ' + result.familyName + '!');
@@ -147,39 +78,25 @@ function showFamilySetup() {
   }
 }
 
-// ============ АВТОУДАЛЕНИЕ СООБЩЕНИЙ ============
 function startAutoDelete() {
   setInterval(function() {
     if (autoDeleteHours === 0 || !currentFamilyId) return;
-    
     db.ref(getChatPath()).once('value').then(function(snap) {
       const msgs = snap.val();
       if (!msgs) return;
-      
       const now = Date.now();
       const updates = {};
-      
       for (const [id, msg] of Object.entries(msgs)) {
-        if (msg.deleteAt && msg.deleteAt <= now) {
-          updates[id] = null;
-          processedIds.delete(id);
-        }
+        if (msg.deleteAt && msg.deleteAt <= now) { updates[id] = null; processedIds.delete(id); }
       }
-      
-      if (Object.keys(updates).length > 0) {
-        db.ref(getChatPath()).update(updates);
-      }
+      if (Object.keys(updates).length > 0) { db.ref(getChatPath()).update(updates); }
     });
-  }, 60000); // Проверка каждую минуту
+  }, 60000);
 }
 
-// ============ ПРОСМОТРЩИК ФОТО ============
 window.openImageViewer = function(src) {
   const allImages = [];
-  document.querySelectorAll('.media-img').forEach(function(img) {
-    if (img.src) allImages.push(img.src);
-  });
-  
+  document.querySelectorAll('.media-img').forEach(function(img) { if (img.src) allImages.push(img.src); });
   let currentIndex = allImages.indexOf(src);
   const old = document.querySelector('.image-viewer');
   if (old) old.remove();
@@ -238,11 +155,8 @@ window.openImageViewer = function(src) {
   img.addEventListener('touchend', function() {
     if (isSwiping && scale === 1) {
       const diff = panX;
-      if (diff < -80 && currentIndex < allImages.length - 1) {
-        currentIndex++; img.src = allImages[currentIndex]; updateCounter();
-      } else if (diff > 80 && currentIndex > 0) {
-        currentIndex--; img.src = allImages[currentIndex]; updateCounter();
-      }
+      if (diff < -80 && currentIndex < allImages.length - 1) { currentIndex++; img.src = allImages[currentIndex]; updateCounter(); }
+      else if (diff > 80 && currentIndex > 0) { currentIndex--; img.src = allImages[currentIndex]; updateCounter(); }
       panX = 0; panY = 0; updateImage();
     }
     isSwiping = false; isPanning = false; isZooming = false;
@@ -262,14 +176,12 @@ window.openImageViewer = function(src) {
   
   viewer.appendChild(img);
   
-  // Счётчик
   const counter = document.createElement('div');
   counter.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);color:white;background:rgba(0,0,0,0.5);padding:5px 15px;border-radius:20px;z-index:10001;font-size:1rem;';
   viewer.appendChild(counter);
   function updateCounter() { counter.textContent = (currentIndex + 1) + ' / ' + allImages.length; }
   updateCounter();
   
-  // Стрелки
   if (currentIndex > 0) {
     const prev = document.createElement('button');
     prev.innerHTML = '‹';
@@ -286,7 +198,6 @@ window.openImageViewer = function(src) {
     viewer.appendChild(next);
   }
   
-  // Кнопка закрыть
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '✕';
   closeBtn.style.cssText = 'position:fixed;top:20px;right:20px;padding:10px 16px;background:rgba(255,255,255,0.15);color:white;border:none;border-radius:8px;cursor:pointer;z-index:10001;font-size:1.2rem;';
@@ -296,19 +207,11 @@ window.openImageViewer = function(src) {
   viewer.addEventListener('click', function(e) { if (e.target === viewer) viewer.remove(); });
   document.body.appendChild(viewer);
   
-  function escHandler(e) {
-    if (e.key === 'Escape') { viewer.remove(); window.removeEventListener('keydown', escHandler); }
-  }
+  function escHandler(e) { if (e.key === 'Escape') { viewer.remove(); window.removeEventListener('keydown', escHandler); } }
   window.addEventListener('keydown', escHandler);
 };
 
-// ============ ЗАПУСК ============
-// Ждём загрузки DOM
 document.addEventListener('DOMContentLoaded', function() {
   console.log('📱 FChat готов к работе');
-  
-  // Очистка кэша каждые 5 минут
-  setInterval(function() {
-    if (processedIds.size > 100) processedIds.clear();
-  }, 300000);
+  setInterval(function() { if (processedIds && processedIds.size > 100) processedIds.clear(); }, 300000);
 });
