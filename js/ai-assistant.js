@@ -42,7 +42,7 @@ async function getNewToken() {
   try {
     console.log('🔄 Запрашиваю новый токен GigaChat...');
     
-    const response = await fetch(TOKEN_API, {
+    const response = await fetch(CORS_PROXY + encodeURIComponent(TOKEN_API), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -102,7 +102,7 @@ async function askAIAssistant(prompt, messageHistory) {
 
     console.log('📤 Отправляю запрос к GigaChat...');
     
-    const response = await fetch(GIGACHAT_API, {
+    const response = await fetch(CORS_PROXY + encodeURIComponent(GIGACHAT_API), {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
