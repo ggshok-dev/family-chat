@@ -21,7 +21,7 @@ const AUTH_KEY = 'MDE5ZGVlYzktZTg1Ni03OTNhLTlmZGYtMGRiOWQwM2NkZjVhOjBjNDgzMTJiLT
 // API endpoints
 const GIGACHAT_API = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions';
 const TOKEN_API = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth';
-const CORS_PROXY = 'https://corsproxy.io/?';
+const CORS_PROXY = 'https://fchat-proxy.ggshok.workers.dev/?url=';
 
 // Токен (обновляется автоматически)
 let GIGACHAT_TOKEN = '';
