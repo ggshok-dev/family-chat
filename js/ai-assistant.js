@@ -11,51 +11,78 @@
 // - Достаточно для семейного чата
 // - Токен нужно обновлять раз в сутки (автоматически)
 
-const GIGACHAT_TOKEN = 'eyJjdHkiOiJqd3QiLCJlbmMiOiJBMjU2Q0JDLUhTNTEyIiwiYWxnIjoiUlNBLU9BRVAtMjU2In0.k9Evwum2I2egft8PSnVtYo35o4WD4WcNGy915WBzk5rGCU8UUfF4oag4UzRqr-P_DfNUCFaXCRjlxMPAyzY7jaaHm2IyEnCtBHgQaBuDavYAHZc08f_8JyiV3oHcJBsh2LRyz63rkmv97YlJGfCL5jWs8EQg-H442f73XeWS8hugp9a_uzpl_8nLCe-eI1tkTkELsfKjxpm7L2yql_sPoeVDyK-RdDT16r_CN5dgihevYbWrFRSHMjBTVZHyvgjSGY-jMbwK7Dg5z-rU1IE3csg6A3M_33-QTaBWe5h1ilvQSrqBogveHzn2--CHtxMIWSnFskNM7sSf3c4JDu5FRA.xf2VbcRaivtIPGLMJeQSeQ.PFaWgayiuSnoWF2wU_igsjyc9QkipOhtbcO7M9dFzjvR8zGpFulxqoPk_1Fl2_8M26_T0vGEAp2GRGYtlQ1ZqTWACp-l9Jkean4hWdP3pXudaUVWdeWRoG9xsW2T1j9BEYDBvDPJ6vDZjYh1duQFn6Lqk-xVqLEojalol9L6SgH3mYn-5sMRwGQvDPrdWYhIzFPj2fhN0BqZjqT2fZNDdpsABqfQHFiVfcqqxWcyVbchTVs559tCNMOHTT4lO6Yu7X3YJwS9zV290W06ToXO52foPU9ISJcBQ1jlhzEzWp5UbCkbK9_lJ2MFu3Lxalc7fxjeavMJDUCfmnrtvgQAp9oXmxWnole934LzcrwYrCXoe7bQA5zjWA22R8UD_lBtnoUcgRIQjSpBb9eGE375uBXqeOdRzwWAe8VUX0xTuu1Z8cUlRYpypRlfWnXDd6ugD2SRXuWdeOoeqUG7xR8IQB0PwUDZj7GF9rcjtqfy-QRZ5guWuNTy5jJOexnkfT1hB_6bJXYNAGDdI7Vm_18xT3vtpPNO94_KQYreoBgouAmw11S85ccdisBtsvWNq1XSYSQyU83PNGJmnDilUnU6NcwB_k5FDgEfHDNcfg4r7jrQ6_JVYzuuN350KAHJUOOBuBfDD_F1EahTAI0IGRElcKKB8g2nRocEldqVshynm-CYIzS-S4xz2cntxFc5k_g-7RTapeBsDTs5gOHQZWWJo00aZar6wbj-644aL_l1t4c';
-const GIGACHAT_API = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions';
+// Данные авторизации
+const AUTH_KEY = 'MDE5ZGVlYzktZTg1Ni03OTNhLTlmZGYtMGRiOWQwM2NkZjVhOjBjNDgzMTJiLTI4OWItNDZmOC04YmUxLTMxNGUzNTIyNzMwYw==';
 
-// Автоматическое обновление токена (если есть refresh token)
-async function refreshGigaChatToken() {
-  try {
-    const response = await fetch('https://ngw.devices.sberbank.ru:9443/api/v2/oauth', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic ' + btoa('YOUR_CLIENT_ID:YOUR_CLIENT_SECRET')
-      },
-      body: 'scope=GIGACHAT_API_PERS'
-    });
-    const data = await response.json();
-    if (data.access_token) {
-      GIGACHAT_TOKEN = data.access_token;
-      console.log('✅ Токен GigaChat обновлён');
-    }
-  } catch (error) {
-    console.error('Ошибка обновления токена:', error);
-  }
-}
+// API endpoints
+const GIGACHAT_API = 'https://gigachat.devices.sberbank.ru/api/v1/chat/completions';
+const TOKEN_API = 'https://ngw.devices.sberbank.ru:9443/api/v2/oauth';
+const CORS_PROXY = 'https://corsproxy.io/?';
+
+// Токен (обновляется автоматически)
+let GIGACHAT_TOKEN = '';
 
 // ============ КОНФИГУРАЦИЯ АССИСТЕНТА ============
 const AI_ASSISTANT_ID = 'ai_assistant';
 const AI_ASSISTANT_NAME = '🤖 Ассистент';
 const AI_ASSISTANT_EMOJI = '🤖';
 
-// Триггеры для обращения к ассистенту
 const TRIGGERS = [
   'ассистент', '🤖', 'помощник', '@бот', '@assistant', '@ai',
   'подскажи', 'расскажи', 'объясни', 'что такое', 'как приготовить',
   'посоветуй', 'помоги', 'напомни', 'переведи', 'посчитай'
 ];
 
+// ============ ПОЛУЧЕНИЕ ТОКЕНА ============
+async function getNewToken() {
+  try {
+    console.log('🔄 Запрашиваю новый токен GigaChat...');
+    
+    const response = await fetch(CORS_PROXY + encodeURIComponent(TOKEN_API), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+        'RqUID': (crypto.randomUUID ? crypto.randomUUID() : Date.now().toString()),
+        'Authorization': 'Basic ' + AUTH_KEY
+      },
+      body: 'scope=GIGACHAT_API_PERS'
+    });
+    
+    const data = await response.json();
+    
+    if (data.access_token) {
+      GIGACHAT_TOKEN = data.access_token;
+      console.log('✅ Новый токен GigaChat получен (действует 30 минут)');
+      return true;
+    } else {
+      console.error('❌ Ошибка получения токена:', data);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Ошибка получения токена:', error);
+    return false;
+  }
+}
+
+// Обновляем токен каждые 25 минут
+setInterval(getNewToken, 25 * 60 * 1000);
+
 // ============ ОТПРАВКА ЗАПРОСА К GigaChat ============
 async function askAIAssistant(prompt, messageHistory) {
   try {
+    // Если токена нет — получаем
+    if (!GIGACHAT_TOKEN) {
+      const success = await getNewToken();
+      if (!success) return '🤖 Не удалось подключиться к серверу. Попробуйте позже.';
+    }
+    
     const requestBody = {
       model: 'GigaChat',
       messages: [
         {
           role: 'system',
-          content: 'Ты — дружелюбный семейный ассистент FChat. Отвечай кратко, по-русски, с эмодзи. Не используй markdown.'
+          content: 'Ты — дружелюбный семейный ассистент в чате FChat. Твоё имя — Ассистент. Ты помогаешь семье с вопросами, даёшь советы, шутишь и поддерживаешь беседу. Правила: 1) Отвечай кратко и по-русски 2) Будь вежливым и доброжелательным 3) Не используй markdown, только обычный текст 4) Используй эмодзи в ответах 5) Помни, что ты общаешься с семьёй'
         },
         {
           role: 'user',
@@ -70,7 +97,7 @@ async function askAIAssistant(prompt, messageHistory) {
 
     console.log('📤 Отправляю запрос к GigaChat...');
     
-    const response = await fetch(GIGACHAT_API, {
+    const response = await fetch(CORS_PROXY + encodeURIComponent(GIGACHAT_API), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -81,24 +108,26 @@ async function askAIAssistant(prompt, messageHistory) {
     
     const data = await response.json();
     
-    // ЛОГИРУЕМ ОТВЕТ ДЛЯ ОТЛАДКИ
-    console.log('📥 Ответ GigaChat:', data);
+    // Если токен истёк — получаем новый и пробуем снова
+    if (data.error && (data.error.code === 'TokenExpired' || response.status === 401)) {
+      console.log('🔄 Токен истёк, получаю новый...');
+      await getNewToken();
+      return askAIAssistant(prompt, messageHistory);
+    }
     
     if (data.error) {
       console.error('❌ Ошибка GigaChat:', data.error);
-      return '🤖 Ошибка: ' + (data.error.message || data.error.code || 'неизвестная ошибка');
+      return '🤖 Ошибка: ' + (data.error.message || 'сервер временно недоступен');
     }
     
-    if (!data.choices || !data.choices[0]) {
-      console.error('❌ Неожиданный формат ответа:', data);
-      return '🤖 Получен некорректный ответ от API.';
-    }
-    
-    return data.choices[0].message?.content || '🤖 Пустой ответ от API.';
+    return data.choices?.[0]?.message?.content || '🤖 Я не понял вопрос. Можете перефразировать?';
     
   } catch (error) {
     console.error('❌ Сетевая ошибка:', error);
-    return '🤖 Сетевая ошибка: ' + error.message;
+    
+    // Если сеть недоступна — пробуем ещё раз через 3 секунды
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    return '🤖 Сервер временно недоступен. Попробуйте через минуту.';
   }
 }
 
@@ -150,67 +179,68 @@ function setupAIAssistant() {
     return;
   }
   
-  if (GIGACHAT_TOKEN === 'YOUR_GIGACHAT_TOKEN') {
-    console.log('⚠️ AI-ассистент не активирован: нужно указать токен GigaChat');
-    console.log('   Получите токен на https://developers.sber.ru/');
-    console.log('   И вставьте его в js/ai-assistant.js вместо YOUR_GIGACHAT_TOKEN');
-    return;
-  }
-  
-  const generalPath = 'messages/' + currentFamilyId + '/general';
-  
-  // Слушаем общий чат
-  db.ref(generalPath).on('child_added', async function(snap) {
-    const msg = snap.val();
+  // Получаем первый токен
+  getNewToken().then(function(success) {
+    if (!success) {
+      console.log('⚠️ Не удалось получить токен. Ассистент не активирован.');
+      return;
+    }
     
-    if (msg.from === AI_ASSISTANT_ID) return;
-    if (msg.timestamp < Date.now() - 5000) return;
-    if (!shouldRespond(msg.text)) return;
+    const generalPath = 'messages/' + currentFamilyId + '/general';
     
-    console.log('🤖 Ассистент отвечает на запрос:', msg.text?.substring(0, 50));
-    
-    db.ref('typing/' + currentFamilyId + '/general/' + AI_ASSISTANT_ID).set(true);
-    
-    const history = await getRecentMessages(generalPath, 10);
-    const answer = await askAIAssistant(msg.text, history);
-    
-    db.ref('typing/' + currentFamilyId + '/general/' + AI_ASSISTANT_ID).remove();
-    
-    await sendAIMessage(generalPath, answer);
-  });
-  
-  // Слушаем личные чаты
-  if (currentUser) {
-    const privatePath = 'messages/' + currentFamilyId + '/private';
-    
-    db.ref(privatePath).on('child_added', async function(snap) {
-      const chatId = snap.key;
-      if (!chatId.includes(currentUser)) return;
+    // Слушаем общий чат
+    db.ref(generalPath).on('child_added', async function(snap) {
+      const msg = snap.val();
       
-      const chatPath = privatePath + '/' + chatId;
+      if (msg.from === AI_ASSISTANT_ID) return;
+      if (msg.timestamp < Date.now() - 5000) return;
+      if (!shouldRespond(msg.text)) return;
       
-      db.ref(chatPath).on('child_added', async function(msgSnap) {
-        const msg = msgSnap.val();
-        
-        if (msg.from === AI_ASSISTANT_ID) return;
-        if (msg.timestamp < Date.now() - 5000) return;
-        if (!shouldRespond(msg.text)) return;
-        
-        console.log('🤖 Ассистент отвечает в личном чате');
-        
-        db.ref('typing/' + currentFamilyId + '/private_' + chatId + '/' + AI_ASSISTANT_ID).set(true);
-        
-        const history = await getRecentMessages(chatPath, 5);
-        const answer = await askAIAssistant(msg.text, history);
-        
-        db.ref('typing/' + currentFamilyId + '/private_' + chatId + '/' + AI_ASSISTANT_ID).remove();
-        
-        await sendAIMessage(chatPath, answer);
-      });
+      console.log('🤖 Ассистент отвечает на запрос:', msg.text?.substring(0, 50));
+      
+      db.ref('typing/' + currentFamilyId + '/general/' + AI_ASSISTANT_ID).set(true);
+      
+      const history = await getRecentMessages(generalPath, 10);
+      const answer = await askAIAssistant(msg.text, history);
+      
+      db.ref('typing/' + currentFamilyId + '/general/' + AI_ASSISTANT_ID).remove();
+      
+      await sendAIMessage(generalPath, answer);
     });
-  }
-  
-  console.log('✅ AI-ассистент (GigaChat) активирован и слушает чат');
+    
+    // Слушаем личные чаты
+    if (currentUser) {
+      const privatePath = 'messages/' + currentFamilyId + '/private';
+      
+      db.ref(privatePath).on('child_added', async function(snap) {
+        const chatId = snap.key;
+        if (!chatId.includes(currentUser)) return;
+        
+        const chatPath = privatePath + '/' + chatId;
+        
+        db.ref(chatPath).on('child_added', async function(msgSnap) {
+          const msg = msgSnap.val();
+          
+          if (msg.from === AI_ASSISTANT_ID) return;
+          if (msg.timestamp < Date.now() - 5000) return;
+          if (!shouldRespond(msg.text)) return;
+          
+          console.log('🤖 Ассистент отвечает в личном чате');
+          
+          db.ref('typing/' + currentFamilyId + '/private_' + chatId + '/' + AI_ASSISTANT_ID).set(true);
+          
+          const history = await getRecentMessages(chatPath, 5);
+          const answer = await askAIAssistant(msg.text, history);
+          
+          db.ref('typing/' + currentFamilyId + '/private_' + chatId + '/' + AI_ASSISTANT_ID).remove();
+          
+          await sendAIMessage(chatPath, answer);
+        });
+      });
+    }
+    
+    console.log('✅ AI-ассистент (GigaChat) активирован и слушает чат');
+  });
 }
 
 // ============ РЕГИСТРАЦИЯ АССИСТЕНТА В СЕМЬЕ ============
@@ -248,6 +278,3 @@ function getCommandResponse(text) {
 }
 
 console.log('✅ ai-assistant.js загружен (GigaChat)');
-console.log('   Для активации:');
-console.log('   1. Вставьте токен GigaChat в переменную GIGACHAT_TOKEN');
-console.log('   2. В main.js добавьте: setupAIAssistant();');
