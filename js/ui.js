@@ -210,9 +210,33 @@ function setupUIListeners() {
   document.getElementById('fontUp').addEventListener('click', function() { if (fontSize < 150) { fontSize += 10; updateFontSize(); } });
   document.getElementById('fontDown').addEventListener('click', function() { if (fontSize > 80) { fontSize -= 10; updateFontSize(); } });
   
-  // Файлы
-  document.getElementById('attachBtn').addEventListener('click', function() { document.getElementById('fileInput').click(); });
-  document.getElementById('fileInput').addEventListener('change', function(e) { const files = e.target.files; for (let i = 0; i < files.length; i++) { const file = files[i]; const reader = new FileReader(); if (file.type.startsWith('image/')) { reader.onload = function(ev) { sendMedia('image', ev.target.result); }; } else { reader.onload = function(ev) { sendMedia('file', ev.target.result, file.name, file.type); }; } reader.readAsDataURL(file); } e.target.value = ''; });
+  // Файлы (с OCR)
+  document.getElementById('attachBtn').addEventListener('click', function() {
+  document.getElementById('fileInput').click();
+  });
+
+  document.getElementById('fileInput').addEventListener('change', function(e) {
+  const files = e.target.files;
+  if (!files.length) return;
+  
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    
+    if (file.type.startsWith('image/')) {
+      // Для фото — распознаём текст И отправляем фото
+      processImageWithOCR(file);
+    } else {
+      // Для других файлов — отправляем как обычно
+      const reader = new FileReader();
+      reader.onload = function(ev) { 
+        sendMedia('file', ev.target.result, file.name, file.type); 
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+  
+  e.target.value = '';
+  });
   
   // Аватар
   document.getElementById('avatarBtn').addEventListener('click', function() { document.getElementById('avatarInput').click(); });
