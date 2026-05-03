@@ -10,6 +10,7 @@ function initApp() {
     switchToGeneralChat();
     listenTyping();
     startAutoDelete();
+    setupAIAssistant();
   } else {
     showFamilySetup();
   }
