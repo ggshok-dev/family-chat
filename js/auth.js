@@ -243,4 +243,72 @@ document.addEventListener('DOMContentLoaded', function() {
   initEmojiSelector();
 });
 
+// ============ ПИН-КОД (локальная защита) ============
+function getPin() {
+  return localStorage.getItem('fc_pin_' + currentUser) || null;
+}
+
+function setPin(pin) {
+  localStorage.setItem('fc_pin_' + currentUser, pin);
+}
+
+function hasPin() {
+  return !!getPin();
+}
+
+function verifyPin(pin) {
+  return getPin() === pin;
+}
+
+function showPinDialog() {
+  const overlay = document.getElementById('pinOverlay');
+  const title = document.getElementById('pinTitle');
+  const input = document.getElementById('pinInput');
+  const error = document.getElementById('pinError');
+  
+  if (hasPin()) {
+    title.textContent = 'Введите ПИН-код';
+  } else {
+    title.textContent = 'Создайте ПИН-код';
+  }
+  
+  input.value = '';
+  error.classList.remove('show');
+  overlay.style.display = 'flex';
+  setTimeout(function() { input.focus(); }, 100);
+}
+
+document.getElementById('pinBtn').addEventListener('click', function() {
+  const pin = document.getElementById('pinInput').value.trim();
+  const error = document.getElementById('pinError');
+  
+  if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+    error.textContent = 'ПИН должен состоять из 4 цифр';
+    error.classList.add('show');
+    return;
+  }
+  
+  if (hasPin()) {
+    if (verifyPin(pin)) {
+      document.getElementById('pinOverlay').style.display = 'none';
+      loadAllUsers();
+      loadMessages();
+    } else {
+      error.textContent = 'Неверный ПИН-код';
+      error.classList.add('show');
+      document.getElementById('pinInput').value = '';
+    }
+  } else {
+    setPin(pin);
+    document.getElementById('pinOverlay').style.display = 'none';
+    loadAllUsers();
+    loadMessages();
+    alert('✅ ПИН-код создан!');
+  }
+});
+
+document.getElementById('pinOverlay').addEventListener('click', function(e) {
+  if (e.target === this) this.style.display = 'none';
+});
+
 console.log('✅ auth.js загружен');
