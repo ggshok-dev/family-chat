@@ -16,55 +16,15 @@
   
   <!-- Стили -->
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="css/auth.css">
   
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
 </head>
 <body>
-  <div id="auth-container" class="auth-overlay">
-    <div class="auth-card">
-        <!-- Индикатор прогресса -->
-        <div class="progress-bar"><div id="progress-fill"></div></div>
-        
-        <div class="auth-steps-container">
-            <!-- Шаг 1 -->
-            <div class="auth-step active" id="step-1">
-                <div class="icon">🏠</div>
-                <h2>Создать семью</h2>
-                <p>Введите фамилию или ID группы</p>
-                <input type="text" id="family-input" placeholder="Например: Ивановы">
-                <button class="primary-btn" onclick="nextStep(2)">Продолжить</button>
-            </div>
-
-            <!-- Шаг 2 -->
-            <div class="auth-step" id="step-2">
-                <div class="icon">👤</div>
-                <h2>Ваше имя</h2>
-                <p>Как вас будут видеть в чате?</p>
-                <input type="text" id="name-input" placeholder="Например: Папа">
-                <div class="btn-group">
-                    <button class="secondary-btn" onclick="nextStep(1)">Назад</button>
-                    <button class="primary-btn" onclick="nextStep(3)">Далее</button>
-                </div>
-            </div>
-
-            <!-- Шаг 3 -->
-            <div class="auth-step" id="step-3">
-                <div class="icon">🔐</div>
-                <h2>Личный ПИН</h2>
-                <p>Для защиты вашего профиля</p>
-                <input type="password" id="pin-input" inputmode="numeric" maxlength="4" placeholder="0 0 0 0">
-                <div class="btn-group">
-                    <button class="secondary-btn" onclick="nextStep(2)">Назад</button>
-                    <button class="primary-btn" onclick="finishRegistration()">Войти в чат</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
   <!-- ========== ЭКРАН ВХОДА / РЕГИСТРАЦИЯ ========== -->
   <div class="secret-overlay" id="secretOverlay">
     <div class="secret-dialog" id="loginDialog">
@@ -77,92 +37,83 @@
         <input type="password" class="secret-input" id="loginPassword" placeholder="Пароль">
         <button class="secret-btn" id="loginBtn">Войти</button>
         <p style="margin-top:10px;font-size:0.9rem;">
-          <a href="#" id="showRegister" style="color:#667eea;">Нет аккаунта? Зарегистрироваться</a>
+          <a href="#" id="showRegister">Нет аккаунта? Зарегистрироваться</a>
         </p>
       </div>
       
       <!-- Форма регистрации (пошаговая) -->
-<div id="registerForm" style="display:none;">
-  
-  <!-- Индикатор шагов -->
-<div class="step-indicator">
-  <div class="step-dot active" id="dot1"></div>
-  <div class="step-dot" id="dot2"></div>
-  <div class="step-dot" id="dot3"></div>
-</div>
-  
-  <!-- Шаг 1: Выбор роли -->
-  <div class="auth-step active" id="regStep1">
-    <h2 style="color:white;margin-bottom:8px;font-size:1.4rem;">👋 Кто вы в семье?</h2>
-    <p style="color:rgba(255,255,255,0.8);margin-bottom:20px;font-size:0.9rem;">Выберите вашу роль</p>
-    
-    <div style="margin-bottom:18px;">
-      <select id="regRole" class="secret-input" style="text-align:left;padding:14px 18px;">
-        <optgroup label="Родители (создатели)">
-          <option value="dad">👨 Папа</option>
-          <option value="mom">👩 Мама</option>
-        </optgroup>
-        <optgroup label="Старшие родственники">
-          <option value="grandma">👵 Бабушка</option>
-          <option value="grandpa">👴 Дедушка</option>
-        </optgroup>
-        <optgroup label="Дети">
-          <option value="son">👦 Сын</option>
-          <option value="daughter">👧 Дочь</option>
-          <option value="brother">👦 Брат</option>
-          <option value="sister">👧 Сестра</option>
-        </optgroup>
-        <optgroup label="Дальние родственники">
-          <option value="aunt">👩‍🦰 Тётя</option>
-          <option value="uncle">👨‍🦱 Дядя</option>
-          <option value="nephew">🧒 Племянник</option>
-          <option value="niece">👧 Племянница</option>
-        </optgroup>
-        <optgroup label="Друзья">
-          <option value="friend">🤝 Друг</option>
-          <option value="friend_f">👭 Подруга</option>
-        </optgroup>
-      </select>
-    </div>
-    <button class="secret-btn" onclick="nextRegStep(2)">Далее ➤</button>
-  </div>
+      <div id="registerForm" style="display:none;">
+        <!-- Индикатор шагов -->
+        <div class="step-indicator">
+          <div class="step-dot active" id="dot1"></div>
+          <div class="step-dot" id="dot2"></div>
+          <div class="step-dot" id="dot3"></div>
+        </div>
+        
+        <!-- Шаг 1: Выбор роли -->
+        <div class="auth-step active" id="regStep1">
+          <h2>👋 Кто вы в семье?</h2>
+          <p>Выберите вашу роль</p>
+          <select id="regRole" class="secret-input" style="text-align:left;padding:14px 18px;">
+            <optgroup label="Родители (создатели)">
+              <option value="dad">👨 Папа</option>
+              <option value="mom">👩 Мама</option>
+            </optgroup>
+            <optgroup label="Старшие родственники">
+              <option value="grandma">👵 Бабушка</option>
+              <option value="grandpa">👴 Дедушка</option>
+            </optgroup>
+            <optgroup label="Дети">
+              <option value="son">👦 Сын</option>
+              <option value="daughter">👧 Дочь</option>
+              <option value="brother">👦 Брат</option>
+              <option value="sister">👧 Сестра</option>
+            </optgroup>
+            <optgroup label="Дальние родственники">
+              <option value="aunt">👩‍🦰 Тётя</option>
+              <option value="uncle">👨‍🦱 Дядя</option>
+              <option value="nephew">🧒 Племянник</option>
+              <option value="niece">👧 Племянница</option>
+            </optgroup>
+            <optgroup label="Друзья">
+              <option value="friend">🤝 Друг</option>
+              <option value="friend_f">👭 Подруга</option>
+            </optgroup>
+          </select>
+          <button class="secret-btn" onclick="nextRegStep(2)">Далее ➤</button>
+        </div>
 
-  <!-- Шаг 2: Имя и эмодзи -->
-  <div class="auth-step" id="regStep2" style="display:none;">
-    <h2 style="color:white;margin-bottom:8px;font-size:1.4rem;">😊 Ваше имя и аватар</h2>
-    <p style="color:rgba(255,255,255,0.8);margin-bottom:20px;font-size:0.9rem;">Как вас будут видеть в чате</p>
-    
-    <input type="text" class="secret-input" id="regName" placeholder="Ваше имя" maxlength="20" style="margin-bottom:15px;">
-    
-    <div style="margin-bottom:15px;">
-      <label style="display:block;text-align:left;color:rgba(255,255,255,0.8);font-size:0.85rem;margin-bottom:6px;">Выберите эмодзи:</label>
-      <div id="emojiSelector" style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;max-height:120px;overflow-y:auto;padding:8px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);border-radius:14px;"></div>
-    </div>
-    
-    <button class="secret-btn" onclick="nextRegStep(3)">Далее ➤</button>
-  </div>
+        <!-- Шаг 2: Имя и эмодзи -->
+        <div class="auth-step" id="regStep2" style="display:none;">
+          <h2>😊 Ваше имя и аватар</h2>
+          <p>Как вас будут видеть в чате</p>
+          <input type="text" class="secret-input" id="regName" placeholder="Ваше имя" maxlength="20">
+          <div style="margin-bottom:15px;">
+            <label>Выберите эмодзи:</label>
+            <div id="emojiSelector"></div>
+          </div>
+          <button class="secret-btn" onclick="nextRegStep(3)">Далее ➤</button>
+        </div>
 
-  <!-- Шаг 3: Email и пароль -->
-  <div class="auth-step" id="regStep3" style="display:none;">
-    <h2 style="color:white;margin-bottom:8px;font-size:1.4rem;">🔐 Данные для входа</h2>
-    <p style="color:rgba(255,255,255,0.8);margin-bottom:20px;font-size:0.9rem;">Email и пароль для входа в чат</p>
-    
-    <input type="email" class="secret-input" id="regEmail" placeholder="Email" autocomplete="email" style="margin-bottom:12px;">
-    <input type="password" class="secret-input" id="regPassword" placeholder="Пароль (мин 6 символов)" style="margin-bottom:18px;">
-    
-    <button class="secret-btn" id="registerBtn">🎉 Зарегистрироваться!</button>
-  </div>
-  
-  <p style="margin-top:18px;font-size:0.9rem;">
-    <a href="#" id="showLogin" style="color:rgba(255,255,255,0.85);">← Уже есть аккаунт? Войти</a>
-  </p>
-</div>
+        <!-- Шаг 3: Email и пароль -->
+        <div class="auth-step" id="regStep3" style="display:none;">
+          <h2>🔐 Данные для входа</h2>
+          <p>Email и пароль для входа в чат</p>
+          <input type="email" class="secret-input" id="regEmail" placeholder="Email" autocomplete="email">
+          <input type="password" class="secret-input" id="regPassword" placeholder="Пароль (мин 6 символов)">
+          <button class="secret-btn" id="registerBtn">🎉 Зарегистрироваться!</button>
+        </div>
+        
+        <p style="margin-top:18px;font-size:0.9rem;">
+          <a href="#" id="showLoginInReg">← Уже есть аккаунт? Войти</a>
+        </p>
+      </div>
       
       <div class="error-msg" id="errorMsg"></div>
     </div>
   </div>
 
-  <!-- ========== ПИН-КОД (после входа) ========== -->
+  <!-- ========== ПИН-КОД ========== -->
   <div class="pin-overlay" id="pinOverlay">
     <div class="pin-dialog">
       <div class="user-icon" id="pinUserIcon">👤</div>
@@ -176,7 +127,6 @@
 
   <!-- ========== ОСНОВНОЕ ПРИЛОЖЕНИЕ ========== -->
   <div class="app" id="mainApp" style="display:none;">
-    <!-- Заголовок -->
     <div class="header">
       <span class="header-logo">👨‍👩‍👧‍👦</span>
       <span class="header-title">FChat</span>
@@ -188,119 +138,41 @@
       </div>
     </div>
 
-    <!-- Панель настроек -->
     <div class="settings-panel" id="settingsPanel">
       <h3>⚙️ Настройки</h3>
-      
-      <div class="setting-item">
-        <span class="setting-label">🖼️ Аватар</span>
-        <div style="display:flex;gap:8px;">
-          <button class="action-btn primary" id="avatarBtn">Загрузить</button>
-          <button class="action-btn warning" id="avatarResetBtn">По умолчанию</button>
-        </div>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🔑 Сменить ПИН-код</span>
-        <button class="action-btn primary" id="changePinBtn">Изменить</button>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">👥 Пригласить в семью</span>
-        <button class="action-btn primary" id="inviteMemberBtn">Пригласить</button>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">📋 Код приглашения</span>
-        <button class="action-btn primary" id="showInviteCodeBtn">Показать</button>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🔔 Уведомления</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="notifToggle" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🔊 Звук</span>
-        <label class="toggle-switch">
-          <input type="checkbox" id="soundToggle" checked>
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">📝 Шрифт</span>
-        <div class="font-size-controls">
-          <button class="font-size-btn" id="fontDown">A−</button>
-          <span class="font-size-value" id="fontValue">100%</span>
-          <button class="font-size-btn" id="fontUp">A+</button>
-        </div>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🗑️ Автоудаление</span>
-        <select id="autoDelete">
-            <option value="0">Выключено</option>
-            <option value="24">24 часа</option>
-            <option value="72">3 дня</option>
-            <option value="168" selected>7 дней</option>
-            <option value="720">Месяц</option>
-        </select>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🔑 Сменить пароль</span>
-        <button class="action-btn primary" id="changePasswordBtn">Изменить</button>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🚪 Выйти из аккаунта</span>
-        <button class="action-btn danger" id="logoutBtn">Выйти</button>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🔄 Кэш</span>
-        <button class="action-btn warning" id="cacheBtn">Сбросить</button>
-      </div>
-      
-      <div class="setting-item">
-        <span class="setting-label">🗑️ Очистить чат</span>
-        <button class="action-btn danger" id="clearBtn">Удалить всё</button>
-      </div>
+      <div class="setting-item"><span class="setting-label">🖼️ Аватар</span><div style="display:flex;gap:8px;"><button class="action-btn primary" id="avatarBtn">Загрузить</button><button class="action-btn warning" id="avatarResetBtn">По умолчанию</button></div></div>
+      <div class="setting-item"><span class="setting-label">🔑 Сменить ПИН-код</span><button class="action-btn primary" id="changePinBtn">Изменить</button></div>
+      <div class="setting-item"><span class="setting-label">👥 Пригласить в семью</span><button class="action-btn primary" id="inviteMemberBtn">Пригласить</button></div>
+      <div class="setting-item"><span class="setting-label">📋 Код приглашения</span><button class="action-btn primary" id="showInviteCodeBtn">Показать</button></div>
+      <div class="setting-item"><span class="setting-label">🔔 Уведомления</span><label class="toggle-switch"><input type="checkbox" id="notifToggle" checked><span class="toggle-slider"></span></label></div>
+      <div class="setting-item"><span class="setting-label">🔊 Звук</span><label class="toggle-switch"><input type="checkbox" id="soundToggle" checked><span class="toggle-slider"></span></label></div>
+      <div class="setting-item"><span class="setting-label">📝 Шрифт</span><div class="font-size-controls"><button class="font-size-btn" id="fontDown">A−</button><span class="font-size-value" id="fontValue">100%</span><button class="font-size-btn" id="fontUp">A+</button></div></div>
+      <div class="setting-item"><span class="setting-label">🗑️ Автоудаление</span><select id="autoDelete"><option value="0">Выключено</option><option value="24">24 часа</option><option value="72">3 дня</option><option value="168" selected>7 дней</option><option value="720">Месяц</option></select></div>
+      <div class="setting-item"><span class="setting-label">🔑 Сменить пароль</span><button class="action-btn primary" id="changePasswordBtn">Изменить</button></div>
+      <div class="setting-item"><span class="setting-label">🚪 Выйти из аккаунта</span><button class="action-btn danger" id="logoutBtn">Выйти</button></div>
+      <div class="setting-item"><span class="setting-label">🔄 Кэш</span><button class="action-btn warning" id="cacheBtn">Сбросить</button></div>
+      <div class="setting-item"><span class="setting-label">🗑️ Очистить чат</span><button class="action-btn danger" id="clearBtn">Удалить всё</button></div>
     </div>
 
-    <!-- Аватарки пользователей -->
     <div class="users-avatars" id="usersAvatars"></div>
 
-    <!-- Вкладки чатов -->
     <div class="tabs">
       <button class="tab active" data-tab="general">💬 Общий</button>
       <button class="tab" data-tab="private">🔒 Личный</button>
     </div>
 
-    <!-- Заголовок личного чата -->
     <div class="private-chat-header" id="privateChatHeader">
       <span>🔒 Личный чат с</span>
       <strong class="partner-name"></strong>
     </div>
 
-    <!-- Окно чата -->
     <div class="chat-window" id="chatWindow">
-      <div class="empty-chat">
-        <div class="empty-icon">💬</div>
-        <p>Загрузка...</p>
-      </div>
+      <div class="empty-chat"><div class="empty-icon">💬</div><p>Загрузка...</p></div>
     </div>
 
-    <!-- Панель ввода -->
     <div class="input-panel">
       <div id="input-panel-container">
-        <div class="emoji-picker-wrapper" id="emojiPicker">
-          <div class="emoji-grid" id="emojiGrid"></div>
-        </div>
+        <div class="emoji-picker-wrapper" id="emojiPicker"><div class="emoji-grid" id="emojiGrid"></div></div>
         <div class="input-row">
           <button class="icon-btn" id="emojiBtn">😊</button>
           <button class="icon-btn" id="micBtn">🎤</button>
@@ -312,33 +184,21 @@
     </div>
   </div>
 
-  <!-- Скрытые поля -->
   <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt,.zip" multiple style="display:none">
   <input type="file" id="avatarInput" accept="image/*" style="display:none">
 
-  <!-- ========== СКРИПТЫ (модульная структура) ========== -->
+  <!-- Модульные скрипты -->
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/family.js"></script>
   <script src="js/chat.js"></script>
   <script src="js/ui.js"></script>
-  <script src="js/ai-assistant.js"></script>
   <script src="js/main.js"></script>
   
   <!-- Service Worker -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/family-chat/sw.js')
-        .then(function(reg) {
-          console.log('✅ Service Worker зарегистрирован');
-          
-          if ('Notification' in window && Notification.permission === 'default') {
-            Notification.requestPermission();
-          }
-        })
-        .catch(function(err) {
-          console.log('SW error:', err);
-        });
+      navigator.serviceWorker.register('/family-chat/sw.js');
     }
   </script>
 </body>
