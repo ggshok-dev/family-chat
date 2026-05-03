@@ -276,18 +276,17 @@ function switchToGeneralChat() {
   loadMessages();
 }
 
-function switchToPrivateChat(userId) {
-  // Проверяем права
-  if (!hasPermission('canSeePrivateChats')) {
-    alert('У вас нет доступа к личным чатам');
-    return;
-  }
-  
+  function switchToPrivateChat(userId) {
   activeTab = 'private';
   privateWith = userId;
+  
+  // Сохраняем последнего собеседника
+  localStorage.setItem('fc_private_' + currentUser, userId);
+  
   document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
   const privateTab = document.querySelector('.tab[data-tab="private"]');
   if (privateTab) privateTab.classList.add('active');
+  
   updatePrivateHeader();
   loadMessages();
 }
