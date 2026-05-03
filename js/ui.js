@@ -45,7 +45,6 @@ function renderUsers() {
       `;
     }).join('');
     
-    // Обработчики кликов
     container.querySelectorAll('.user-avatar').forEach(function(av) {
       av.addEventListener('click', function() {
         const userId = av.dataset.user;
@@ -218,13 +217,11 @@ function showReactionMenu(event, msg) {
 // ============ РЕАКЦИИ ============
 function addReaction(msg, emoji) {
   const reactions = msg.reactions || {};
-  
   if (reactions[currentUser] === emoji) {
     delete reactions[currentUser];
   } else {
     reactions[currentUser] = emoji;
   }
-  
   db.ref(getChatPath() + '/' + msg.id + '/reactions').set(reactions);
 }
 
@@ -246,7 +243,6 @@ function switchTheme() {
 
 // ============ НАСТРОЙКИ ============
 function applyStoredSettings() {
-  // Тема
   const savedTheme = localStorage.getItem('fc_theme') || 'light';
   currentTheme = savedTheme;
   document.body.classList.remove('dark-theme', 'green-theme', 'purple-theme');
@@ -254,15 +250,14 @@ function applyStoredSettings() {
   else if (savedTheme === 'green-theme') document.body.classList.add('green-theme');
   else if (savedTheme === 'purple-theme') document.body.classList.add('purple-theme');
   
-  // Шрифт
   fontSize = parseInt(localStorage.getItem('fc_font') || '100');
   document.documentElement.style.setProperty('--font-scale', fontSize / 100);
   const fv = document.getElementById('fontValue');
   if (fv) fv.textContent = fontSize + '%';
   
-  // Уведомления и звук
   notifEnabled = localStorage.getItem('fc_notif') !== 'false';
   soundEnabled = localStorage.getItem('fc_sound') !== 'false';
+  autoDeleteHours = parseInt(localStorage.getItem('fc_autoDelete') || '168');
   
   const nt = document.getElementById('notifToggle');
   const st = document.getElementById('soundToggle');
@@ -276,7 +271,6 @@ function applyStoredSettings() {
   if (nb) nb.textContent = notifEnabled ? '🔔' : '🔕';
   if (sb) sb.textContent = soundEnabled ? '🔊' : '🔇';
   
-  // Иконка темы
   const themeBtn = document.getElementById('themeBtn');
   if (themeBtn) {
     const theme = THEMES.find(function(t) { return t.id === savedTheme || t.class === savedTheme; });
@@ -371,7 +365,8 @@ function setupUIListeners() {
     notifEnabled = !notifEnabled;
     localStorage.setItem('fc_notif', notifEnabled);
     this.textContent = notifEnabled ? '🔔' : '🔕';
-    document.getElementById('notifToggle').checked = notifEnabled;
+    const nt = document.getElementById('notifToggle');
+    if (nt) nt.checked = notifEnabled;
   });
   
   // Звук
@@ -379,7 +374,8 @@ function setupUIListeners() {
     soundEnabled = !soundEnabled;
     localStorage.setItem('fc_sound', soundEnabled);
     this.textContent = soundEnabled ? '🔊' : '🔇';
-    document.getElementById('soundToggle').checked = soundEnabled;
+    const st = document.getElementById('soundToggle');
+    if (st) st.checked = soundEnabled;
   });
   
   // Размер шрифта
@@ -424,6 +420,10 @@ function setupUIListeners() {
       reader.readAsDataURL(file);
     }
     e.target.value = '';
+  });
+  
+  document.getElementById('avatarResetBtn').addEventListener('click', function() {
+    if (confirm('Сбросить аватар?')) resetAvatar(currentUser);
   });
   
   // Микрофон
@@ -479,6 +479,43 @@ function setupUIListeners() {
   document.getElementById('cacheBtn').addEventListener('click', function() {
     if (confirm('Перезагрузить страницу?')) location.reload();
   });
+  
+  // Пригласить в семью
+  const inviteBtn = document.getElementById('inviteMemberBtn');
+  if (inviteBtn) {
+    inviteBtn.addEventListener('click', function() {
+      const email = prompt('Введите email приглашаемого:');
+      if (!email) return;
+      alert('📧 Приглашение отправлено на ' + email + '\n\n(Функция в разработке)');
+    });
+  }
+  
+  // Показать код приглашения
+  const showCodeBtn = document.getElementById('showInviteCodeBtn');
+  if (showCodeBtn) {
+    showCodeBtn.addEventListener('click', function() {
+      const code = getInviteCode();
+      if (code) {
+        alert('📋 Код приглашения: ' + code + '\n\nСообщите этот код тем, кого хотите пригласить.');
+      } else {
+        alert('У вас нет семьи или вы не администратор');
+      }
+    });
+  }
+  
+  // Сменить ПИН-код
+  const changePinBtn = document.getElementById('changePinBtn');
+  if (changePinBtn) {
+    changePinBtn.addEventListener('click', function() {
+      const oldPin = prompt('Введите текущий ПИН-код:');
+      if (!oldPin) return;
+      if (!verifyPin(oldPin)) { alert('Неверный ПИН-код'); return; }
+      const newPin = prompt('Введите новый 4-значный ПИН-код:');
+      if (!newPin || newPin.length !== 4 || !/^\d{4}$/.test(newPin)) { alert('ПИН должен состоять из 4 цифр'); return; }
+      setPin(newPin);
+      alert('✅ ПИН-код изменён!');
+    });
+  }
   
   // Счётчик непрочитанных
   document.addEventListener('visibilitychange', function() {
