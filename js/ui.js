@@ -172,69 +172,58 @@ function setupUIListeners() {
   if (listenersInitialized) return;
   listenersInitialized = true;
   
+  // Отправка сообщений
   document.getElementById('sendBtn').addEventListener('click', function() { sendText(document.getElementById('msgInput').value, replyToMessage); });
   document.getElementById('msgInput').addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendText(this.value, replyToMessage); } });
   document.getElementById('msgInput').addEventListener('input', function() { startTypingIndicator(); });
+  
+  // Эмодзи
   document.getElementById('emojiBtn').addEventListener('click', function() { document.getElementById('emojiPicker').classList.toggle('show'); });
   document.addEventListener('click', function(e) { const pk = document.getElementById('emojiPicker'), eb = document.getElementById('emojiBtn'); if (pk && eb && !pk.contains(e.target) && e.target !== eb) { pk.classList.remove('show'); } });
   
-  document.querySelectorAll('.tab').forEach(function(tab) { tab.addEventListener('click', function() { if (tab.dataset.tab === 'general') { switchToGeneralChat(); } else { if (privateWith) { switchToPrivateChat(privateWith); } } }); });
+  // Вкладки (ОДИН раз!)
+  document.querySelectorAll('.tab').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+      document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      
+      if (tab.dataset.tab === 'general') {
+        switchToGeneralChat();
+      } else {
+        if (!privateWith) {
+          const saved = localStorage.getItem('fc_private_' + currentUser);
+          if (saved) { privateWith = saved; }
+        }
+        if (!privateWith && currentFamilyData) {
+          const members = currentFamilyData.members || {};
+          const others = Object.keys(members).filter(function(id) { return id !== currentUser; });
+          if (others.length > 0) { privateWith = others[0]; }
+        }
+        if (privateWith) { switchToPrivateChat(privateWith); }
+      }
+    });
+  });
+  
+  // Настройки
   document.getElementById('settingsBtn').addEventListener('click', function() { document.getElementById('settingsPanel').classList.toggle('show'); });
   document.getElementById('themeBtn').addEventListener('click', switchTheme);
   
-  // Вкладки
-  document.querySelectorAll('.tab').forEach(function(tab) {
-  tab.addEventListener('click', function() {
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    tab.classList.add('active');
-    
-    if (tab.dataset.tab === 'general') {
-      switchToGeneralChat();
-    } else {
-      // Проверяем, есть ли сохранённый собеседник
-      if (!privateWith) {
-        const saved = localStorage.getItem('fc_private_' + currentUser);
-        if (saved) {
-          privateWith = saved;
-        }
-      }
-      
-      // Если собеседник всё ещё не выбран — выбираем первого доступного
-      if (!privateWith && currentFamilyData) {
-        const members = currentFamilyData.members || {};
-        const others = Object.keys(members).filter(function(id) { 
-          return id !== currentUser; 
-        });
-        if (others.length > 0) {
-          privateWith = others[0];
-        }
-      }
-      
-      if (privateWith) {
-        switchToPrivateChat(privateWith);
-      }
-    }
-  });
-});
-  
-  // Кнопка уведомлений
+  // Уведомления
   document.getElementById('notifBtn').addEventListener('click', function() {
     notifEnabled = !notifEnabled; localStorage.setItem('fc_notif', notifEnabled);
     this.textContent = notifEnabled ? '🔔' : '🔕';
     const nt = document.getElementById('notifToggle'); if (nt) nt.checked = notifEnabled;
   });
+  document.getElementById('notifToggle').addEventListener('change', function() {
+    notifEnabled = this.checked; localStorage.setItem('fc_notif', notifEnabled);
+    document.getElementById('notifBtn').textContent = notifEnabled ? '🔔' : '🔕';
+  });
   
-  // Кнопка звука
+  // Звук
   document.getElementById('soundBtn').addEventListener('click', function() {
     soundEnabled = !soundEnabled; localStorage.setItem('fc_sound', soundEnabled);
     this.textContent = soundEnabled ? '🔊' : '🔇';
     const st = document.getElementById('soundToggle'); if (st) st.checked = soundEnabled;
-  });
-  
-  // СИНХРОНИЗАЦИЯ ПОЛЗУНКОВ С КНОПКАМИ
-  document.getElementById('notifToggle').addEventListener('change', function() {
-    notifEnabled = this.checked; localStorage.setItem('fc_notif', notifEnabled);
-    document.getElementById('notifBtn').textContent = notifEnabled ? '🔔' : '🔕';
   });
   document.getElementById('soundToggle').addEventListener('change', function() {
     soundEnabled = this.checked; localStorage.setItem('fc_sound', soundEnabled);
@@ -245,77 +234,51 @@ function setupUIListeners() {
   document.getElementById('fontUp').addEventListener('click', function() { if (fontSize < 150) { fontSize += 10; updateFontSize(); } });
   document.getElementById('fontDown').addEventListener('click', function() { if (fontSize > 80) { fontSize -= 10; updateFontSize(); } });
   
-  // Файлы (отправка без OCR)
-  document.getElementById('attachBtn').addEventListener('click', function() {
-  document.getElementById('fileInput').click();
-});
-
+  // Файлы (отправка)
+  document.getElementById('attachBtn').addEventListener('click', function() { document.getElementById('fileInput').click(); });
   document.getElementById('fileInput').addEventListener('change', function(e) {
-  const files = e.target.files;
-  if (!files.length) return;
-  
-  for (let i = 0; i < files.length; i++) {
-    const file = files[i];
-    const reader = new FileReader();
-    
-    if (file.type.startsWith('image/')) {
-      reader.onload = function(ev) { sendMedia('image', ev.target.result); };
-    } else {
-      reader.onload = function(ev) { sendMedia('file', ev.target.result, file.name, file.type); };
-    }
-    reader.readAsDataURL(file);
-  }
-  
-  e.target.value = '';
-});
-
-// Кнопка "Распознать текст" — только OCR
-const ocrBtn = document.getElementById('ocrBtn');
-if (ocrBtn) {
-  ocrBtn.addEventListener('click', function() {
-    document.getElementById('ocrFileInput').click();
-  });
-}
-
-// Отдельный input для OCR
-const ocrFileInput = document.getElementById('ocrFileInput');
-if (ocrFileInput) {
-  ocrFileInput.addEventListener('change', async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    showToast('🔍 Распознаю текст...');
-    
-    if (file.type.startsWith('image/')) {
-      // Распознаём текст с фото
+    const files = e.target.files;
+    if (!files.length) return;
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
       const reader = new FileReader();
-      reader.onload = async function(ev) {
-        const text = await extractTextFromImage(ev.target.result);
-        if (text) {
-          document.getElementById('msgInput').value = text;
-          document.getElementById('msgInput').focus();
-          showToast('✅ Текст распознан и вставлен');
-        } else {
-          showToast('❌ Текст не найден');
-        }
-      };
+      if (file.type.startsWith('image/')) { reader.onload = function(ev) { sendMedia('image', ev.target.result); }; }
+      else { reader.onload = function(ev) { sendMedia('file', ev.target.result, file.name, file.type); }; }
       reader.readAsDataURL(file);
-    } else if (file.name.endsWith('.pdf')) {
-      // PDF распознавание
-      showToast('📄 Распознаю PDF...');
-      const text = await extractTextFromPDF(file);
-      if (text) {
-        document.getElementById('msgInput').value = text;
-        document.getElementById('msgInput').focus();
-        showToast('✅ Текст из PDF вставлен');
-      }
-    } else {
-      showToast('❌ Поддерживаются только фото и PDF');
     }
-    
     e.target.value = '';
   });
-}
+  
+  // OCR кнопка (распознавание текста)
+  const ocrBtn = document.getElementById('ocrBtn');
+  if (ocrBtn) {
+    ocrBtn.addEventListener('click', function() {
+      const ocrFileInput = document.getElementById('ocrFileInput');
+      if (ocrFileInput) ocrFileInput.click();
+    });
+  }
+  const ocrFileInput = document.getElementById('ocrFileInput');
+  if (ocrFileInput) {
+    ocrFileInput.addEventListener('change', async function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      showToast('🔍 Распознаю текст...');
+      if (file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onload = async function(ev) {
+          const text = await extractTextFromImage(ev.target.result);
+          if (text) { document.getElementById('msgInput').value = text; document.getElementById('msgInput').focus(); showToast('✅ Готово!'); }
+          else { showToast('❌ Текст не найден'); }
+        };
+        reader.readAsDataURL(file);
+      } else if (file.name.endsWith('.pdf')) {
+        showToast('📄 Распознаю PDF...');
+        const text = await extractTextFromPDF(file);
+        if (text) { document.getElementById('msgInput').value = text; document.getElementById('msgInput').focus(); showToast('✅ Готово!'); }
+      } else { showToast('❌ Только фото и PDF'); }
+      e.target.value = '';
+    });
+  }
   
   // Аватар
   document.getElementById('avatarBtn').addEventListener('click', function() { document.getElementById('avatarInput').click(); });
@@ -329,26 +292,15 @@ if (ocrFileInput) {
     navigator.mediaDevices.getUserMedia({audio: true}).then(function(stream) { mediaRecorder = new MediaRecorder(stream); audioChunks = []; mediaRecorder.ondataavailable = function(e) { audioChunks.push(e.data); }; mediaRecorder.onstop = function() { const blob = new Blob(audioChunks, {type: 'audio/webm'}); const reader = new FileReader(); reader.onload = function(ev) { sendMedia('voice', ev.target.result); }; reader.readAsDataURL(blob); stream.getTracks().forEach(function(t) { t.stop(); }); }; mediaRecorder.start(); btn.classList.add('recording'); btn.textContent = '⏹️'; setTimeout(function() { if (mediaRecorder && mediaRecorder.state === 'recording') { mediaRecorder.stop(); btn.classList.remove('recording'); btn.textContent = '🎤'; } }, 30000); }).catch(function() { alert('Нет доступа к микрофону'); });
   });
   
-  // Автоудаление
+  // Автоудаление, очистка, кэш
   document.getElementById('autoDelete').addEventListener('change', function() { autoDeleteHours = parseInt(this.value); localStorage.setItem('fc_autoDelete', autoDeleteHours); });
-  
-  // Очистка чата
   document.getElementById('clearBtn').addEventListener('click', function() { if (confirm('Удалить все сообщения?')) { db.ref(getChatPath()).set(null); processedIds.clear(); loadMessages(); } });
-  
-  // Кэш
   document.getElementById('cacheBtn').addEventListener('click', function() { if (confirm('Перезагрузить?')) location.reload(); });
   
-  // Пригласить в семью
-  const inviteBtn = document.getElementById('inviteMemberBtn');
-  if (inviteBtn) { inviteBtn.addEventListener('click', function() { const email = prompt('Email приглашаемого:'); if (email) alert('📧 Приглашение для ' + email + '\n(Функция в разработке)'); }); }
-  
-  // Код приглашения
-  const codeBtn = document.getElementById('showInviteCodeBtn');
-  if (codeBtn) { codeBtn.addEventListener('click', function() { const code = getInviteCode(); alert(code ? '📋 Код: ' + code : 'Нет кода'); }); }
-  
-  // Сменить ПИН
-  const pinBtn = document.getElementById('changePinBtn');
-  if (pinBtn) { pinBtn.addEventListener('click', function() { const old = prompt('Текущий ПИН:'); if (!old || !verifyPin(old)) { alert('Неверно'); return; } const newPin = prompt('Новый ПИН (4 цифры):'); if (newPin && newPin.length === 4 && /^\d{4}$/.test(newPin)) { setPin(newPin); alert('✅ ПИН изменён!'); } }); }
+  // Приглашения и ПИН
+  const inviteBtn = document.getElementById('inviteMemberBtn'); if (inviteBtn) { inviteBtn.addEventListener('click', function() { const email = prompt('Email:'); if (email) alert('📧 Приглашение для ' + email); }); }
+  const codeBtn = document.getElementById('showInviteCodeBtn'); if (codeBtn) { codeBtn.addEventListener('click', function() { const code = getInviteCode(); alert(code ? '📋 Код: ' + code : 'Нет кода'); }); }
+  const pinBtn = document.getElementById('changePinBtn'); if (pinBtn) { pinBtn.addEventListener('click', function() { const old = prompt('Текущий ПИН:'); if (!old || !verifyPin(old)) { alert('Неверно'); return; } const newPin = prompt('Новый ПИН (4 цифры):'); if (newPin && newPin.length === 4 && /^\d{4}$/.test(newPin)) { setPin(newPin); alert('✅ ПИН изменён!'); } }); }
   
   document.addEventListener('visibilitychange', function() { if (document.visibilityState === 'visible') { document.title = 'FChat'; } });
 }
